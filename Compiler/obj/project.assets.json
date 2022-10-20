@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Apps\\Compiler\\Compiler.csproj",
+      "projectUniqueName": "D:\\GitProjects\\Compiler\\Compiler\\Compiler.csproj",
       "projectName": "Compiler",
-      "projectPath": "D:\\Apps\\Compiler\\Compiler.csproj",
+      "projectPath": "D:\\GitProjects\\Compiler\\Compiler\\Compiler.csproj",
       "packagesPath": "C:\\Users\\Kovalenko Maxim\\.nuget\\packages\\",
-      "outputPath": "D:\\Apps\\Compiler\\obj\\",
+      "outputPath": "D:\\GitProjects\\Compiler\\Compiler\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Kovalenko Maxim\\AppData\\Roaming\\NuGet\\NuGet.Config",

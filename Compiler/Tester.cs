@@ -8,16 +8,32 @@ namespace Compiler
 { 
     class Tester
     {
-        static void Main()
+        public static void StartTest()
         {
-            int numberTest = 1;
-            string pathIn = "../../../" + $"00{numberTest}_input.txt";
-            string pathOut = "../../../" + $"00{numberTest}_out.txt";
-            Console.WriteLine($"Нажмите на Enter для запуска теста {numberTest}");
-            string? input = Console.ReadLine();
-            if(input == null)
+            for (int numberTest = 1; numberTest < 3; numberTest++)
             {
-                Compiler.Main(pathIn, pathOut);
+                string pathIn = "../../../tests/" + $"00{numberTest}_input.txt";
+                string pathOut = "../../../tests/" + $"00{numberTest}_out.txt";
+                string pathCheck = "../../../tests/" + $"00{numberTest}_check.txt";
+                Compiler.CompileFile(pathIn, pathOut);
+                string? checkFile;
+                string? outFile;
+                using (StreamReader sr = new StreamReader(pathCheck, Encoding.Default))
+                {
+                    checkFile = sr.ReadToEnd();
+                }
+                using (StreamReader sr = new StreamReader(pathOut, Encoding.Default))
+                {
+                    outFile = sr.ReadToEnd();
+                }
+                if(checkFile == outFile)
+                {
+                    Console.WriteLine("OK");
+                }
+                else
+                {
+                    Console.WriteLine("WA");
+                }
             }
         }
     }

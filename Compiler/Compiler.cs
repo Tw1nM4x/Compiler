@@ -317,7 +317,7 @@ namespace Compiler
             return status[statusDFA];
         }
 
-        public static void Main(string pathIn, string pathOut)
+        public static void CompileFile(string pathIn = $"../../../tests/001_input.txt", string pathOut = $"../../../tests/001_out.txt")
         {
             int lexemeLenght = 0;
             int сurrentSymbol = 0;
@@ -360,7 +360,7 @@ namespace Compiler
 
             using (StreamWriter sw = new StreamWriter(pathOut))
             {
-                foreach(var lineOut in ans)
+                foreach (var lineOut in ans)
                 {
                     sw.WriteLine(lineOut);
                 }
@@ -371,4 +371,3 @@ namespace Compiler
 //е в real
 //значение у всех
 //проверять границы
-//
