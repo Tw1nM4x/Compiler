@@ -18,12 +18,13 @@ namespace Compiler
             }
             if (input == "")
             {
-                Console.WriteLine($"Введите имя файла (c расширением, файл должен храниться в папке tests) и ключ (ключ Лексического анализа - 1)");
-                string? fileNameAndKey = Console.ReadLine();
-                string?[] words = fileNameAndKey.Split(' ');
-                if (words[1] == "1" && words.Length > 1)
+                Console.WriteLine($"Введите имя файла (c расширением, файл должен храниться в папке tests)");
+                string? fileName = Console.ReadLine();
+                Console.WriteLine($"Введите ключ (ключ Лексического анализа - 1)");
+                string? key = Console.ReadLine();
+                if (key == "1")
                 {
-                    string path = $"../../../tests/{words[0]}";
+                    string path = $"../../../tests/{fileName}";
                     if (File.Exists(path))
                     {
                         Compiler.CompileFile(path,"console");

@@ -10,6 +10,8 @@ namespace Compiler
     {
         public static void StartTest()
         {
+            int countOK = 0;
+            int countERROR = 0;
             for (int numberTest = 1; numberTest < 3; numberTest++)
             {
                 string pathIn = "../../../tests/" + $"00{numberTest}_input.txt";
@@ -29,12 +31,15 @@ namespace Compiler
                 if(checkFile == outFile)
                 {
                     Console.WriteLine("OK");
+                    countOK += 1;
                 }
                 else
                 {
-                    Console.WriteLine("WA");
+                    Console.WriteLine("ERROR");
+                    countERROR += 1;
                 }
             }
+            Console.WriteLine($"Result OK: {countOK} ERRORS: {countERROR}");
         }
     }
 }
