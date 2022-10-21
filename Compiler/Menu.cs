@@ -18,10 +18,25 @@ namespace Compiler
             }
             if (input == "")
             {
-                Console.WriteLine($"Введите имя файла и ключ (Лексический анализ - 1)");
+                Console.WriteLine($"Введите имя файла (c расширением, файл должен храниться в папке tests) и ключ (ключ Лексического анализа - 1)");
                 string? fileNameAndKey = Console.ReadLine();
                 string?[] words = fileNameAndKey.Split(' ');
-                Compiler.CompileFile();
+                if (words[1] == "1" && words.Length > 1)
+                {
+                    string path = $"../../../tests/{words[0]}";
+                    if (File.Exists(path))
+                    {
+                        Compiler.CompileFile(path,"console");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Такого файла не сущестует");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Такого ключа не существует");
+                }
             }
         }
     }

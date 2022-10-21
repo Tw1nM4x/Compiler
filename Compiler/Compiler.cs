@@ -358,11 +358,14 @@ namespace Compiler
                 }
             }
 
-            using (StreamWriter sw = new StreamWriter(pathOut))
+            if(pathOut != "console")
             {
-                foreach (var lineOut in ans)
+                using (StreamWriter sw = new StreamWriter(pathOut))
                 {
-                    sw.WriteLine(lineOut);
+                    foreach (var lineOut in ans)
+                    {
+                        sw.WriteLine(lineOut);
+                    }
                 }
             }
         }
