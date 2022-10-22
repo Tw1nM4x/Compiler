@@ -32,19 +32,34 @@ namespace Compiler
                         while (line.Length > 0)
                         {
                             string typeLexeme = LexicalAnalyzer.GetFirstLexeme(line, ref lexemeLenght, ref nowCommentLine, ref typeCommentIsFigureScope);
+                            //if lexeme invalid
                             if (typeLexeme == "ERROR")
                             {
-                                Console.WriteLine($"{currentLine} {сurrentSymbol + 1} ERROR: Такой лексемы не существует");
+                                ans.Add($"{currentLine} {сurrentSymbol + 1} ERROR: Такой лексемы не существует");
+                                if (pathOut == "console")
+                                {
+                                    Console.WriteLine($"{currentLine} {сurrentSymbol + 1} ERROR: Такой лексемы не существует");
+                                }
                                 return;
                             }
                             if (typeLexeme != "Space" && typeLexeme != "Comment")
                             {
                                 string lexeme = line.Substring(0, lexemeLenght);
                                 string value = LexicalAnalyzer.GetValueLexeme(typeLexeme, lexeme);
-                                ans.Add($"{currentLine} {сurrentSymbol + 1} {typeLexeme} {lexeme}");
+                                //if value invalid
+                                if (value.Length >= 5 && value.Substring(0, 5) == "ERROR")
+                                {
+                                    ans.Add($"{currentLine} {сurrentSymbol + 1} {value}");
+                                    if (pathOut == "console")
+                                    {
+                                        Console.WriteLine($"{currentLine} {сurrentSymbol + 1} {value}");
+                                    }
+                                    return;
+                                }
+                                ans.Add($"{currentLine} {сurrentSymbol + 1} {typeLexeme} {value} {lexeme}");
                                 if (pathOut == "console")
                                 {
-                                    Console.WriteLine($"{currentLine} {сurrentSymbol + 1} {typeLexeme} {lexeme}");
+                                    Console.WriteLine($"{currentLine} {сurrentSymbol + 1} {typeLexeme} {value} {lexeme}");
                                 }
                             }
                             сurrentSymbol += lexemeLenght;
@@ -72,6 +87,3 @@ namespace Compiler
         }
     }
 }
-//е в real
-//значение у всех
-//проверять границы

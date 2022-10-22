@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Markup;
 
 namespace Compiler
 {
@@ -47,6 +48,12 @@ namespace Compiler
             table[1, (int)'$'] = 7;
             //real
             table[4, (int)'.'] = 8;
+            table[4, (int)'e'] = 8;
+            table[4, (int)'-'] = 8;
+            table[4, (int)'+'] = 8;
+            table[8, (int)'e'] = 8;
+            table[8, (int)'-'] = 8;
+            table[8, (int)'+'] = 8;
             //space
             table[1, (int)' '] = 9;
             table[9, (int)' '] = 9;
@@ -214,6 +221,36 @@ namespace Compiler
                                 }
                             }
                         }
+                        //if real have '.'
+                        if (statusDFA == 8 && input[i] == '.')
+                        {
+                            if (input.Substring(0, lexemeLenght).ToLower().IndexOf('e') != -1)
+                            {
+                                statusDFA = 8;
+                                lexemeLenght -= 1;
+                                break;
+                            }
+                        }
+                        //if real have 'e'
+                        if (statusDFA == 8 && Char.ToLower(input[i]) == 'e')
+                        {
+                            if (input.Substring(0, lexemeLenght - 1).ToLower().IndexOf('e') != -1)
+                            {
+                                statusDFA = 8;
+                                lexemeLenght -= 1;
+                                break;
+                            }
+                        }
+                        //if real have '-' or '+'
+                        if (statusDFA == 8 && (input[i] == '-' || input[i] == '+'))
+                        {
+                            if (Char.ToLower(input[i - 1]) != 'e')
+                            {
+                                statusDFA = 8;
+                                lexemeLenght -= 1;
+                                break;
+                            }
+                        }
                     }
                     else
                     {
@@ -252,25 +289,51 @@ namespace Compiler
                     lexemeLenght = 1;
                     statusDFA = 0;
                 }
-                else
-                {
-                    //if char
-                    if (lexemeLenght == 3)
-                    {
-                        statusDFA = 11;
-                    }
-                }
             }
             //if only % or & or $
             if (statusDFA >= 5 && statusDFA <= 7 && lexemeLenght == 1)
             {
                 statusDFA = 0;
             }
-            //check real
+            //check real with '.'
             if (input[lexemeLenght - 1] == '.' && statusDFA == 8)
             {
                 statusDFA = 4;
                 lexemeLenght -= 1;
+            }
+            //check real with last 'e' or '-' or '+'
+            if ((Char.ToLower(input[lexemeLenght - 1]) == 'e' || input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+') && statusDFA == 8)
+            {
+                int offset = 1;
+                if(input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+')
+                {
+                    offset = 2;
+                }
+                if(input.Substring(0, lexemeLenght - offset).ToLower().IndexOf('.') != -1)
+                {
+                    if(input[lexemeLenght - offset - 1] == '.')
+                    {
+                        //if integer
+                        statusDFA = 4;
+                        lexemeLenght -= (offset + 1);
+                    }
+                    else
+                    {
+                        lexemeLenght -= offset;
+                    }
+                }
+                else
+                {
+                    //if integer
+                    statusDFA = 4;
+                    lexemeLenght -= offset;
+                }
+            }
+            //check real if '.e'
+            if (input.Substring(0, lexemeLenght).ToLower().IndexOf(".e") != -1 && statusDFA == 8)
+            {
+                statusDFA = 4;
+                lexemeLenght = input.Substring(0, lexemeLenght).ToLower().IndexOf(".e");
             }
             //check couple operation signs
             if (statusDFA == 14)
@@ -300,13 +363,6 @@ namespace Compiler
                 {
                     lexemeLenght += 1;
                 }
-                else
-                {
-                    if (input[lexemeLenght - 1] == '.')
-                    {
-                        statusDFA = 0;
-                    }
-                }
             }
             //if comment
             if (statusDFA == 10)
@@ -317,37 +373,126 @@ namespace Compiler
         }
         public static string GetValueLexeme(string typeLexeme, string lexeme)
         {
+            string valueLexeme = "";
             switch (typeLexeme)
             {
                 case "String":
-
-                    break;
+                    {
+                        valueLexeme = lexeme.Replace("'", "");
+                        if (valueLexeme.Length > 255)
+                        {
+                            valueLexeme = "ERROR: Превышение допустимого числа символов в String";
+                        }
+                        break;
+                    }
                 case "Indifier":
-
-                    break;
+                    {
+                        valueLexeme = lexeme;
+                        if (valueLexeme.Length > 127)
+                        {
+                            valueLexeme = "ERROR: Превышение допустимого числа символов в Indifier";
+                        }
+                        break;
+                    }
                 case "Integer":
-
-                    break;
+                    {
+                        uint typeInt = 10;
+                        switch (lexeme[0])
+                        {
+                            case '%':
+                                typeInt = 2;
+                                break;
+                            case '&':
+                                typeInt = 8;
+                                break;
+                            case '$':
+                                typeInt = 16;
+                                break;
+                            default:
+                                typeInt = 10;
+                                break;
+                        }
+                        uint value = 0;
+                        for (int i = typeInt == 10? 0: 1; i < lexeme.Length; i++)
+                        {
+                            uint convertChar;
+                            if (lexeme[i] >= '0' && lexeme[i] <= '9')
+                            {
+                                convertChar = ((uint)lexeme[i] - (uint)'0');
+                            }
+                            else
+                            {
+                                convertChar = ((uint)Char.ToLower(lexeme[i]) - (uint)'a') + 10;
+                            }
+                            value = (value * typeInt) + convertChar;
+                            if (value > 2147483648)
+                            {
+                                return "ERROR: Переполнение Integer";
+                            }
+                        }
+                        valueLexeme = value.ToString();
+                        break;
+                    }
                 case "Real":
-
-                    break;
+                    {
+                        double value = 0;
+                        lexeme = lexeme.Replace(".", ",");
+                        lexeme = lexeme.ToUpper();
+                        value = Convert.ToDouble(lexeme);
+                        valueLexeme = value.ToString().Replace(",", ".");
+                        if (valueLexeme == "∞")
+                        {
+                            valueLexeme = "+Inf";
+                        }
+                        break;
+                    }
                 case "Char":
-
-                    break;
+                    {
+                        switch (lexeme[0])
+                        {
+                            case '\'':
+                                valueLexeme = lexeme.Replace("'", "");
+                                if ((int)valueLexeme[0] > 65535)
+                                {
+                                    valueLexeme = "ERROR: Не корректное значение Char";
+                                }
+                                break;
+                            case '#':
+                                valueLexeme = lexeme.Replace("#", "");
+                                int codeChar = Convert.ToInt32(valueLexeme);
+                                if (codeChar > 65535)
+                                {
+                                    valueLexeme = "ERROR: Не корректное значение Char";
+                                }
+                                else{
+                                    valueLexeme = Convert.ToChar(codeChar).ToString();
+                                }
+                                break;
+                        }
+                        break;
+                    }
                 case "Key_word":
-
-                    break;
+                    {
+                        valueLexeme = lexeme;
+                        break;
+                    }
                 case "End_file":
-
-                    break;
+                    {
+                        valueLexeme = lexeme;
+                        break;
+                    }
                 case "Operation_sign":
-
-                    break;
+                    {
+                        valueLexeme = lexeme;
+                        break;
+                    }
                 case "Separator":
-
-                    break;
+                    {
+                        valueLexeme = lexeme;
+                        break;
+                    }
             }
-            return "";
+            return valueLexeme;
         }
     }
 }
