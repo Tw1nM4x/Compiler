@@ -14,7 +14,6 @@ namespace Compiler
             int сurrentSymbol = 0;
             int currentLine = 1;
             bool nowCommentLine = false;
-            bool typeCommentIsFigureScope = true;
             List<string> ans = new List<string>();
 
             LexicalAnalyzer.CreateTableDFA();
@@ -31,7 +30,7 @@ namespace Compiler
                     {
                         while (line.Length > 0)
                         {
-                            string typeLexeme = LexicalAnalyzer.GetFirstLexeme(line, ref lexemeLenght, ref nowCommentLine, ref typeCommentIsFigureScope);
+                            string typeLexeme = LexicalAnalyzer.GetFirstLexeme(line, ref lexemeLenght, ref nowCommentLine);
                             //if lexeme invalid
                             if (typeLexeme == "ERROR")
                             {

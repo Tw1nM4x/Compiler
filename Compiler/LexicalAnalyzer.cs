@@ -120,7 +120,7 @@ namespace Compiler
                 table[7, i] = 7;
             }
         }
-        public static string GetFirstLexeme(string input, ref int lexemeLenght, ref bool nowCommentLine, ref bool typeCommentIsFigureScope)
+        public static string GetFirstLexeme(string input, ref int lexemeLenght, ref bool nowCommentLine)
         {
             int statusDFA = 1;
             lexemeLenght = 0;
@@ -132,31 +132,12 @@ namespace Compiler
                 lexemeLenght = input.Length;
                 return status[statusDFA];
             }
-            //if comment long (* *)
-            if (input[0] == '(' && input[1] == '*' && input.Length >= 2 && !nowCommentLine)
-            {
-                int indexStart = allFileForCheckComments.IndexOf("(*") + 2;
-                if (allFileForCheckComments.Substring(indexStart, allFileForCheckComments.Length - indexStart).IndexOf("*)") != -1)
-                {
-                    allFileForCheckComments = allFileForCheckComments.Substring(indexStart, allFileForCheckComments.Length - indexStart);
-                    typeCommentIsFigureScope = false;
-                    statusDFA = 10;
-                    lexemeLenght = 2;
-                }
-                else
-                {
-                    statusDFA = 15;
-                    lexemeLenght = 1;
-                    return status[statusDFA];
-                }
-            }
             //if comment long { }
             if (input[0] == '{' && input.Length >= 1 && !nowCommentLine)
             {
                 if (allFileForCheckComments.Substring(allFileForCheckComments.IndexOf("{") + 1, allFileForCheckComments.Length - allFileForCheckComments.IndexOf("{") - 1).IndexOf("}") != -1)
                 {
                     allFileForCheckComments = allFileForCheckComments.Substring(allFileForCheckComments.IndexOf("}") + 1, allFileForCheckComments.Length - allFileForCheckComments.IndexOf("}") - 1);
-                    typeCommentIsFigureScope = true;
                     statusDFA = 10;
                     lexemeLenght = 1;
                 }
@@ -187,18 +168,9 @@ namespace Compiler
                             break;
                         }
                         //if end comment {}
-                        if (statusDFA == 10 && input[i] == '}' && typeCommentIsFigureScope)
+                        if (statusDFA == 10 && input[i] == '}')
                         {
-                            typeCommentIsFigureScope = true;
                             nowCommentLine = false;
-                            return status[statusDFA];
-                        }
-                        //if end comment (* *)
-                        if (statusDFA == 10 && (input[i] == '*' && input[i + 1] == ')' && i + 1 < input.Length) && !typeCommentIsFigureScope)
-                        {
-                            typeCommentIsFigureScope = true;
-                            nowCommentLine = false;
-                            lexemeLenght += 1;
                             return status[statusDFA];
                         }
                         //if key word or end file
@@ -295,12 +267,6 @@ namespace Compiler
             {
                 statusDFA = 0;
             }
-            //check real with '.'
-            if (input[lexemeLenght - 1] == '.' && statusDFA == 8)
-            {
-                statusDFA = 4;
-                lexemeLenght -= 1;
-            }
             //check real with last 'e' or '-' or '+'
             if ((Char.ToLower(input[lexemeLenght - 1]) == 'e' || input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+') && statusDFA == 8)
             {
@@ -329,12 +295,6 @@ namespace Compiler
                     lexemeLenght -= offset;
                 }
             }
-            //check real if '.e'
-            if (input.Substring(0, lexemeLenght).ToLower().IndexOf(".e") != -1 && statusDFA == 8)
-            {
-                statusDFA = 4;
-                lexemeLenght = input.Substring(0, lexemeLenght).ToLower().IndexOf(".e");
-            }
             //check couple operation signs
             if (statusDFA == 14)
             {
@@ -350,16 +310,6 @@ namespace Compiler
                     (input[lexemeLenght - 1] == '-' && input[lexemeLenght] == '=') ||
                     (input[lexemeLenght - 1] == '*' && input[lexemeLenght] == '=') ||
                     (input[lexemeLenght - 1] == '/' && input[lexemeLenght] == '=')))
-                {
-                    lexemeLenght += 1;
-                }
-            }
-            //check couple separator
-            if (statusDFA == 15)
-            {
-                if (lexemeLenght < input.Length &&
-                    ((input[lexemeLenght - 1] == '(' && input[lexemeLenght] == '.') ||
-                    (input[lexemeLenght - 1] == '.' && input[lexemeLenght] == ')')))
                 {
                     lexemeLenght += 1;
                 }
