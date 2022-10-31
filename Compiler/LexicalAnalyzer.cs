@@ -267,6 +267,15 @@ namespace Compiler
             {
                 statusDFA = 0;
             }
+            //if out system
+            if (statusDFA >= 4 && statusDFA <= 7 && lexemeLenght < input.Length)
+            {
+                if ((input[lexemeLenght] >= '0' && input[lexemeLenght] <= '9') || (Char.ToLower(input[lexemeLenght]) >= 'a' && Char.ToLower(input[lexemeLenght]) <= 'z'))
+                {
+                    lexemeLenght += 1;
+                    statusDFA = 0;
+                }
+            }
             //check real with last 'e' or '-' or '+'
             if ((Char.ToLower(input[lexemeLenght - 1]) == 'e' || input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+') && statusDFA == 8)
             {
@@ -331,7 +340,7 @@ namespace Compiler
                         valueLexeme = lexeme.Replace("'", "");
                         if (valueLexeme.Length > 255)
                         {
-                            valueLexeme = "ERROR: Превышение допустимого числа символов в String";
+                            valueLexeme = "ERROR: Overflow string";
                         }
                         break;
                     }
@@ -340,7 +349,7 @@ namespace Compiler
                         valueLexeme = lexeme;
                         if (valueLexeme.Length > 127)
                         {
-                            valueLexeme = "ERROR: Превышение допустимого числа символов в Indifier";
+                            valueLexeme = "ERROR: Overflow indifier";
                         }
                         break;
                     }
@@ -377,7 +386,7 @@ namespace Compiler
                             value = (value * typeInt) + convertChar;
                             if (value > 2147483648)
                             {
-                                return "ERROR: Переполнение Integer";
+                                return "ERROR: Overflow integer";
                             }
                         }
                         valueLexeme = value.ToString();
@@ -404,7 +413,7 @@ namespace Compiler
                                 valueLexeme = lexeme.Replace("'", "");
                                 if ((int)valueLexeme[0] > 65535)
                                 {
-                                    valueLexeme = "ERROR: Не корректное значение Char";
+                                    valueLexeme = "ERROR: Overflow char";
                                 }
                                 break;
                             case '#':
@@ -412,7 +421,7 @@ namespace Compiler
                                 int codeChar = Convert.ToInt32(valueLexeme);
                                 if (codeChar > 65535)
                                 {
-                                    valueLexeme = "ERROR: Не корректное значение Char";
+                                    valueLexeme = "ERROR: Overflow char";
                                 }
                                 else{
                                     valueLexeme = Convert.ToChar(codeChar).ToString();

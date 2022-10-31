@@ -18,33 +18,35 @@ namespace Compiler
 
             LexicalAnalyzer.CreateTableDFA();
 
-            using (StreamReader sr = new StreamReader(pathIn, Encoding.Default))
+            using (StreamReader sr = new StreamReader(pathIn, Encoding.UTF8))
             {
                 LexicalAnalyzer.allFileForCheckComments = sr.ReadToEnd();
                 sr.DiscardBufferedData();
                 sr.BaseStream.Seek(0, System.IO.SeekOrigin.Begin);
                 string? line;
-                while ((line = sr.ReadLine()) != null)
+                bool haveError = false;
+                while ((line = sr.ReadLine()) != null && !haveError)
                 {
                     if (line != null)
                     {
                         while (line.Length > 0)
                         {
                             string typeLexeme = LexicalAnalyzer.GetFirstLexeme(line, ref lexemeLenght, ref nowCommentLine);
+                            string lexeme = line.Substring(0, lexemeLenght);
+                            string value = LexicalAnalyzer.GetValueLexeme(typeLexeme, lexeme);
                             //if lexeme invalid
                             if (typeLexeme == "ERROR")
                             {
-                                ans.Add($"{currentLine} {сurrentSymbol + 1} ERROR: Такой лексемы не существует");
+                                ans.Add($"{currentLine} {сurrentSymbol + 1} {typeLexeme}");
                                 if (pathOut == "console")
                                 {
-                                    Console.WriteLine($"{currentLine} {сurrentSymbol + 1} ERROR: Такой лексемы не существует");
+                                    Console.WriteLine($"{currentLine} {сurrentSymbol + 1} {typeLexeme}");
                                 }
-                                return;
+                                haveError = true;
+                                break;
                             }
                             if (typeLexeme != "Space" && typeLexeme != "Comment")
                             {
-                                string lexeme = line.Substring(0, lexemeLenght);
-                                string value = LexicalAnalyzer.GetValueLexeme(typeLexeme, lexeme);
                                 //if value invalid
                                 if (value.Length >= 5 && value.Substring(0, 5) == "ERROR")
                                 {
@@ -53,7 +55,8 @@ namespace Compiler
                                     {
                                         Console.WriteLine($"{currentLine} {сurrentSymbol + 1} {value}");
                                     }
-                                    return;
+                                    haveError = true;
+                                    break;
                                 }
                                 ans.Add($"{currentLine} {сurrentSymbol + 1} {typeLexeme} {value} {lexeme}");
                                 if (pathOut == "console")
@@ -75,9 +78,9 @@ namespace Compiler
 
             if(pathOut != "console")
             {
-                using (StreamWriter sw = new StreamWriter(pathOut))
+                using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
                 {
-                    foreach (var lineOut in ans)
+                    foreach (string lineOut in ans)
                     {
                         sw.WriteLine(lineOut);
                     }
