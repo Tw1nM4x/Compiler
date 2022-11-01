@@ -1,0 +1,11 @@
+1 1 Key_word if if
+1 3 Separator ( (
+1 4 Indifier x x
+1 5 Operation_sign = =
+1 6 Integer 5 5
+1 7 Separator ) )
+1 8 Key_word then then
+1 13 Indifier x x
+1 14 Operation_sign -= -=
+1 16 Integer 3 3
+1 17 Separator ; ;

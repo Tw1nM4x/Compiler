@@ -24,8 +24,8 @@ namespace Compiler
                 sr.DiscardBufferedData();
                 sr.BaseStream.Seek(0, System.IO.SeekOrigin.Begin);
                 string? line;
-                bool haveError = false;
-                while ((line = sr.ReadLine()) != null && !haveError)
+                bool end = false;
+                while ((line = sr.ReadLine()) != null && !end)
                 {
                     if (line != null)
                     {
@@ -34,7 +34,6 @@ namespace Compiler
                             string typeLexeme = LexicalAnalyzer.GetFirstLexeme(line, ref lexemeLenght, ref nowCommentLine);
                             string lexeme = line.Substring(0, lexemeLenght);
                             string value = LexicalAnalyzer.GetValueLexeme(typeLexeme, lexeme);
-                            //if lexeme invalid
                             if (typeLexeme == "ERROR")
                             {
                                 ans.Add($"{currentLine} {сurrentSymbol + 1} {typeLexeme}");
@@ -42,12 +41,11 @@ namespace Compiler
                                 {
                                     Console.WriteLine($"{currentLine} {сurrentSymbol + 1} {typeLexeme}");
                                 }
-                                haveError = true;
+                                end = true;
                                 break;
                             }
                             if (typeLexeme != "Space" && typeLexeme != "Comment")
                             {
-                                //if value invalid
                                 if (value.Length >= 5 && value.Substring(0, 5) == "ERROR")
                                 {
                                     ans.Add($"{currentLine} {сurrentSymbol + 1} {value}");
@@ -55,13 +53,18 @@ namespace Compiler
                                     {
                                         Console.WriteLine($"{currentLine} {сurrentSymbol + 1} {value}");
                                     }
-                                    haveError = true;
+                                    end = true;
                                     break;
                                 }
                                 ans.Add($"{currentLine} {сurrentSymbol + 1} {typeLexeme} {value} {lexeme}");
                                 if (pathOut == "console")
                                 {
                                     Console.WriteLine($"{currentLine} {сurrentSymbol + 1} {typeLexeme} {value} {lexeme}");
+                                }
+                                if(value == "finish")
+                                {
+                                    end = true;
+                                    break;
                                 }
                             }
                             сurrentSymbol += lexemeLenght;

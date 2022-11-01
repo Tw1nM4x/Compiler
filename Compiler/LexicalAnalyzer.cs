@@ -15,7 +15,7 @@ namespace Compiler
         const int numberOfSymbols = 256;
         public static string allFileForCheckComments = "";
         static int[,] table = new int[numberOfStatusAutomaton, numberOfSymbols];
-        static string[] status = { "ERROR", "ERROR", "String", "Indifier", "Integer", "Integer", "Integer", "Integer", "Real", "Space", "Comment", "Char", "Key_word", "End_file", "Operation_sign", "Separator" };
+        static string[] status = { "ERROR", "ERROR", "String", "Indifier", "Integer", "Integer", "Integer", "Integer", "Real", "Space", "Comment", "String", "Key_word", "End_file", "Operation_sign", "Separator" };
         /*
          0 - состояние ошибки (ERROR)
          1 - состояние начальное
@@ -28,8 +28,8 @@ namespace Compiler
          8 - состояние Real
          9 - состояние Space
          10 - состояние Comment
-         11 - состояние Char
-         -------------------------
+         11 - состояние String_whith_Char
+        -------------------------
          12 - состояние Key_word
          13 - состояние End_file
          14 - состояние Operation_sign
@@ -39,6 +39,10 @@ namespace Compiler
         {
             //string
             table[1, (int)'\''] = 2;
+            table[11, (int)'\''] = 2;
+            //string whith char
+            table[1, (int)'#'] = 11;
+            table[11, (int)'#'] = 11;
             //indifier
             table[1, (int)'_'] = 3;
             table[3, (int)'_'] = 3;
@@ -49,8 +53,12 @@ namespace Compiler
             //real
             table[4, (int)'.'] = 8;
             table[4, (int)'e'] = 8;
-            table[4, (int)'-'] = 8;
-            table[4, (int)'+'] = 8;
+            table[5, (int)'.'] = 8;
+            table[5, (int)'e'] = 8;
+            table[6, (int)'.'] = 8;
+            table[6, (int)'e'] = 8;
+            table[7, (int)'.'] = 8;
+            table[7, (int)'e'] = 8;
             table[8, (int)'e'] = 8;
             table[8, (int)'-'] = 8;
             table[8, (int)'+'] = 8;
@@ -74,8 +82,6 @@ namespace Compiler
             table[1, (int)'['] = 15;
             table[1, (int)']'] = 15;
             table[1, (int)'.'] = 15;
-            //char
-            table[1, (int)'#'] = 11;
 
             for (int i = 0; i < numberOfSymbols; i++)
             {
@@ -101,7 +107,7 @@ namespace Compiler
                 table[7, i] = 7;
                 //real
                 table[8, i] = 8;
-                //char
+                //string whith char
                 table[11, i] = 11;
             }
             for (int i = (int)'0'; i <= (int)'1'; i++)
@@ -124,15 +130,14 @@ namespace Compiler
         {
             int statusDFA = 1;
             lexemeLenght = 0;
+            int countQuotesInString = 0;
 
-            //if Comment
             if (input[0] == '/' && input[1] == '/' && input.Length >= 1 && !nowCommentLine)
             {
                 statusDFA = 10;
                 lexemeLenght = input.Length;
                 return status[statusDFA];
             }
-            //if comment long { }
             if (input[0] == '{' && input.Length >= 1 && !nowCommentLine)
             {
                 if (allFileForCheckComments.Substring(allFileForCheckComments.IndexOf("{") + 1, allFileForCheckComments.Length - allFileForCheckComments.IndexOf("{") - 1).IndexOf("}") != -1)
@@ -148,7 +153,6 @@ namespace Compiler
                     return status[statusDFA];
                 }
             }
-            //if comment now
             if (nowCommentLine)
             {
                 statusDFA = 10;
@@ -162,10 +166,28 @@ namespace Compiler
                     {
                         lexemeLenght += 1;
                         statusDFA = table[statusDFA, input[i] < numberOfSymbols ? Char.ToLower(input[i]) : 255];
-                        //if end string
-                        if (statusDFA == 2 && input[i] == '\'' && lexemeLenght > 1)
+                        //string
+                        if (statusDFA == 2 && input[i] == '\'')
                         {
-                            break;
+                            countQuotesInString += 1;
+                            if (countQuotesInString % 2 == 0)
+                            {
+                                if (i + 1 < input.Length && input[i + 1] == '\'')
+                                {
+                                    statusDFA = 1;
+                                }
+                                else
+                                {
+                                    if (i + 1 < input.Length && input[i + 1] == '#')
+                                    {
+                                        statusDFA = 1;
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
                         }
                         //if end comment {}
                         if (statusDFA == 10 && input[i] == '}')
@@ -173,32 +195,18 @@ namespace Compiler
                             nowCommentLine = false;
                             return status[statusDFA];
                         }
-                        //if key word or end file
-                        if (statusDFA == 3)
-                        {
-                            if (input.Substring(0, lexemeLenght).ToLower() == lexemeEndFile)
-                            {
-                                //end file
-                                statusDFA = 13;
-                                return status[statusDFA];
-                            }
-
-                            foreach (string keyWord in keyWords)
-                            {
-                                if (input.Substring(0, lexemeLenght).ToLower() == keyWord)
-                                {
-                                    //key word
-                                    statusDFA = 12;
-                                    return status[statusDFA];
-                                }
-                            }
-                        }
                         //if real have '.'
                         if (statusDFA == 8 && input[i] == '.')
                         {
                             if (input.Substring(0, lexemeLenght).ToLower().IndexOf('e') != -1)
                             {
-                                statusDFA = 8;
+                                statusDFA = 0;
+                                lexemeLenght -= 1;
+                                break;
+                            }
+                            if ((input[0] == '%' || input[0] == '&' || input[0] == '$') && i + 1 < input.Length && input[i + 1] >= '0' && input[i + 1] <= '9')
+                            {
+                                statusDFA = 0;
                                 lexemeLenght -= 1;
                                 break;
                             }
@@ -208,7 +216,7 @@ namespace Compiler
                         {
                             if (input.Substring(0, lexemeLenght - 1).ToLower().IndexOf('e') != -1)
                             {
-                                statusDFA = 8;
+                                statusDFA = 0;
                                 lexemeLenght -= 1;
                                 break;
                             }
@@ -218,7 +226,7 @@ namespace Compiler
                         {
                             if (Char.ToLower(input[i - 1]) != 'e')
                             {
-                                statusDFA = 8;
+                                statusDFA = 0;
                                 lexemeLenght -= 1;
                                 break;
                             }
@@ -226,25 +234,11 @@ namespace Compiler
                     }
                     else
                     {
-                        //if long error
-                        if (table[1, input[0] < numberOfSymbols ? Char.ToLower(input[0]) : 255] == 0)
+                        if (lexemeLenght == 0)
                         {
-                            lexemeLenght += 1;
-                            statusDFA = 1;
-                            if (i + 1 < input.Length && table[statusDFA, input[i + 1] < numberOfSymbols ? input[i + 1] : 255] != 0)
-                            {
-                                break;
-                            }
+                            lexemeLenght = 1;
                         }
-                        else
-                        {
-                            //if end lexem
-                            if (lexemeLenght == 0)
-                            {
-                                lexemeLenght = 1;
-                            }
-                            break;
-                        }
+                        break;
                     }
                 }
                 else
@@ -252,14 +246,28 @@ namespace Compiler
                     break;
                 }
             }
-            //check string
-            if (statusDFA == 2)
+            //string
+            if (statusDFA == 2 && countQuotesInString % 2 == 1)
             {
-                //if dont string
-                if (input[lexemeLenght - 1] != '\'' || lexemeLenght == 1)
+                statusDFA = 0;
+                return status[statusDFA];
+            }
+            //if key word or end file
+            if (statusDFA == 3)
+            {
+                if (input.Substring(0, lexemeLenght).ToLower() == lexemeEndFile)
                 {
-                    lexemeLenght = 1;
-                    statusDFA = 0;
+                    statusDFA = 13;
+                    return status[statusDFA];
+                }
+
+                foreach (string keyWord in keyWords)
+                {
+                    if (input.Substring(0, lexemeLenght).ToLower() == keyWord)
+                    {
+                        statusDFA = 12;
+                        return status[statusDFA];
+                    }
                 }
             }
             //if only % or & or $
@@ -267,7 +275,7 @@ namespace Compiler
             {
                 statusDFA = 0;
             }
-            //if out system
+            //if out system integer
             if (statusDFA >= 4 && statusDFA <= 7 && lexemeLenght < input.Length)
             {
                 if ((input[lexemeLenght] >= '0' && input[lexemeLenght] <= '9') || (Char.ToLower(input[lexemeLenght]) >= 'a' && Char.ToLower(input[lexemeLenght]) <= 'z'))
@@ -277,7 +285,7 @@ namespace Compiler
                 }
             }
             //check real with last 'e' or '-' or '+'
-            if ((Char.ToLower(input[lexemeLenght - 1]) == 'e' || input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+') && statusDFA == 8)
+            if (statusDFA == 8 && (Char.ToLower(input[lexemeLenght - 1]) == 'e' || input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+'))
             {
                 int offset = 1;
                 if(input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+')
@@ -288,8 +296,7 @@ namespace Compiler
                 {
                     if(input[lexemeLenght - offset - 1] == '.')
                     {
-                        //if integer
-                        statusDFA = 4;
+                        statusDFA = 0;
                         lexemeLenght -= (offset + 1);
                     }
                     else
@@ -299,12 +306,10 @@ namespace Compiler
                 }
                 else
                 {
-                    //if integer
-                    statusDFA = 4;
+                    statusDFA = 0;
                     lexemeLenght -= offset;
                 }
             }
-            //check couple operation signs
             if (statusDFA == 14)
             {
                 if (lexemeLenght < input.Length &&
@@ -323,7 +328,6 @@ namespace Compiler
                     lexemeLenght += 1;
                 }
             }
-            //if comment
             if (statusDFA == 10)
             {
                 nowCommentLine = true;
@@ -337,10 +341,77 @@ namespace Compiler
             {
                 case "String":
                     {
-                        valueLexeme = lexeme.Replace("'", "");
-                        if (valueLexeme.Length > 255)
+                        if (lexeme.Length > 255)
                         {
                             valueLexeme = "ERROR: Overflow string";
+                            break;
+                        }
+                        bool nowSymbol = false;
+                        int countQuotes = 0;
+                        string symbolStr = "";
+                        for (int i = 0; i < lexeme.Length; i++)
+                        {
+                            if (lexeme[i] == '\'')
+                            {
+                                countQuotes += 1;
+                                if (nowSymbol)
+                                {
+                                    int symbol = Int32.Parse(symbolStr);
+                                    if (symbol > 65535)
+                                    {
+                                        valueLexeme = "ERROR: Overflow symbol in string";
+                                        break;
+                                    }
+                                    valueLexeme += (char)symbol;
+                                    symbolStr = "";
+                                }
+                                nowSymbol = false;
+                                if (i + 1 < lexeme.Length && lexeme[i + 1] == '\'')
+                                {
+                                    valueLexeme += lexeme[i];
+                                    i++;
+                                }
+                            }
+                            else
+                            {
+                                if (lexeme[i] == '#' && countQuotes % 2 == 0)
+                                {
+                                    if (nowSymbol)
+                                    {
+                                        int symbol = Int32.Parse(symbolStr);
+                                        if (symbol > 65535)
+                                        {
+                                            valueLexeme = "ERROR: Overflow symbol in string";
+                                            break;
+                                        }
+                                        valueLexeme += (char)symbol;
+                                        symbolStr = "";
+                                    }
+                                    nowSymbol = true;
+                                }
+                                else
+                                {
+                                    if (!nowSymbol)
+                                    {
+                                        valueLexeme += lexeme[i];
+                                    }
+                                    else
+                                    {
+                                        symbolStr += lexeme[i];
+                                    }
+                                }
+                            }
+                        }
+                        if (nowSymbol)
+                        {
+                            int symbol = Int32.Parse(symbolStr);
+                            if (symbol > 65535)
+                            {
+                                valueLexeme = "ERROR: Overflow symbol in string";
+                                break;
+                            }
+                            valueLexeme += (char)symbol;
+                            symbolStr = "";
                         }
                         break;
                     }
@@ -397,47 +468,73 @@ namespace Compiler
                         double value = 0;
                         lexeme = lexeme.Replace(".", ",");
                         lexeme = lexeme.ToUpper();
-                        value = Convert.ToDouble(lexeme);
-                        valueLexeme = value.ToString().Replace(",", ".");
+                        int mantis;
+                        switch (lexeme[0])
+                        {
+                            case '%':
+                                lexeme = lexeme.Remove(0, 1);
+                                if (lexeme.IndexOf(',') != -1)
+                                {
+                                    mantis = Convert.ToInt32(lexeme.Substring(0, lexeme.IndexOf(',')), 2);
+                                    lexeme = lexeme.Remove(0, lexeme.IndexOf(','));
+                                }
+                                else
+                                {
+                                    mantis = Convert.ToInt32(lexeme.Substring(0, lexeme.IndexOf('E')), 2);
+                                    lexeme = lexeme.Remove(0, lexeme.IndexOf('E'));
+                                }
+                                lexeme = mantis.ToString() + lexeme;
+                                value = Convert.ToDouble(lexeme);
+                                break;
+                            case '&':
+                                lexeme = lexeme.Remove(0, 1);
+                                if (lexeme.IndexOf(',') != -1)
+                                {
+                                    mantis = Convert.ToInt32(lexeme.Substring(0, lexeme.IndexOf(',')), 8);
+                                    lexeme = lexeme.Remove(0, lexeme.IndexOf(','));
+                                }
+                                else
+                                {
+                                    mantis = Convert.ToInt32(lexeme.Substring(0, lexeme.IndexOf('E')), 8);
+                                    lexeme = lexeme.Remove(0, lexeme.IndexOf('E'));
+                                }
+                                lexeme = mantis.ToString() + lexeme;
+                                value = Convert.ToDouble(lexeme);
+                                break;
+                            case '$':
+                                lexeme = lexeme.Remove(0, 1);
+                                if (lexeme.IndexOf(',') != -1)
+                                {
+                                    mantis = Convert.ToInt32(lexeme.Substring(0, lexeme.IndexOf(',')), 16);
+                                    lexeme = lexeme.Remove(0, lexeme.IndexOf(','));
+                                }
+                                else
+                                {
+                                    mantis = Convert.ToInt32(lexeme.Substring(0, lexeme.IndexOf('E')), 16);
+                                    lexeme = lexeme.Remove(0, lexeme.IndexOf('E'));
+                                }
+                                lexeme = mantis.ToString() + lexeme;
+                                value = Convert.ToDouble(lexeme);
+                                break;
+                            default:
+                                value = Convert.ToDouble(lexeme);
+                                break;
+                        }
+                        valueLexeme = value.ToString("E10").Replace(",", ".");
                         if (valueLexeme == "∞")
                         {
                             valueLexeme = "+Inf";
                         }
                         break;
                     }
-                case "Char":
-                    {
-                        switch (lexeme[0])
-                        {
-                            case '\'':
-                                valueLexeme = lexeme.Replace("'", "");
-                                if ((int)valueLexeme[0] > 65535)
-                                {
-                                    valueLexeme = "ERROR: Overflow char";
-                                }
-                                break;
-                            case '#':
-                                valueLexeme = lexeme.Replace("#", "");
-                                int codeChar = Convert.ToInt32(valueLexeme);
-                                if (codeChar > 65535)
-                                {
-                                    valueLexeme = "ERROR: Overflow char";
-                                }
-                                else{
-                                    valueLexeme = Convert.ToChar(codeChar).ToString();
-                                }
-                                break;
-                        }
-                        break;
-                    }
                 case "Key_word":
                     {
-                        valueLexeme = lexeme;
+                        valueLexeme = lexeme.ToLower();
                         break;
                     }
                 case "End_file":
                     {
-                        valueLexeme = lexeme;
+                        valueLexeme = lexeme.ToLower();
                         break;
                     }
                 case "Operation_sign":

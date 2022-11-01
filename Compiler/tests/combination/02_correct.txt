@@ -1,0 +1,5 @@
+1 1 Integer 1 1
+1 2 Operation_sign - -
+1 3 Operation_sign - -
+1 4 Operation_sign - -
+1 5 Integer 2 2

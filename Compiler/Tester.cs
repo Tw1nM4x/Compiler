@@ -17,8 +17,8 @@ namespace Compiler
                 this.countTest = countTest;
             }
         }
-        static Folder[] folders = new Folder[] { new("string", 10), new("indifier", 9), new("integer", 19), new("real", 0), new("space", 0), 
-            new("comment", 0), new("key word", 0), new("end file", 0), new("operation sign", 0), new("separator", 0), new("errors", 3), new("combination", 0) };
+        static Folder[] folders = new Folder[] { new("string", 14), new("indifier", 9), new("integer", 19), new("real", 28), new("space", 2), 
+            new("comment", 9), new("key word", 4), new("end file", 4), new("operation sign", 3), new("separator", 3), new("errors", 3), new("combination", 2) };
         public static void StartTest()
         {
             int countOK = 0;
@@ -59,7 +59,7 @@ namespace Compiler
                     }
                 }
             }
-            Console.WriteLine($"Result OK: {countOK} ERRORS: {countERROR}");
+            Console.WriteLine($"OK: {countOK}  ERRORS: {countERROR}");
         }
     }
 }
