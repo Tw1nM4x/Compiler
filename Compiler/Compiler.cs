@@ -8,7 +8,7 @@ namespace Compiler
 {
     class Compiler
     {
-        public static void CompileFile(string pathIn = $"../../../tests/001_input.txt", string pathOut = $"../../../tests/001_out.txt")
+        public static void CompileFile(string pathIn = $"../../../tests/1.txt", string pathOut = $"console")
         {
             int lexemeLenght = 0;
             int сurrentSymbol = 0;

@@ -38,6 +38,8 @@ namespace Compiler
                 {
                     Console.WriteLine($"Такого ключа не существует");
                 }
+                Console.WriteLine("\nЧтобы завершить программу нажмите Enter");
+                Console.ReadLine();
             }
         }
     }
