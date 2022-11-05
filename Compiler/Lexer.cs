@@ -7,15 +7,33 @@ using System.Windows.Markup;
 
 namespace Compiler
 {
-    internal class LexicalAnalyzer
+    public struct Lexeme
     {
-        const string lexemeEndFile = "finish";
+        public int numberLine;
+        public int numberSymbol;
+        public string type;
+        public string value;
+        public string lexeme;
+        public Lexeme(int numberLine, int numberSymbol, string type, string value, string lexeme)
+        {
+            this.numberLine = numberLine;
+            this.numberSymbol = numberSymbol;
+            this.type = type;
+            this.value = value;
+            this.lexeme = lexeme;
+        }
+    }
+    internal class Lexer
+    {
+        public static int currentLine = 1;
+        public static int currentSymbol = 1;
+        const string END_FILE = "end.";
         static string[] keyWords = new string[] { "and", "array", "as", "asm", "begin", "case", "const", "constructor", "destructor", "div", "do", "downto", "else", "end", "file", "for", "foreach", "function", "goto", "implementation", "if", "in", "inherited", "inline", "interface", "label", "mod", "nil", "not", "object", "of", "operator", "or", "packed", "procedure", "program", "record", "repeat", "self", "set", "shl", "shr", "string", "then", "to", "type", "unit", "until", "uses", "var", "while", "with", "xor", "dispose", "exit", "false", "new", "true", "as", "class", "dispinterface", "except", "exports", "finalization", "finally", "initialization", "inline", "is", "library", "on", "out", "packed", "property", "raise", "resourcestring", "threadvar", "try" };
-        const int numberOfStatusAutomaton = 12;
-        const int numberOfSymbols = 256;
+        const int COUNT_STATUS = 10;
+        const int COUNT_SYMBOLS = 256;
         public static string allFileForCheckComments = "";
-        static int[,] table = new int[numberOfStatusAutomaton, numberOfSymbols];
-        static string[] status = { "ERROR", "ERROR", "String", "Indifier", "Integer", "Integer", "Integer", "Integer", "Real", "Space", "Comment", "String", "Key_word", "End_file", "Operation_sign", "Separator" };
+        static int[,] table = new int[COUNT_STATUS, COUNT_SYMBOLS];
+        public static string[] status = { "ERROR", "ERROR", "String", "Indifier", "Integer", "Integer", "Integer", "Integer", "Real", "String", "Key_word", "End_file", "Operation_sign", "Separator", "Not_Lexeme" };
         /*
          0 - состояние ошибки (ERROR)
          1 - состояние начальное
@@ -26,23 +44,22 @@ namespace Compiler
          6 - состояние Integer x8
          7 - состояние Integer x16
          8 - состояние Real
-         9 - состояние Space
-         10 - состояние Comment
-         11 - состояние String_whith_Char
+         9 - состояние String whith Char
         -------------------------
-         12 - состояние Key_word
-         13 - состояние End_file
-         14 - состояние Operation_sign
-         15 - состояние Separator
+         10 - состояние Key_word
+         11 - состояние End_file
+         12 - состояние Operation_sign
+         13 - состояние Separator
+         14 - состояние Not_Lexeme
         */
         public static void CreateTableDFA()
         {
             //string
             table[1, (int)'\''] = 2;
-            table[11, (int)'\''] = 2;
+            table[9, (int)'\''] = 2;
             //string whith char
-            table[1, (int)'#'] = 11;
-            table[11, (int)'#'] = 11;
+            table[1, (int)'#'] = 9;
+            table[9, (int)'#'] = 9;
             //indifier
             table[1, (int)'_'] = 3;
             table[3, (int)'_'] = 3;
@@ -62,33 +79,28 @@ namespace Compiler
             table[8, (int)'e'] = 8;
             table[8, (int)'-'] = 8;
             table[8, (int)'+'] = 8;
-            //space
-            table[1, (int)' '] = 9;
-            table[9, (int)' '] = 9;
             //operation sign
-            table[1, (int)'='] = 14;
-            table[1, (int)':'] = 14;
-            table[1, (int)'+'] = 14;
-            table[1, (int)'-'] = 14;
-            table[1, (int)'*'] = 14;
-            table[1, (int)'/'] = 14;
-            table[1, (int)'>'] = 14;
-            table[1, (int)'<'] = 14;
+            table[1, (int)'='] = 12;
+            table[1, (int)':'] = 12;
+            table[1, (int)'+'] = 12;
+            table[1, (int)'-'] = 12;
+            table[1, (int)'*'] = 12;
+            table[1, (int)'/'] = 12;
+            table[1, (int)'>'] = 12;
+            table[1, (int)'<'] = 12;
             //separator
-            table[1, (int)','] = 15;
-            table[1, (int)';'] = 15;
-            table[1, (int)'('] = 15;
-            table[1, (int)')'] = 15;
-            table[1, (int)'['] = 15;
-            table[1, (int)']'] = 15;
-            table[1, (int)'.'] = 15;
+            table[1, (int)','] = 13;
+            table[1, (int)';'] = 13;
+            table[1, (int)'('] = 13;
+            table[1, (int)')'] = 13;
+            table[1, (int)'['] = 13;
+            table[1, (int)']'] = 13;
+            table[1, (int)'.'] = 13;
 
-            for (int i = 0; i < numberOfSymbols; i++)
+            for (int i = 0; i < COUNT_SYMBOLS; i++)
             {
                 //string
                 table[2, i] = 2;
-                //comment
-                table[10, i] = 10;
             }
             for (int i = (int)'a'; i <= (int)'z'; i++)
             {
@@ -108,7 +120,7 @@ namespace Compiler
                 //real
                 table[8, i] = 8;
                 //string whith char
-                table[11, i] = 11;
+                table[9, i] = 9;
             }
             for (int i = (int)'0'; i <= (int)'1'; i++)
             {
@@ -126,59 +138,130 @@ namespace Compiler
                 table[7, i] = 7;
             }
         }
-        public static string GetFirstLexeme(string input, ref int lexemeLenght, ref bool nowCommentLine)
+        public static Lexeme GetFirstLexeme(ref byte[] inputBytes)
         {
             int statusDFA = 1;
-            lexemeLenght = 0;
+            int lexemeLenght = 0;
             int countQuotesInString = 0;
 
-            if (input[0] == '/' && input[1] == '/' && input.Length >= 1 && !nowCommentLine)
+            //string input = Encoding.Default.GetString(inputBytes);
+
+            void CutFirstElementsFromArray(ref byte[] array, int countFirstElements)
             {
-                statusDFA = 10;
-                lexemeLenght = input.Length;
-                return status[statusDFA];
-            }
-            if (input[0] == '{' && input.Length >= 1 && !nowCommentLine)
-            {
-                if (allFileForCheckComments.Substring(allFileForCheckComments.IndexOf("{") + 1, allFileForCheckComments.Length - allFileForCheckComments.IndexOf("{") - 1).IndexOf("}") != -1)
+                for (int i = 0; i < array.Length - countFirstElements; i++)
                 {
-                    allFileForCheckComments = allFileForCheckComments.Substring(allFileForCheckComments.IndexOf("}") + 1, allFileForCheckComments.Length - allFileForCheckComments.IndexOf("}") - 1);
-                    statusDFA = 10;
-                    lexemeLenght = 1;
+                    array[i] = array[i + countFirstElements];
                 }
-                else
-                {
-                    statusDFA = 0;
-                    lexemeLenght = 1;
-                    return status[statusDFA];
-                }
-            }
-            if (nowCommentLine)
-            {
-                statusDFA = 10;
+                Array.Resize(ref array, array.Length - countFirstElements);
             }
 
-            for (int i = lexemeLenght; i < input.Length; i++)
+            string GetString(byte[] input, int start, int end)
             {
-                if (statusDFA < numberOfStatusAutomaton)
+                return Encoding.Default.GetString(input[start..end]);
+            }
+
+            Lexeme Out(ref byte[] inputBytes)
+            {
+                Lexeme outLex = new Lexeme(currentLine, currentSymbol, status[statusDFA], GetValueLexeme(status[statusDFA], GetString(inputBytes,0,lexemeLenght)), GetString(inputBytes, 0, lexemeLenght));
+                CutFirstElementsFromArray(ref inputBytes, lexemeLenght);
+                currentSymbol += lexemeLenght;
+                return outLex;
+            }
+
+            while (inputBytes[0] == 13 || inputBytes[0] == 10 || inputBytes[0] == 32 || inputBytes[0] == 123 || (inputBytes.Length > 1 && (inputBytes[0] == '/' && inputBytes[1] == '/')))
+            {
+                switch (inputBytes[0])
                 {
-                    if (table[statusDFA, input[i] < numberOfSymbols ? Char.ToLower(input[i]) : 255] != 0)
+                    case 13:
+                        currentLine += 1;
+                        CutFirstElementsFromArray(ref inputBytes, 1);
+                        break;
+                    case 10:
+                        currentSymbol = 1;
+                        CutFirstElementsFromArray(ref inputBytes, 1);
+                        break;
+                    case 32:
+                        currentSymbol += 1;
+                        CutFirstElementsFromArray(ref inputBytes, 1);
+                        break;
+                    case 123:
+                        if (GetString(inputBytes, 0, inputBytes.Length).IndexOf('}') != -1)
+                        {
+                            while (inputBytes[0] != '}')
+                            {
+                                currentSymbol += 1;
+                                if(inputBytes[0] == 13)
+                                {
+                                    currentLine += 1;
+                                    currentSymbol = 1;
+                                }
+                                if (inputBytes[0] == 10)
+                                {
+                                    currentSymbol = 1;
+                                }
+                                CutFirstElementsFromArray(ref inputBytes, 1);
+                            }
+                            currentSymbol += 1;
+                            CutFirstElementsFromArray(ref inputBytes, 1);
+                        }
+                        else
+                        {
+                            statusDFA = 0;
+                            lexemeLenght = 1;
+                            return Out(ref inputBytes);
+                        }
+                        break;
+                }
+                if (inputBytes.Length > 1)
+                {
+                    if(inputBytes[0] == '/' && inputBytes[1] == '/')
+                    {
+                        while (inputBytes.Length > 0)
+                        {
+                            if (inputBytes[0] != 13 && inputBytes[0] != 10)
+                            {
+                                currentSymbol += 1;
+                                CutFirstElementsFromArray(ref inputBytes, 1);
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+                if(inputBytes.Length == 0)
+                {
+                    statusDFA = 14;
+                    return Out(ref inputBytes);
+                }
+            }
+
+            for (int i = lexemeLenght; i < inputBytes.Length; i++)
+            {
+                if (inputBytes[i] == 13 || inputBytes[i] == 10)
+                {
+                    break;
+                }
+                if (statusDFA < COUNT_STATUS)
+                {
+                    if (table[statusDFA, Char.ToLower((char)inputBytes[i])] != 0)
                     {
                         lexemeLenght += 1;
-                        statusDFA = table[statusDFA, input[i] < numberOfSymbols ? Char.ToLower(input[i]) : 255];
+                        statusDFA = table[statusDFA, Char.ToLower((char)inputBytes[i])];
                         //string
-                        if (statusDFA == 2 && input[i] == '\'')
+                        if (statusDFA == 2 && inputBytes[i] == '\'')
                         {
                             countQuotesInString += 1;
                             if (countQuotesInString % 2 == 0)
                             {
-                                if (i + 1 < input.Length && input[i + 1] == '\'')
+                                if (i + 1 < inputBytes.Length && inputBytes[i + 1] == '\'')
                                 {
                                     statusDFA = 1;
                                 }
                                 else
                                 {
-                                    if (i + 1 < input.Length && input[i + 1] == '#')
+                                    if (i + 1 < inputBytes.Length && inputBytes[i + 1] == '#')
                                     {
                                         statusDFA = 1;
                                     }
@@ -189,22 +272,16 @@ namespace Compiler
                                 }
                             }
                         }
-                        //if end comment {}
-                        if (statusDFA == 10 && input[i] == '}')
-                        {
-                            nowCommentLine = false;
-                            return status[statusDFA];
-                        }
                         //if real have '.'
-                        if (statusDFA == 8 && input[i] == '.')
+                        if (statusDFA == 8 && inputBytes[i] == '.')
                         {
-                            if (input.Substring(0, lexemeLenght).ToLower().IndexOf('e') != -1)
+                            if (GetString(inputBytes, 0, inputBytes.Length).Substring(0, lexemeLenght).ToLower().IndexOf('e') != -1)
                             {
                                 statusDFA = 0;
                                 lexemeLenght -= 1;
                                 break;
                             }
-                            if ((input[0] == '%' || input[0] == '&' || input[0] == '$') && i + 1 < input.Length && input[i + 1] >= '0' && input[i + 1] <= '9')
+                            if ((inputBytes[0] == '%' || inputBytes[0] == '&' || inputBytes[0] == '$') && i + 1 < inputBytes.Length && inputBytes[i + 1] >= '0' && inputBytes[i + 1] <= '9')
                             {
                                 statusDFA = 0;
                                 lexemeLenght -= 1;
@@ -212,9 +289,9 @@ namespace Compiler
                             }
                         }
                         //if real have 'e'
-                        if (statusDFA == 8 && Char.ToLower(input[i]) == 'e')
+                        if (statusDFA == 8 && Char.ToLower((char)inputBytes[i]) == 'e')
                         {
-                            if (input.Substring(0, lexemeLenght - 1).ToLower().IndexOf('e') != -1)
+                            if (GetString(inputBytes, 0, lexemeLenght - 1).ToLower().IndexOf('e') != -1)
                             {
                                 statusDFA = 0;
                                 lexemeLenght -= 1;
@@ -222,9 +299,9 @@ namespace Compiler
                             }
                         }
                         //if real have '-' or '+'
-                        if (statusDFA == 8 && (input[i] == '-' || input[i] == '+'))
+                        if (statusDFA == 8 && (inputBytes[i] == '-' || inputBytes[i] == '+'))
                         {
-                            if (Char.ToLower(input[i - 1]) != 'e')
+                            if (Char.ToLower((char)inputBytes[i - 1]) != 'e')
                             {
                                 statusDFA = 0;
                                 lexemeLenght -= 1;
@@ -250,23 +327,23 @@ namespace Compiler
             if (statusDFA == 2 && countQuotesInString % 2 == 1)
             {
                 statusDFA = 0;
-                return status[statusDFA];
+                return Out(ref inputBytes);
             }
             //if key word or end file
             if (statusDFA == 3)
             {
-                if (input.Substring(0, lexemeLenght).ToLower() == lexemeEndFile)
-                {
-                    statusDFA = 13;
-                    return status[statusDFA];
-                }
-
                 foreach (string keyWord in keyWords)
                 {
-                    if (input.Substring(0, lexemeLenght).ToLower() == keyWord)
+                    if (GetString(inputBytes, 0, lexemeLenght).ToLower() == keyWord)
                     {
-                        statusDFA = 12;
-                        return status[statusDFA];
+                        if(keyWord == "end" && lexemeLenght < inputBytes.Length  && inputBytes[lexemeLenght] == '.')
+                        {
+                            statusDFA = 11;
+                            lexemeLenght += 1;
+                            return Out(ref inputBytes);
+                        }
+                        statusDFA = 10;
+                        return Out(ref inputBytes);
                     }
                 }
             }
@@ -276,25 +353,25 @@ namespace Compiler
                 statusDFA = 0;
             }
             //if out system integer
-            if (statusDFA >= 4 && statusDFA <= 7 && lexemeLenght < input.Length)
+            if (statusDFA >= 4 && statusDFA <= 7 && lexemeLenght < inputBytes.Length)
             {
-                if ((input[lexemeLenght] >= '0' && input[lexemeLenght] <= '9') || (Char.ToLower(input[lexemeLenght]) >= 'a' && Char.ToLower(input[lexemeLenght]) <= 'z'))
+                if ((inputBytes[lexemeLenght] >= '0' && inputBytes[lexemeLenght] <= '9') || (Char.ToLower((char)inputBytes[lexemeLenght]) >= 'a' && Char.ToLower((char)inputBytes[lexemeLenght]) <= 'z'))
                 {
                     lexemeLenght += 1;
                     statusDFA = 0;
                 }
             }
             //check real with last 'e' or '-' or '+'
-            if (statusDFA == 8 && (Char.ToLower(input[lexemeLenght - 1]) == 'e' || input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+'))
+            if (statusDFA == 8 && (Char.ToLower((char)inputBytes[lexemeLenght - 1]) == 'e' || inputBytes[lexemeLenght - 1] == '-' || inputBytes[lexemeLenght - 1] == '+'))
             {
                 int offset = 1;
-                if(input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+')
+                if(inputBytes[lexemeLenght - 1] == '-' || inputBytes[lexemeLenght - 1] == '+')
                 {
                     offset = 2;
                 }
-                if(input.Substring(0, lexemeLenght - offset).ToLower().IndexOf('.') != -1)
+                if(GetString(inputBytes, 0, lexemeLenght - offset).ToLower().IndexOf('.') != -1)
                 {
-                    if(input[lexemeLenght - offset - 1] == '.')
+                    if(inputBytes[lexemeLenght - offset - 1] == '.')
                     {
                         statusDFA = 0;
                         lexemeLenght -= (offset + 1);
@@ -310,29 +387,37 @@ namespace Compiler
                     lexemeLenght -= offset;
                 }
             }
-            if (statusDFA == 14)
+            if (statusDFA == 12)
             {
-                if (lexemeLenght < input.Length &&
-                    ((input[lexemeLenght - 1] == '<' && input[lexemeLenght] == '<') ||
-                    (input[lexemeLenght - 1] == '>' && input[lexemeLenght] == '>') ||
-                    (input[lexemeLenght - 1] == '*' && input[lexemeLenght] == '*') ||
-                    (input[lexemeLenght - 1] == '<' && input[lexemeLenght] == '>') ||
-                    (input[lexemeLenght - 1] == '<' && input[lexemeLenght] == '=') ||
-                    (input[lexemeLenght - 1] == '>' && input[lexemeLenght] == '=') ||
-                    (input[lexemeLenght - 1] == ':' && input[lexemeLenght] == '=') ||
-                    (input[lexemeLenght - 1] == '+' && input[lexemeLenght] == '=') ||
-                    (input[lexemeLenght - 1] == '-' && input[lexemeLenght] == '=') ||
-                    (input[lexemeLenght - 1] == '*' && input[lexemeLenght] == '=') ||
-                    (input[lexemeLenght - 1] == '/' && input[lexemeLenght] == '=')))
+                if (lexemeLenght < inputBytes.Length &&
+                    ((inputBytes[lexemeLenght - 1] == '<' && inputBytes[lexemeLenght] == '<') ||
+                    (inputBytes[lexemeLenght - 1] == '>' && inputBytes[lexemeLenght] == '>') ||
+                    (inputBytes[lexemeLenght - 1] == '*' && inputBytes[lexemeLenght] == '*') ||
+                    (inputBytes[lexemeLenght - 1] == '<' && inputBytes[lexemeLenght] == '>') ||
+                    (inputBytes[lexemeLenght - 1] == '<' && inputBytes[lexemeLenght] == '=') ||
+                    (inputBytes[lexemeLenght - 1] == '>' && inputBytes[lexemeLenght] == '=') ||
+                    (inputBytes[lexemeLenght - 1] == ':' && inputBytes[lexemeLenght] == '=') ||
+                    (inputBytes[lexemeLenght - 1] == '+' && inputBytes[lexemeLenght] == '=') ||
+                    (inputBytes[lexemeLenght - 1] == '-' && inputBytes[lexemeLenght] == '=') ||
+                    (inputBytes[lexemeLenght - 1] == '*' && inputBytes[lexemeLenght] == '=') ||
+                    (inputBytes[lexemeLenght - 1] == '/' && inputBytes[lexemeLenght] == '=')))
                 {
                     lexemeLenght += 1;
                 }
             }
-            if (statusDFA == 10)
+            if (statusDFA == 13)
             {
-                nowCommentLine = true;
+                if (lexemeLenght < inputBytes.Length && (inputBytes[lexemeLenght - 1] == '.' && inputBytes[lexemeLenght] == '.'))
+                { 
+                    lexemeLenght += 1;
+                }
             }
-            return status[statusDFA];
+            if (statusDFA == 8 && lexemeLenght < inputBytes.Length && (inputBytes[lexemeLenght - 1] == '.' && inputBytes[lexemeLenght] == '.'))
+            {
+                statusDFA = 4;
+                lexemeLenght -= 1;
+            }
+            return Out(ref inputBytes);
         }
         public static string GetValueLexeme(string typeLexeme, string lexeme)
         {
@@ -341,11 +426,6 @@ namespace Compiler
             {
                 case "String":
                     {
-                        if (lexeme.Length > 255)
-                        {
-                            valueLexeme = "ERROR: Overflow string";
-                            break;
-                        }
                         bool nowSymbol = false;
                         int countQuotes = 0;
                         string symbolStr = "";
@@ -412,6 +492,11 @@ namespace Compiler
                             }
                             valueLexeme += (char)symbol;
                             symbolStr = "";
+                        }
+                        if (valueLexeme.Length > 255)
+                        {
+                            valueLexeme = "ERROR: Overflow string";
+                            break;
                         }
                         break;
                     }
@@ -549,6 +634,29 @@ namespace Compiler
                     }
             }
             return valueLexeme;
+        }
+        public static List<Lexeme> GetAllLexeme(string pathIn = "../../../tests/1.txt")
+        {
+            List<Lexeme> ans = new List<Lexeme>();
+
+            using (FileStream fstream = File.OpenRead(pathIn))
+            {
+                byte[] input = new byte[fstream.Length];
+                fstream.Read(input, 0, input.Length);
+                while (input.Length > 0)
+                {
+                    Lexeme nextLex = GetFirstLexeme(ref input);
+                    if(nextLex.type != "Not_Lexeme")
+                    {
+                        ans.Add(nextLex);
+                    }
+                    if (nextLex.type == "ERROR" || nextLex.type == "End_file")
+                    {
+                        break;
+                    }
+                }
+            }
+            return ans;
         }
     }
 }

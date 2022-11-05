@@ -10,33 +10,37 @@ namespace Compiler
     {
         public static void Main()
         {
-            Console.WriteLine($"Введите 1 для запуска автоматических тестов \nИли нажмите Enter для ввода имени файла и кода");
+            Lexer.CreateTableDFA();
+            Console.WriteLine($"Введите ключ для запуска автоматических тестов связанных с проверяемым режимом работы\nИли нажмите Enter для ручного ввода имени файла и ключа\n");
+            Console.WriteLine($"Ключи:\n1 - Лексический анализ\n2 - Анализ простейшего выражения\n");
             string? input = Console.ReadLine();
-            if (input == "1")
+            if (input == "1" || input == "2")
             {
-                Tester.StartTest();
+                Tester.StartTest(input);
             }
             if (input == "")
             {
-                Console.WriteLine($"Введите имя файла (c расширением, файл должен храниться в папке tests)");
+                Console.WriteLine($"Введите имя файла (файл в формате .txt должен храниться в папке tests)");
                 string? fileName = Console.ReadLine();
-                Console.WriteLine($"Введите ключ (ключ Лексического анализа - 1)");
-                string? key = Console.ReadLine();
-                if (key == "1")
+                string path = $"../../../tests/{fileName}.txt";
+                if (!File.Exists(path))
                 {
-                    string path = $"../../../tests/{fileName}";
-                    if (File.Exists(path))
-                    {
-                        Compiler.CompileFile(path,"console");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Такого файла не сущестует");
-                    }
+                    Console.WriteLine($"Такого файла не сущестует");
+                    return;
                 }
-                else
+                Console.WriteLine($"Введите ключ");
+                string? key = Console.ReadLine();
+                switch (key)
                 {
-                    Console.WriteLine($"Такого ключа не существует");
+                    case "1":
+                        SkillCompiler.OutputLexemeParsing(path, "console");
+                        break;
+                    case "2":
+                        SkillCompiler.OutputSimpleExpressionsParsing(path, "console");
+                        break;
+                    default:
+                        Console.WriteLine($"Такого ключа не существует");
+                        break;
                 }
                 Console.WriteLine("\nЧтобы завершить программу нажмите Enter");
                 Console.ReadLine();

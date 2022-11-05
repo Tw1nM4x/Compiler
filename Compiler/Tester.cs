@@ -17,40 +17,19 @@ namespace Compiler
                 this.countTest = countTest;
             }
         }
-        static Folder[] folders = new Folder[] { new("string", 14), new("indifier", 9), new("integer", 19), new("real", 28), new("space", 2), 
-            new("comment", 9), new("key word", 4), new("end file", 4), new("operation sign", 3), new("separator", 3), new("errors", 3), new("combination", 2) };
+        static Folder[] folders = new Folder[] { };
 
-        static void StartDetailTest()
+        public static void StartTest(string key)
         {
-            for (int numberFolder = 0; numberFolder < folders.Length; numberFolder++)
+            switch (key)
             {
-                Console.WriteLine($"----------{folders[numberFolder].name}----------");
-                for (int numberTest = 1; numberTest <= folders[numberFolder].countTest; numberTest++)
-                {
-                    Console.WriteLine($"{numberTest})\n");
-                    string numberTestStr = numberTest.ToString();
-                    if (numberTestStr.Length < 2)
-                    {
-                        numberTestStr = "0" + numberTestStr;
-                    }
-                    string pathIn = $"../../../tests/{folders[numberFolder].name}/" + $"{numberTestStr}_input.txt";
-                    using (StreamReader sr = new StreamReader(pathIn, Encoding.Default))
-                    {
-                        Console.WriteLine("In:\n" + sr.ReadToEnd() + "\n");
-                    }
-                    Console.WriteLine("Out:");
-                    Compiler.CompileFile(pathIn, "console");
-                    Console.WriteLine("\nЧтобы завершить введите 0\nЧтобы перейти к следующему тесту нажмите Enter");
-                    string? input = Console.ReadLine();
-                    if(input == "0")
-                    {
-                        return;
-                    }
-                }
+                case "1":
+                    folders = new Folder[] { new("string", 14), new("indifier", 9), new("integer", 19), new("real", 28), new("space", 2), new("comment", 9), new("key word", 4), new("end file", 4), new("operation sign", 3), new("separator", 3), new("errors", 3), new("combination", 2) };
+                    break;
+                case "2":
+                    folders = new Folder[] { new("simple expressions", 14) };
+                    break;
             }
-        }
-        public static void StartTest()
-        {
             int countOK = 0;
             int countERROR = 0;
             for (int numberFolder = 0; numberFolder < folders.Length; numberFolder++)
@@ -66,7 +45,15 @@ namespace Compiler
                     string pathIn = $"../../../tests/{folders[numberFolder].name}/" + $"{numberTestStr}_input.txt";
                     string pathOut = $"../../../tests/{folders[numberFolder].name}/" + $"{numberTestStr}_out.txt";
                     string pathCheck = $"../../../tests/{folders[numberFolder].name}/" + $"{numberTestStr}_correct.txt";
-                    Compiler.CompileFile(pathIn, pathOut);
+                    switch (key)
+                    {
+                        case "1":
+                            SkillCompiler.OutputLexemeParsing(pathIn, pathOut);
+                            break;
+                        case "2":
+                            SkillCompiler.OutputSimpleExpressionsParsing(pathIn, pathOut);
+                            break;
+                    }
                     string? checkFile;
                     string? outFile;
                     using (StreamReader sr = new StreamReader(pathCheck, Encoding.Default))
@@ -91,11 +78,48 @@ namespace Compiler
             }
             Console.WriteLine($"OK: {countOK}  ERRORS: {countERROR}");
             Console.WriteLine("-------------------------------");
-            Console.WriteLine("Чтобы запустить проверку тестов с подробным результатом нажмите 1 \nЧтобы завершить программу нажмите Enter");
+            Console.WriteLine("Чтобы запустить проверку тестов с подробным результатом введите 1 \nЧтобы завершить программу нажмите Enter");
             string? input = Console.ReadLine();
             if(input == "1")
             {
-                StartDetailTest();
+                StartDetailTest(key);
+            }
+        }
+        static void StartDetailTest(string key)
+        {
+            for (int numberFolder = 0; numberFolder < folders.Length; numberFolder++)
+            {
+                Console.WriteLine($"----------{folders[numberFolder].name}----------");
+                for (int numberTest = 1; numberTest <= folders[numberFolder].countTest; numberTest++)
+                {
+                    Console.WriteLine($"{numberTest})\n");
+                    string numberTestStr = numberTest.ToString();
+                    if (numberTestStr.Length < 2)
+                    {
+                        numberTestStr = "0" + numberTestStr;
+                    }
+                    string pathIn = $"../../../tests/{folders[numberFolder].name}/" + $"{numberTestStr}_input.txt";
+                    using (StreamReader sr = new StreamReader(pathIn, Encoding.Default))
+                    {
+                        Console.WriteLine("In:\n" + sr.ReadToEnd() + "\n");
+                    }
+                    Console.WriteLine("Out:");
+                    switch (key)
+                    {
+                        case "1":
+                            SkillCompiler.OutputLexemeParsing(pathIn);
+                            break;
+                        case "2":
+                            SkillCompiler.OutputSimpleExpressionsParsing(pathIn);
+                            break;
+                    }
+                    Console.WriteLine("\nЧтобы завершить введите 0\nЧтобы перейти к следующему тесту нажмите Enter");
+                    string? input = Console.ReadLine();
+                    if(input == "0")
+                    {
+                        return;
+                    }
+                }
             }
         }
     }
