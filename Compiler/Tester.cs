@@ -80,6 +80,7 @@ namespace Compiler
                     {
                         if (checkFile[i] != outFile[i])
                         {
+                            Console.WriteLine(i);
                             flag = false;
                         }
                     }
