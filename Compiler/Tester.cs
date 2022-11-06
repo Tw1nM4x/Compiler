@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Globalization;
 using System.Reflection.PortableExecutable;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Compiler
 {
@@ -54,34 +55,36 @@ namespace Compiler
                             SkillCompiler.OutputSimpleExpressionsParsing(pathIn, pathOut);
                             break;
                     }
-                    byte[] checkFile;
-                    byte[] outFile;
-                    using (FileStream fstream = File.OpenRead(pathCheck))
+                    string checkFile;
+                    string outFile;
+                    using (StreamReader sr = new StreamReader(pathCheck, Encoding.UTF8))
                     {
-                        checkFile = new byte[fstream.Length];
-                        fstream.Read(checkFile, 0, checkFile.Length);
+                        checkFile = sr.ReadToEnd();
                     }
-                    using (FileStream fstream = File.OpenRead(pathOut))
+                    using (StreamReader sr = new StreamReader(pathOut, Encoding.UTF8))
                     {
-                        outFile = new byte[fstream.Length];
-                        fstream.Read(outFile, 0, outFile.Length);
+                        outFile = sr.ReadToEnd();
                     }
-                    bool twin = true;
-                    if(outFile.Length != checkFile.Length)
+
+                    bool flag = true;
+                    int minLenght = 0;
+                    if (checkFile.Length > outFile.Length)
                     {
-                        twin = false;
+                        minLenght = outFile.Length;
                     }
                     else
                     {
-                        for(int i = 0; i < outFile.Length; i++)
+                        minLenght = checkFile.Length;
+                    }
+                    for (int i = 0; i < minLenght; i++)
+                    {
+                        if (checkFile[i] != outFile[i])
                         {
-                            if (outFile[i] != checkFile[i])
-                            {
-                                twin = false;
-                            }
+                            flag = false;
                         }
                     }
-                    if (twin)
+
+                    if (flag)
                     {
                         Console.WriteLine($"{numberTest}-OK");
                         countOK += 1;
