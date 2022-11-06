@@ -54,17 +54,34 @@ namespace Compiler
                             SkillCompiler.OutputSimpleExpressionsParsing(pathIn, pathOut);
                             break;
                     }
-                    string? checkFile;
-                    string? outFile;
-                    using (StreamReader sr = new StreamReader(pathCheck, Encoding.Default))
+                    byte[] checkFile;
+                    byte[] outFile;
+                    using (FileStream fstream = File.OpenRead(pathCheck))
                     {
-                        checkFile = sr.ReadToEnd();
+                        checkFile = new byte[fstream.Length];
+                        fstream.Read(checkFile, 0, checkFile.Length);
                     }
-                    using (StreamReader sr = new StreamReader(pathOut, Encoding.Default))
+                    using (FileStream fstream = File.OpenRead(pathOut))
                     {
-                        outFile = sr.ReadToEnd();
+                        outFile = new byte[fstream.Length];
+                        fstream.Read(outFile, 0, outFile.Length);
                     }
-                    if (checkFile == outFile)
+                    bool twin = true;
+                    if(outFile.Length != checkFile.Length)
+                    {
+                        twin = false;
+                    }
+                    else
+                    {
+                        for(int i = 0; i < outFile.Length; i++)
+                        {
+                            if (outFile[i] != checkFile[i])
+                            {
+                                twin = false;
+                            }
+                        }
+                    }
+                    if (twin)
                     {
                         Console.WriteLine($"{numberTest}-OK");
                         countOK += 1;
