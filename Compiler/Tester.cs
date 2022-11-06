@@ -76,14 +76,6 @@ namespace Compiler
                     {
                         minLenght = checkFile.Length;
                     }
-                    for (int i = 0; i < minLenght; i++)
-                    {
-                        if (checkFile[i] != outFile[i])
-                        {
-                            Console.WriteLine(i);
-                            flag = false;
-                        }
-                    }
 
                     if (flag)
                     {

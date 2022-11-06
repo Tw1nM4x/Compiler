@@ -41,17 +41,17 @@ namespace Compiler
                     {
                         if(lex.type == "ERROR")
                         {
-                            sw.Write($"{lex.numberLine} {lex.numberSymbol} {lex.type}\n");
+                            sw.Write($"{lex.numberLine} {lex.numberSymbol} {lex.type}\r\n");
                         }
                         else
                         {
                             if(lex.value.Length > 5 && lex.value.Substring(0, 5) == "ERROR")
                             {
-                                sw.Write($"{lex.numberLine} {lex.numberSymbol} {lex.value}\n");
+                                sw.Write($"{lex.numberLine} {lex.numberSymbol} {lex.value}\r\n");
                             }
                             else
                             {
-                                sw.Write($"{lex.numberLine} {lex.numberSymbol} {lex.type} {lex.value} {lex.lexeme}\n");
+                                sw.Write($"{lex.numberLine} {lex.numberSymbol} {lex.type} {lex.value} {lex.lexeme}\r\n");
                             }
                         }
                     }
@@ -63,17 +63,17 @@ namespace Compiler
                 {
                     if (lex.type == "ERROR")
                     {
-                        Console.Write($"{lex.numberLine} {lex.numberSymbol} {lex.type}\n");
+                        Console.Write($"{lex.numberLine} {lex.numberSymbol} {lex.type}\r\n");
                     }
                     else
                     {
                         if (lex.value.Length > 5 && lex.value.Substring(0, 5) == "ERROR")
                         {
-                            Console.Write($"{lex.numberLine} {lex.numberSymbol} {lex.value}\n");
+                            Console.Write($"{lex.numberLine} {lex.numberSymbol} {lex.value}\r\n");
                         }
                         else
                         {
-                            Console.Write($"{lex.numberLine} {lex.numberSymbol} {lex.type} {lex.value} {lex.lexeme}\n");
+                            Console.Write($"{lex.numberLine} {lex.numberSymbol} {lex.type} {lex.value} {lex.lexeme}\r\n");
                         }
                     }
                 }
@@ -174,13 +174,13 @@ namespace Compiler
             {
                 if(pathOut == "console")
                 {
-                    Console.Write($"{error}\n");
+                    Console.Write($"{error}\r\n");
                 }
                 else
                 {
                     using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
                     {
-                        sw.Write($"{error}\n");
+                        sw.Write($"{error}\r\n");
                     }
                 }
             }
@@ -190,7 +190,7 @@ namespace Compiler
                 {
                     foreach (string lineOut in ans)
                     {
-                        Console.Write($"{lineOut}\n");
+                        Console.Write($"{lineOut}\r\n");
                     }
                 }
                 else
@@ -199,7 +199,7 @@ namespace Compiler
                     {
                         foreach (string lineOut in ans)
                         {
-                            sw.Write($"{lineOut}\n");
+                            sw.Write($"{lineOut}\r\n");
                         }
                     }
                 }
