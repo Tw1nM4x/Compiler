@@ -67,14 +67,19 @@ namespace Compiler
                     }
 
                     bool flag = true;
-                    int minLenght = 0;
-                    if (checkFile.Length > outFile.Length)
+                    if (checkFile.Length != outFile.Length)
                     {
-                        minLenght = outFile.Length;
+                        flag = false;
                     }
                     else
                     {
-                        minLenght = checkFile.Length;
+                        for (int i = 0; i < checkFile.Length; i++)
+                        {
+                            if (checkFile[i] != outFile[i]) 
+                            {
+                                flag = false;
+                            }
+                        }
                     }
 
                     if (flag)

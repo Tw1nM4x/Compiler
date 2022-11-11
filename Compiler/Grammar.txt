@@ -1,0 +1,24 @@
++ expression ::= (simple expression) ('<' | '<=' | '>' | '>=' | '=' | '<>') (simple expression)
+
+- compoud statement ::= 'begin' {(statement) ';'} 'end'
+
+- simple statement ::= (var | func) (':=' | '+=' | '-=' | '*=' | '/=') (simple expression)
+
+- statement ::= (compoud statement) | (simple statement) | (operator) | (func)
+
+- variable declaration ::= {(identifier) ':' (type) '=' (expression) ';'}
+
+- func ::= 'function' (identifier) '(' (variable declaration) ')' ':' (type) ';' (compoud statement)
+
+- operator ::= 
+- (if ::= if ((expression) { ('and' | 'or') (expression) }) then (statement) else (statement)) |
+- (for ::= for (control var) in (enum) do (statement)) |
+- (while ::= while (expression) do (statement))
+
+- goto ::= (label)
+- label ::= (identifier) | (int (from 0 to 9999)
+
+- ? ::= ('break') | ('continue') | ('exit') | (('halt') (int))
+
+- out ::= (('write') | ('writeln')) '(' ( (string) | (integer) | (real) { ',' (string) | (integer) | (real) } ) ')'
+- in ::= (('read') | ('readln')) '(' ( (string) | (integer) | (real) { ',' (string) | (integer) | (real) } ) ')'

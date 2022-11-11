@@ -23,60 +23,101 @@ namespace Compiler
     }
     internal class Parser
     {
-        static Lexeme currentLex;
-        static bool addCurrentLex = false;
-        public static Node ParseExpression(ref byte[] inputBytes)
+        public static Lexeme currentLex;
+        public static Node Parse(ref byte[] inputBytes)
         {
-            bool firstNode = false;
-            if(Lexer.currentLine == 1 && Lexer.currentSymbol == 1)
+            currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+            Node res;
+            if (currentLex.type == Lexer.status[10])
             {
-                currentLex = Lexer.GetFirstLexeme(ref inputBytes);
-                addCurrentLex = false;
-                firstNode = true;
-            }
-            Node left = ParseTerm(ref inputBytes);
-            if (inputBytes.Length > 0)
-            {
-                while (currentLex.type == Lexer.status[12] && (currentLex.value == "+" || currentLex.value == "-"))
+                switch (currentLex.value)
                 {
-                    Lexeme operation = currentLex;
-                    addCurrentLex = true;
-                    if (inputBytes.Length > 0)
-                    {
-                        currentLex = Lexer.GetFirstLexeme(ref inputBytes);
-                        addCurrentLex = false;
-                    }
-                    Node right = ParseTerm(ref inputBytes);
-                    left = new Node("BinOperation", operation.value, left, right);
-                    if (right.type == "ERROR")
-                    {
-                        return new Node("ERROR", right.value, null, null);
-                    }
+                    case "program":
+                        res = new Node("StartProgram", "program", ParseProgram(ref inputBytes), null);
+                        break;
+                    case "var":
+                        res = new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: program has not started", null, null);
+                        break;
+                    case "begin":
+                        res = new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: program has not started", null, null);
+                        break;
+                    default:
+                        res = new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: program has not started", null, null);
+                        break;
                 }
             }
-            if (!addCurrentLex && firstNode && currentLex.type != Lexer.status[14])
+            else
             {
-                return new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: don't have operation sign", null, null);
+                res = new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: program has not started", null, null);
+            }
+            return res;
+        }
+        public static Node ParseProgram(ref byte[] inputBytes)
+        {
+            currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+            Node res;
+            if (currentLex.type == Lexer.status[3])
+            {
+                res = new Node("NameProgram", currentLex.value, null, null);
+            }
+            else
+            {
+                res = new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: expected Indifier", null, null);
+            }
+            currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+            if (!(currentLex.type == Lexer.status[13] && currentLex.value == ";"))
+            {
+                res = new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: expected ';'", null, null);
+            }
+            return res;
+        }
+        public static Node ParseSimpleExpression(ref byte[] inputBytes)
+        {
+            Node left = ParseTerm(ref inputBytes);
+            while (currentLex.type == Lexer.status[12] && (currentLex.value == "+" || currentLex.value == "-"))
+            {
+                Lexeme operation = currentLex;
+                if (inputBytes.Length > 0)
+                {
+                    currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+                }
+                Node right = ParseTerm(ref inputBytes);
+                left = new Node("BinOperation", operation.value, left, right);
+                if (right.type == "ERROR")
+                {
+                    return new Node("ERROR", right.value, null, null);
+                }
             }
             return left;
         }
         public static Node ParseTerm(ref byte[] inputBytes)
         {
             Node left = ParseFactor(ref inputBytes);
-            if (inputBytes.Length > 0)
+            if(left.type != "ERROR")
             {
+                if (inputBytes.Length > 0)
+                {
+                    currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+                    Node check = ParseFactor(ref inputBytes);
+                    if (check.type != "ERROR")
+                    {
+                        return new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - 1}) ERROR: don't have operation sign", null, null);
+                    }
+                }
                 while (currentLex.type == Lexer.status[12] && (currentLex.value == "*" || currentLex.value == "/"))
                 {
                     Lexeme operation = currentLex;
-                    addCurrentLex = true;
                     if (inputBytes.Length > 0)
                     {
                         currentLex = Lexer.GetFirstLexeme(ref inputBytes);
-                        addCurrentLex = false;
                     }
                     Node right = ParseFactor(ref inputBytes);
+                    if (inputBytes.Length > 0)
+                    {
+                        currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+                    }
                     left = new Node("BinOperation", operation.value, left, right);
-                    if(right.type == "ERROR")
+                    if (right.type == "ERROR")
                     {
                         return new Node("ERROR", right.value, null, null);
                     }
@@ -88,27 +129,17 @@ namespace Compiler
         {
             if (currentLex.type == Lexer.status[13] && currentLex.value == "(")
             {
-                addCurrentLex = true;
+                Node e;
                 if (inputBytes.Length > 0)
                 {
                     currentLex = Lexer.GetFirstLexeme(ref inputBytes);
-                    addCurrentLex = false;
+                    e = ParseSimpleExpression(ref inputBytes);
                 }
                 else
                 {
-                    return new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - 1}) ERROR: don't have ')'", null, null);
+                    e = new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - 1}) ERROR: don't have ')'", null, null);
                 }
-                Node e = ParseExpression(ref inputBytes);
-                if(currentLex.type == Lexer.status[13] && currentLex.value == ")")
-                {
-                    addCurrentLex = true;
-                    if (inputBytes.Length > 0)
-                    {
-                        currentLex = Lexer.GetFirstLexeme(ref inputBytes);
-                        addCurrentLex = false;
-                    }
-                }
-                else
+                if(!(currentLex.type == Lexer.status[13] && currentLex.value == ")"))
                 {
                     return new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - 1}) ERROR: don't have ')'", null, null);
                 }
@@ -117,16 +148,65 @@ namespace Compiler
             if (currentLex.type == Lexer.status[8] || currentLex.type == Lexer.status[4] || currentLex.type == Lexer.status[3])
             {
                 Lexeme factor = currentLex;
-                addCurrentLex = true;
-                if (inputBytes.Length > 0)
-                {
-                    currentLex = Lexer.GetFirstLexeme(ref inputBytes);
-                    addCurrentLex = false;
-                }
                 return new Node(factor.type, factor.value, null, null);
             }
 
             return new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: don't have factor", null, null);
+        }
+        public static Node ParseExpression(ref byte[] inputBytes)
+        {
+            Node left = ParseSimpleExpression(ref inputBytes);
+            if (currentLex.type == Lexer.status[12] && (currentLex.value == "<" || currentLex.value == "<=" || currentLex.value == ">" || currentLex.value == ">=" || currentLex.value == "=" || currentLex.value == "<>"))
+            {
+                Lexeme operation = currentLex;
+                currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+                Node right = ParseSimpleExpression(ref inputBytes);
+                left = new Node("Comparison", operation.value, left, right);
+                if (right.type == "ERROR")
+                {
+                    return new Node("ERROR", right.value, null, null);
+                }
+            }
+            else
+            {
+                return new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: don't have operation sign of comparison", null, null);
+            }
+            return left;
+        }
+        public static Node ParseСondition(ref byte[] inputBytes)
+        {
+            currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+            Node left = new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: incorrect condition", null, null);
+            if (currentLex.type == Lexer.status[13] && currentLex.value == "(")
+            {
+                if (inputBytes.Length > 0)
+                {
+                    currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+                    left = ParseExpression(ref inputBytes);
+                }
+                else
+                {
+                    return new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: don't have operation sign of condition", null, null);
+                }
+                if (currentLex.type == Lexer.status[13] && currentLex.value == ")")
+                {
+                    if (inputBytes.Length > 0)
+                    {
+                        currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+                    }
+                }
+                else
+                {
+                    return new Node("ERROR", $"({Lexer.currentLine},{Lexer.currentSymbol - currentLex.lexeme.Length}) ERROR: don't have ')'", null, null);
+                }
+                if (currentLex.type == Lexer.status[10] && (currentLex.value == "or" || currentLex.value == "and"))
+                {
+                    Lexeme keyWord = currentLex;
+                    Node right = ParseСondition(ref inputBytes);
+                    left = new Node("BinOperation", keyWord.value, left, right);
+                }
+            }
+            return left;
         }
     }
 }

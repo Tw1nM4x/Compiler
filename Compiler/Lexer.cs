@@ -168,23 +168,23 @@ namespace Compiler
                 return outLex;
             }
 
-            while (inputBytes[0] == 13 || inputBytes[0] == 10 || inputBytes[0] == 32 || inputBytes[0] == 123 || (inputBytes.Length > 1 && (inputBytes[0] == '/' && inputBytes[1] == '/')))
+            while (inputBytes[0] == '\n' || inputBytes[0] == '\r' || inputBytes[0] == ' ' || inputBytes[0] == '{' || (inputBytes.Length > 1 && (inputBytes[0] == '/' && inputBytes[1] == '/')))
             {
-                switch (inputBytes[0])
+                switch ((char)inputBytes[0])
                 {
-                    case 13:
+                    case '\n':
                         currentLine += 1;
                         CutFirstElementsFromArray(ref inputBytes, 1);
                         break;
-                    case 10:
+                    case '\r':
                         currentSymbol = 1;
                         CutFirstElementsFromArray(ref inputBytes, 1);
                         break;
-                    case 32:
+                    case ' ':
                         currentSymbol += 1;
                         CutFirstElementsFromArray(ref inputBytes, 1);
                         break;
-                    case 123:
+                    case '{':
                         if (GetString(inputBytes, 0, inputBytes.Length).IndexOf('}') != -1)
                         {
                             while (inputBytes[0] != '}')

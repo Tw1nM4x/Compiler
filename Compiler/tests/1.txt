@@ -1,1 +1,6 @@
-1
+program Hello;
+var
+a: integer;
+b: string;
+begin
+end.

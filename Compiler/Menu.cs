@@ -12,9 +12,9 @@ namespace Compiler
         {
             Lexer.CreateTableDFA();
             Console.WriteLine($"Введите ключ для запуска автоматических тестов связанных с проверяемым режимом работы\nИли нажмите Enter для ручного ввода имени файла и ключа\n");
-            Console.WriteLine($"Ключи:\n1 - Лексический анализ\n2 - Анализ простейшего выражения\n");
+            Console.WriteLine($"Ключи:\n1 - Лексический анализ\n2 - Анализ простейшего выражения\n3 - Синтаксический анализ");
             string? input = Console.ReadLine();
-            if (input == "1" || input == "2")
+            if (input == "1" || input == "2" || input == "3")
             {
                 Tester.StartTest(input);
             }
@@ -37,6 +37,9 @@ namespace Compiler
                         break;
                     case "2":
                         SkillCompiler.OutputSimpleExpressionsParsing(path, "console");
+                        break;
+                    case "3":
+                        SkillCompiler.OutputSyntaxParsing(path, "console");
                         break;
                     default:
                         Console.WriteLine($"Такого ключа не существует");
