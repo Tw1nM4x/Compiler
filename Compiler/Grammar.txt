@@ -1,24 +1,42 @@
-+ expression ::= (simple expression) ('<' | '<=' | '>' | '>=' | '=' | '<>') (simple expression)
++ Только один модуль в программе.
++ Скалярные типы данных: только один целочисленный, один с плавающей точкой, один строковый.
+- Составные типы данных: только записи/структуры и массивы.
+- Управляющие конструкции: только + блоки, + условия, + циклы, - структурные переходы.
++ Процедуры / функции: только глобальные статические, с параметрами по значению и по ссылке.
+? Библиотеки: только ввод/вывод на стандартные потоки, по одной функции.
+- Минусовые значения
+- Значения из массивов или из записей
 
-- compoud statement ::= 'begin' {(statement) ';'} 'end'
++ comparison ::= (simple condition) ('<' | '<=' | '>' | '>=' | '=' | '<>') (simple condition)
++ simple condition ::=  ('not' | '')(simple expression) { ('and' | 'or') ('not' | '')(simple expression) }
 
-- simple statement ::= (var | func) (':=' | '+=' | '-=' | '*=' | '/=') (simple expression)
++ block ::= 'begin' {(statement) ';'} 'end'
 
-- statement ::= (compoud statement) | (simple statement) | (operator) | (func)
++ simple statement ::= (var | func) (':=' | '+=' | '-=' | '*=' | '/=') (simple expression)
 
-- variable declaration ::= {(identifier) ':' (type) '=' (expression) ';'}
++ statement ::= (block) | (simple statement) | (operator) | (procedure)
 
-- func ::= 'function' (identifier) '(' (variable declaration) ')' ':' (type) ';' (compoud statement)
++ variable declaration ::= {(identifier) ':' (type) '=' (expression) ';'}
 
-- operator ::= 
-- (if ::= if ((expression) { ('and' | 'or') (expression) }) then (statement) else (statement)) |
-- (for ::= for (control var) in (enum) do (statement)) |
-- (while ::= while (expression) do (statement))
++ procedure ::= 'procedure' (identifier) '(' (variable declaration) { ',' (variable declaration) } ')' ':' (type) ';' (compoud statement)
 
-- goto ::= (label)
-- label ::= (identifier) | (int (from 0 to 9999)
++ condition ::= ('not' | '')(comparison) { ('and' | 'or') ('not' | '')(comparison) }
 
-- ? ::= ('break') | ('continue') | ('exit') | (('halt') (int))
++ operator ::= 
++ (if ::= 'if' (condition) 'then' (statement) 'else' (statement) |
++ (for ::= 'for' (initial value) 'to' (final value) 'do' (statement) |
++ (while ::= 'while' (condition) 'do' (statement) |
++ (repeat ::= 'repeat' {(statement) ';'}) 'until' (condition)
 
-- out ::= (('write') | ('writeln')) '(' ( (string) | (integer) | (real) { ',' (string) | (integer) | (real) } ) ')'
-- in ::= (('read') | ('readln')) '(' ( (string) | (integer) | (real) { ',' (string) | (integer) | (real) } ) ')'
++ command ::= ('break') | ('continue') | ('exit') | (('halt') '(' (int) ')')
+
+? out ::= 'write' '(' ( (string) | (integer) | (real) { ',' (string) | (integer) | (real) } ) ')'
+? in ::= 'read' '(' ( (string) | (integer) | (real) { ',' (string) | (integer) | (real) } ) ')'
+
+type
+- array
+- struct
+
+- goto
+
+- const ::= (indifier) '=' (value)

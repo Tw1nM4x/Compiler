@@ -145,29 +145,35 @@ namespace Compiler
             void CheckChildren(Node? node, int deep, List<bool> isLeftParents)
             {
                 Node? now = node;
-                node = now.left;
-                if (node != null)
+                if (now != null && now.childrens != null)
                 {
-                    ToPrint(node, deep, true, isLeftParents);
-                    List<bool> isLeftParentsForLeft = new List<bool>();
-                    for (int i = 0; i < isLeftParents.Count; i++)
+                    for (int i = 0; i < now.childrens.Count - 1; i++)
                     {
-                        isLeftParentsForLeft.Add(isLeftParents[i]);
+                        node = now.childrens[i];
+                        if (node != null)
+                        {
+                            ToPrint(node, deep, true, isLeftParents);
+                            List<bool> isLeftParentsForLeft = new List<bool>();
+                            for (int j = 0; j < isLeftParents.Count; j++)
+                            {
+                                isLeftParentsForLeft.Add(isLeftParents[j]);
+                            }
+                            isLeftParentsForLeft.Add(true);
+                            CheckChildren(node, deep + 1, isLeftParentsForLeft);
+                        }
                     }
-                    isLeftParentsForLeft.Add(true);
-                    CheckChildren(node, deep + 1, isLeftParentsForLeft);
-                }
-                node = now.right;
-                if (node != null)
-                {
-                    ToPrint(node, deep, false, isLeftParents);
-                    List<bool> isLeftParentsForRight = new List<bool>();
-                    for (int i = 0; i < isLeftParents.Count; i++)
+                    node = now.childrens[^1];
+                    if (node != null)
                     {
-                        isLeftParentsForRight.Add(isLeftParents[i]);
+                        ToPrint(node, deep, false, isLeftParents);
+                        List<bool> isLeftParentsForRight = new List<bool>();
+                        for (int i = 0; i < isLeftParents.Count; i++)
+                        {
+                            isLeftParentsForRight.Add(isLeftParents[i]);
+                        }
+                        isLeftParentsForRight.Add(false);
+                        CheckChildren(node, deep + 1, isLeftParentsForRight);
                     }
-                    isLeftParentsForRight.Add(false);
-                    CheckChildren(node, deep + 1, isLeftParentsForRight);
                 }
             }
 
@@ -233,7 +239,7 @@ namespace Compiler
             Node? firstNode = Parser.Parse(ref input);
 
             string error = "";
-
+            
             void ToPrint(Node? last, int deep, bool isLeft, List<bool> isLeftParents)
             {
                 if (last != null)
@@ -276,29 +282,35 @@ namespace Compiler
             void CheckChildren(Node? node, int deep, List<bool> isLeftParents)
             {
                 Node? now = node;
-                node = now.left;
-                if (node != null)
+                if (now != null && now.childrens != null)
                 {
-                    ToPrint(node, deep, true, isLeftParents);
-                    List<bool> isLeftParentsForLeft = new List<bool>();
-                    for (int i = 0; i < isLeftParents.Count; i++)
+                    for (int i = 0; i < now.childrens.Count - 1; i++)
                     {
-                        isLeftParentsForLeft.Add(isLeftParents[i]);
+                        node = now.childrens[i];
+                        if (node != null)
+                        {
+                            ToPrint(node, deep, true, isLeftParents);
+                            List<bool> isLeftParentsForLeft = new List<bool>();
+                            for (int j = 0; j < isLeftParents.Count; j++)
+                            {
+                                isLeftParentsForLeft.Add(isLeftParents[j]);
+                            }
+                            isLeftParentsForLeft.Add(true);
+                            CheckChildren(node, deep + 1, isLeftParentsForLeft);
+                        }
                     }
-                    isLeftParentsForLeft.Add(true);
-                    CheckChildren(node, deep + 1, isLeftParentsForLeft);
-                }
-                node = now.right;
-                if (node != null)
-                {
-                    ToPrint(node, deep, false, isLeftParents);
-                    List<bool> isLeftParentsForRight = new List<bool>();
-                    for (int i = 0; i < isLeftParents.Count; i++)
+                    node = now.childrens[^1];
+                    if (node != null)
                     {
-                        isLeftParentsForRight.Add(isLeftParents[i]);
+                        ToPrint(node, deep, false, isLeftParents);
+                        List<bool> isLeftParentsForRight = new List<bool>();
+                        for (int i = 0; i < isLeftParents.Count; i++)
+                        {
+                            isLeftParentsForRight.Add(isLeftParents[i]);
+                        }
+                        isLeftParentsForRight.Add(false);
+                        CheckChildren(node, deep + 1, isLeftParentsForRight);
                     }
-                    isLeftParentsForRight.Add(false);
-                    CheckChildren(node, deep + 1, isLeftParentsForRight);
                 }
             }
 

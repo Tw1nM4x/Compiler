@@ -168,7 +168,7 @@ namespace Compiler
                 return outLex;
             }
 
-            while (inputBytes[0] == '\n' || inputBytes[0] == '\r' || inputBytes[0] == ' ' || inputBytes[0] == '{' || (inputBytes.Length > 1 && (inputBytes[0] == '/' && inputBytes[1] == '/')))
+            while (inputBytes[0] == '\n' || inputBytes[0] == '\r' || inputBytes[0] == ' ' || inputBytes[0] == '\t' || inputBytes[0] == '{' || (inputBytes.Length > 1 && (inputBytes[0] == '/' && inputBytes[1] == '/')))
             {
                 switch ((char)inputBytes[0])
                 {
@@ -178,6 +178,10 @@ namespace Compiler
                         break;
                     case '\r':
                         currentSymbol = 1;
+                        CutFirstElementsFromArray(ref inputBytes, 1);
+                        break;
+                    case '\t':
+                        currentSymbol += 4;
                         CutFirstElementsFromArray(ref inputBytes, 1);
                         break;
                     case ' ':

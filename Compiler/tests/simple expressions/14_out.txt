@@ -1,1 +1,1 @@
-(1,8) ERROR: don't have ')'
+(1,8) ERROR: don't have operation sign
