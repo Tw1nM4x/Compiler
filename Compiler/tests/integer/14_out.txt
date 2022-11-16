@@ -1,1 +1,1 @@
-1 1 ERROR: Overflow integer
+(1,1) ERROR: Overflow integer

@@ -1,11 +1,9 @@
 + Только один модуль в программе.
 + Скалярные типы данных: только один целочисленный, один с плавающей точкой, один строковый.
-- Составные типы данных: только записи/структуры и массивы.
-- Управляющие конструкции: только + блоки, + условия, + циклы, - структурные переходы.
++ Составные типы данных: только записи/структуры и массивы.
++ Управляющие конструкции: только блоки, условия, циклы, структурные переходы.
 + Процедуры / функции: только глобальные статические, с параметрами по значению и по ссылке.
 ? Библиотеки: только ввод/вывод на стандартные потоки, по одной функции.
-- Минусовые значения
-- Значения из массивов или из записей
 
 + comparison ::= (simple condition) ('<' | '<=' | '>' | '>=' | '=' | '<>') (simple condition)
 + simple condition ::=  ('not' | '')(simple expression) { ('and' | 'or') ('not' | '')(simple expression) }
@@ -33,10 +31,14 @@
 ? out ::= 'write' '(' ( (string) | (integer) | (real) { ',' (string) | (integer) | (real) } ) ')'
 ? in ::= 'read' '(' ( (string) | (integer) | (real) { ',' (string) | (integer) | (real) } ) ')'
 
-type
-- array
-- struct
++ array ::= (indifier) ':' 'array' '[' (ordinal type) { ',' (ordinal type) } ']' 'of' (type(with array))
++ ordinal type ::= (simple expression) '..' (simple expression)
 
-- goto
++ record ::= 'record' { (ordinal type) } 'end'
 
-- const ::= (indifier) '=' (value)
++ goto ::= 'goto' (indifier) ';'
++ label declaration ::= (indifier) { ',' (indifier) }
++ label ::= indifier ':'
+
++ type ::= (indifier) '=' (type)
++ const ::= (indifier) '=' (expression)

@@ -1,20 +1,35 @@
-program Hello;
+{program Hello;
 var
 	a,b,c: string;
 	m : integer = 1;
 	g, helli : real;
+	a, b, x : array [0 + 2..1 - a , 0..5] of array [0 + 2..1 - a , 0..5] of string;
 
 procedure a(t,d:integer; var a: string);
 var c: integer;
 var b: string;
 begin
-a := 5;
+a[5] := 5;
+a[5, 5 + hello] := 5;
+a[0][5 + hello] := 5;
 end;
+
+label m;
+
+type b = string;
 
 var
 	a: string;
+const
+	a = -5;
+	b = a + -5;
+	n = %1001;
+	d = 5.4;
 begin
-	repeat a := 5 until not (5 and 6 + a > 6 or 4) and not ((5 > 4) or (5 < 3));
+	m:
+	a := - 5 * - 6;
+	goto m;
+	repeat a := 5 until not (a[5+7] and 6 + a > 6 or 4) and not ((5 > 4) or (5 < 3));
 	for a := 3 to 6 do
 		begin
 			b:= 6;
@@ -22,4 +37,13 @@ begin
 		end;
 	if (a = 5 or 7) and ((a > 6) or (a < 4)) then read(a,b) else a := 8;
 	while (a = 7) do if (a = 5 or 7) and ((a > 6) or (a < 4)) then auba(5,a,10.15,'hi') else halt (5);
+end.}
+
+type a = record
+	end;
+var pr: record a:string = 5; end;
+ar: array [5.., 3.. 6] of array [5..4] of string
+
+begin
+	if 'Maxim' = hello then ans := 'true';
 end.

@@ -1,1 +1,1 @@
-1 1 ERROR: Overflow string
+(1,1) ERROR: Overflow string

@@ -1,1 +1,1 @@
-(1,6) ERROR: don't have factor
+(1,6) ERROR: expected factor

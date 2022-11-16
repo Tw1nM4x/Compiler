@@ -7,14 +7,27 @@ using System.Windows.Markup;
 
 namespace Compiler
 {
+    public enum TypeLexeme
+    {
+        ERROR,
+        String,
+        Indifier,
+        Integer,
+        Real,
+        Key_word,
+        End_file,
+        Operation_sign,
+        Separator,
+        Not_lexeme
+    }
     public struct Lexeme
     {
         public int numberLine;
         public int numberSymbol;
-        public string type;
+        public TypeLexeme type;
         public string value;
         public string lexeme;
-        public Lexeme(int numberLine, int numberSymbol, string type, string value, string lexeme)
+        public Lexeme(int numberLine, int numberSymbol, TypeLexeme type, string value, string lexeme)
         {
             this.numberLine = numberLine;
             this.numberSymbol = numberSymbol;
@@ -33,7 +46,40 @@ namespace Compiler
         const int COUNT_SYMBOLS = 256;
         public static string allFileForCheckComments = "";
         static int[,] table = new int[COUNT_STATUS, COUNT_SYMBOLS];
-        public static string[] status = { "ERROR", "ERROR", "String", "Indifier", "Integer", "Integer", "Integer", "Integer", "Real", "String", "Key_word", "End_file", "Operation_sign", "Separator", "Not_Lexeme" };
+        static TypeLexeme GetTypeLexeme(int index)
+        {
+            switch (index)
+            {
+                case 2:
+                    return TypeLexeme.String;
+                case 3:
+                    return TypeLexeme.Indifier;
+                case 4:
+                    return TypeLexeme.Integer;
+                case 5:
+                    return TypeLexeme.Integer;
+                case 6:
+                    return TypeLexeme.Integer;
+                case 7:
+                    return TypeLexeme.Integer;
+                case 8:
+                    return TypeLexeme.Real;
+                case 9:
+                    return TypeLexeme.String;
+                case 10:
+                    return TypeLexeme.Key_word;
+                case 11:
+                    return TypeLexeme.End_file;
+                case 12:
+                    return TypeLexeme.Operation_sign;
+                case 13:
+                    return TypeLexeme.Separator;
+                case 14:
+                    return TypeLexeme.Not_lexeme;
+
+            }
+            throw new Exception("Incorrect lexeme");
+        }
         /*
          0 - состояние ошибки (ERROR)
          1 - состояние начальное
@@ -162,7 +208,7 @@ namespace Compiler
 
             Lexeme Out(ref byte[] inputBytes)
             {
-                Lexeme outLex = new Lexeme(currentLine, currentSymbol, status[statusDFA], GetValueLexeme(status[statusDFA], GetString(inputBytes,0,lexemeLenght)), GetString(inputBytes, 0, lexemeLenght));
+                Lexeme outLex = new Lexeme(currentLine, currentSymbol, GetTypeLexeme(statusDFA), GetValueLexeme(GetTypeLexeme(statusDFA), GetString(inputBytes,0,lexemeLenght)), GetString(inputBytes, 0, lexemeLenght));
                 CutFirstElementsFromArray(ref inputBytes, lexemeLenght);
                 currentSymbol += lexemeLenght;
                 return outLex;
@@ -210,9 +256,7 @@ namespace Compiler
                         }
                         else
                         {
-                            statusDFA = 0;
-                            lexemeLenght = 1;
-                            return Out(ref inputBytes);
+                            throw new Exception("Incorrect lexeme");
                         }
                         break;
                 }
@@ -281,15 +325,11 @@ namespace Compiler
                         {
                             if (GetString(inputBytes, 0, inputBytes.Length).Substring(0, lexemeLenght).ToLower().IndexOf('e') != -1)
                             {
-                                statusDFA = 0;
-                                lexemeLenght -= 1;
-                                break;
+                                throw new Exception("Incorrect lexeme");
                             }
                             if ((inputBytes[0] == '%' || inputBytes[0] == '&' || inputBytes[0] == '$') && i + 1 < inputBytes.Length && inputBytes[i + 1] >= '0' && inputBytes[i + 1] <= '9')
                             {
-                                statusDFA = 0;
-                                lexemeLenght -= 1;
-                                break;
+                                throw new Exception("Incorrect lexeme");
                             }
                         }
                         //if real have 'e'
@@ -297,9 +337,7 @@ namespace Compiler
                         {
                             if (GetString(inputBytes, 0, lexemeLenght - 1).ToLower().IndexOf('e') != -1)
                             {
-                                statusDFA = 0;
-                                lexemeLenght -= 1;
-                                break;
+                                throw new Exception("Incorrect lexeme");
                             }
                         }
                         //if real have '-' or '+'
@@ -307,9 +345,7 @@ namespace Compiler
                         {
                             if (Char.ToLower((char)inputBytes[i - 1]) != 'e')
                             {
-                                statusDFA = 0;
-                                lexemeLenght -= 1;
-                                break;
+                                throw new Exception("Incorrect lexeme");
                             }
                         }
                     }
@@ -330,8 +366,7 @@ namespace Compiler
             //string
             if (statusDFA == 2 && countQuotesInString % 2 == 1)
             {
-                statusDFA = 0;
-                return Out(ref inputBytes);
+                throw new Exception("Incorrect lexeme");
             }
             //if key word or end file
             if (statusDFA == 3)
@@ -354,15 +389,14 @@ namespace Compiler
             //if only % or & or $
             if (statusDFA >= 5 && statusDFA <= 7 && lexemeLenght == 1)
             {
-                statusDFA = 0;
+                throw new Exception("Incorrect lexeme");
             }
             //if out system integer
             if (statusDFA >= 4 && statusDFA <= 7 && lexemeLenght < inputBytes.Length)
             {
                 if ((inputBytes[lexemeLenght] >= '0' && inputBytes[lexemeLenght] <= '9') || (Char.ToLower((char)inputBytes[lexemeLenght]) >= 'a' && Char.ToLower((char)inputBytes[lexemeLenght]) <= 'z'))
                 {
-                    lexemeLenght += 1;
-                    statusDFA = 0;
+                    throw new Exception("Incorrect lexeme");
                 }
             }
             //check real with last 'e' or '-' or '+'
@@ -377,8 +411,7 @@ namespace Compiler
                 {
                     if(inputBytes[lexemeLenght - offset - 1] == '.')
                     {
-                        statusDFA = 0;
-                        lexemeLenght -= (offset + 1);
+                        throw new Exception("Incorrect lexeme");
                     }
                     else
                     {
@@ -387,8 +420,7 @@ namespace Compiler
                 }
                 else
                 {
-                    statusDFA = 0;
-                    lexemeLenght -= offset;
+                    throw new Exception("Incorrect lexeme");
                 }
             }
             if (statusDFA == 12)
@@ -423,12 +455,12 @@ namespace Compiler
             }
             return Out(ref inputBytes);
         }
-        public static string GetValueLexeme(string typeLexeme, string lexeme)
+        public static string GetValueLexeme(TypeLexeme typeLexeme, string lexeme)
         {
             string valueLexeme = "";
             switch (typeLexeme)
             {
-                case "String":
+                case TypeLexeme.String:
                     {
                         bool nowSymbol = false;
                         int countQuotes = 0;
@@ -443,8 +475,7 @@ namespace Compiler
                                     int symbol = Int32.Parse(symbolStr);
                                     if (symbol > 65535)
                                     {
-                                        valueLexeme = "ERROR: Overflow symbol in string";
-                                        break;
+                                        throw new Exception("Overflow symbol in string");
                                     }
                                     valueLexeme += (char)symbol;
                                     symbolStr = "";
@@ -465,8 +496,7 @@ namespace Compiler
                                         int symbol = Int32.Parse(symbolStr);
                                         if (symbol > 65535)
                                         {
-                                            valueLexeme = "ERROR: Overflow symbol in string";
-                                            break;
+                                            throw new Exception("Overflow symbol in string");
                                         }
                                         valueLexeme += (char)symbol;
                                         symbolStr = "";
@@ -491,29 +521,27 @@ namespace Compiler
                             int symbol = Int32.Parse(symbolStr);
                             if (symbol > 65535)
                             {
-                                valueLexeme = "ERROR: Overflow symbol in string";
-                                break;
+                                throw new Exception("Overflow symbol in string");
                             }
                             valueLexeme += (char)symbol;
                             symbolStr = "";
                         }
                         if (valueLexeme.Length > 255)
                         {
-                            valueLexeme = "ERROR: Overflow string";
-                            break;
+                            throw new Exception("Overflow string");
                         }
                         break;
                     }
-                case "Indifier":
+                case TypeLexeme.Indifier:
                     {
                         valueLexeme = lexeme;
                         if (valueLexeme.Length > 127)
                         {
-                            valueLexeme = "ERROR: Overflow indifier";
+                            throw new Exception("Overflow indifier");
                         }
                         break;
                     }
-                case "Integer":
+                case TypeLexeme.Integer:
                     {
                         uint typeInt = 10;
                         switch (lexeme[0])
@@ -546,13 +574,13 @@ namespace Compiler
                             value = (value * typeInt) + convertChar;
                             if (value > 2147483648)
                             {
-                                return "ERROR: Overflow integer";
+                                throw new Exception("Overflow integer");
                             }
                         }
                         valueLexeme = value.ToString();
                         break;
                     }
-                case "Real":
+                case TypeLexeme.Real:
                     {
                         double value = 0;
                         lexeme = lexeme.Replace(".", ",");
@@ -616,51 +644,28 @@ namespace Compiler
                         }
                         break;
                     }
-                case "Key_word":
+                case TypeLexeme.Key_word:
                     {
                         valueLexeme = lexeme.ToLower();
                         break;
                     }
-                case "End_file":
+                case TypeLexeme.End_file:
                     {
                         valueLexeme = lexeme.ToLower();
                         break;
                     }
-                case "Operation_sign":
+                case TypeLexeme.Operation_sign:
                     {
                         valueLexeme = lexeme;
                         break;
                     }
-                case "Separator":
+                case TypeLexeme.Separator:
                     {
                         valueLexeme = lexeme;
                         break;
                     }
             }
             return valueLexeme;
-        }
-        public static List<Lexeme> GetAllLexeme(string pathIn = "../../../tests/1.txt")
-        {
-            List<Lexeme> ans = new List<Lexeme>();
-
-            using (FileStream fstream = File.OpenRead(pathIn))
-            {
-                byte[] input = new byte[fstream.Length];
-                fstream.Read(input, 0, input.Length);
-                while (input.Length > 0)
-                {
-                    Lexeme nextLex = GetFirstLexeme(ref input);
-                    if(nextLex.type != "Not_Lexeme")
-                    {
-                        ans.Add(nextLex);
-                    }
-                    if (nextLex.type == "ERROR" || nextLex.type == "End_file")
-                    {
-                        break;
-                    }
-                }
-            }
-            return ans;
         }
     }
 }

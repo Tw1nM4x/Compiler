@@ -1,1 +1,1 @@
-(1,7) ERROR: don't have operation sign
+(1,7) ERROR: expected operation sign
