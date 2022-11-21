@@ -2,9 +2,7 @@
 Compiler for the Pascal written on C#
 
 # Building compiler in VS2022
-The compiler is developed on the .NET Core 3.1 platform.
-
-To build it in Windows, I use Microsoft Visual Studio 2019.
+To build it in Windows, I use Microsoft Visual Studio 2022.
 
 After downloading the source, open CCompiler.sln in Visual Studio.
 
