@@ -9,7 +9,6 @@ namespace Compiler
 {
     public enum TypeLexeme
     {
-        ERROR,
         String,
         Indifier,
         Integer,
@@ -36,7 +35,7 @@ namespace Compiler
             this.lexeme = lexeme;
         }
     }
-    internal class Lexer
+    public class Lexer
     {
         public static int currentLine = 1;
         public static int currentSymbol = 1;
@@ -190,7 +189,6 @@ namespace Compiler
             int lexemeLenght = 0;
             int countQuotesInString = 0;
 
-            //string input = Encoding.Default.GetString(inputBytes);
 
             void CutFirstElementsFromArray(ref byte[] array, int countFirstElements)
             {

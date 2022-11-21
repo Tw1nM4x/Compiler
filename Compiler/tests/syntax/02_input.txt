@@ -1,0 +1,7 @@
+var 
+a,b : integer;
+c : integer = 7;
+begin
+a := 5;
+b := a + c;
+end.

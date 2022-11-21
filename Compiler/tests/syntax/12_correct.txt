@@ -1,0 +1,20 @@
+﻿program
+├─── CheckGoto
+├─── var
+│    ├─── :
+│    │    ├─── a
+│    │    └─── integer
+│    └─── :
+│         ├─── b
+│         └─── string
+├─── label
+│    └─── a
+└─── begin
+     ├─── :
+     │    └─── a
+     ├─── :=
+     │    ├─── b
+     │    └─── true
+     ├─── goto
+     │    └─── a
+     └─── end.

@@ -1,0 +1,7 @@
+program CheckWhile;
+var a : integer;
+b : string;
+begin
+	a := 8;
+	while a > 5 do b := 'no';
+end.

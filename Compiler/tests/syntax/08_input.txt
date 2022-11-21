@@ -1,0 +1,10 @@
+program CheckIf;
+var a : integer;
+b : string;
+begin
+	a := 8;
+	if (a = 7 or 8) and ((a > 8) or not a < 6) then b := 'yes' else begin
+		b := 'no';
+		a := -1;
+	end;
+end.

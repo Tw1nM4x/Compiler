@@ -1,0 +1,4 @@
+1 1 Integer 1 1
+1 2 Operation_sign - -
+1 3 Separator . .
+1 4 Indifier e2 e2

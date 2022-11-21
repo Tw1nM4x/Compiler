@@ -30,6 +30,9 @@ namespace Compiler
                 case "2":
                     folders = new Folder[] { new("simple expressions", 14) };
                     break;
+                case "3":
+                    folders = new Folder[] { new("syntax", 14) };
+                    break;
             }
             int countOK = 0;
             int countERROR = 0;
@@ -53,6 +56,9 @@ namespace Compiler
                             break;
                         case "2":
                             SkillCompiler.OutputSimpleExpressionsParsing(pathIn, pathOut);
+                            break;
+                        case "3":
+                            SkillCompiler.OutputSyntaxParsing(pathIn, pathOut);
                             break;
                     }
                     string checkFile;
@@ -117,19 +123,14 @@ namespace Compiler
                         numberTestStr = "0" + numberTestStr;
                     }
                     string pathIn = $"../../../tests/{folders[numberFolder].name}/" + $"{numberTestStr}_input.txt";
+                    string pathOut = $"../../../tests/{folders[numberFolder].name}/" + $"{numberTestStr}_out.txt";
                     using (StreamReader sr = new StreamReader(pathIn, Encoding.Default))
                     {
                         Console.WriteLine("In:\n" + sr.ReadToEnd() + "\n");
                     }
-                    Console.WriteLine("Out:");
-                    switch (key)
+                    using (StreamReader sr = new StreamReader(pathOut, Encoding.Default))
                     {
-                        case "1":
-                            SkillCompiler.OutputLexemeParsing(pathIn);
-                            break;
-                        case "2":
-                            SkillCompiler.OutputSimpleExpressionsParsing(pathIn);
-                            break;
+                        Console.WriteLine("Out:\n" + sr.ReadToEnd());
                     }
                     Console.WriteLine("\nЧтобы завершить введите 0\nЧтобы перейти к следующему тесту нажмите Enter");
                     string? input = Console.ReadLine();

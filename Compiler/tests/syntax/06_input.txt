@@ -1,0 +1,7 @@
+program CheckArray;
+const a = 1;
+var e : array [5..a + 5] of array [a..a * 10] of integer;
+begin
+	e[6,2] := 5;
+	e[7][a+3] := 10; 
+end.

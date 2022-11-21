@@ -1,0 +1,9 @@
+program CheckRecord;
+type t = record
+a : string;
+b : integer;
+end;
+var e : t;
+begin
+	e.a := 'hello';
+end.

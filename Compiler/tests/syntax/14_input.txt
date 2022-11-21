@@ -1,0 +1,6 @@
+program CheckReadAndWrite;
+var b : string;
+begin
+	read(b);
+	write(b);
+end.
