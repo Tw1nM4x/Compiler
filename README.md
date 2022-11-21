@@ -15,4 +15,5 @@ dotnet build --configuration Release
 
 # Author
 Maxim Kovalenko - third year student Б8120-09.03.03пикд, Far Eastern Federal University
+
 2022
