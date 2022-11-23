@@ -7,11 +7,11 @@ using System.Threading;
 
 namespace Compiler
 {
-    class SkillCompiler
+    /*class SkillCompiler
     {
         public static void OutputLexemeParsing(string pathIn = "../../../tests/1.txt", string pathOut = "console")
         {
-            List<Lexeme> lexemes = new List<Lexeme>();
+            List<Token> lexemes = new List<Token>();
 
             using (FileStream fstream = File.OpenRead(pathIn))
             {
@@ -19,17 +19,14 @@ namespace Compiler
                 fstream.Read(input, 0, input.Length);
                 Lexer.currentSymbol = 1;
                 Lexer.currentLine = 1;
-                List<Lexeme> ans = new List<Lexeme> { };
-                while (input.Length > 0)
+                List<Token> ans = new List<Token> { };
+                while (true)
                 {
                     try
                     {
-                        Lexeme nextLex = Lexer.GetFirstLexeme(ref input);
-                        if (nextLex.type != TypeLexeme.Not_lexeme)
-                        {
-                            ans.Add(nextLex);
-                        }
-                        if (nextLex.type == TypeLexeme.End_file)
+                        Token nextLex = Lexer.GetFirstLexeme(ref input);
+                        ans.Add(nextLex);
+                        if (nextLex.type == TokenType.Eof)
                         {
                             break;
                         }
@@ -52,7 +49,7 @@ namespace Compiler
                 }
                 if (pathOut == "console")
                 {
-                    foreach(Lexeme lex in ans)
+                    foreach(Token lex in ans)
                     {
                         Console.Write($"{lex.numberLine} {lex.numberSymbol} {lex.type} {lex.value} {lex.lexeme}\r\n");
                     }
@@ -61,7 +58,7 @@ namespace Compiler
                 {
                     using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
                     {
-                        foreach (Lexeme lex in ans)
+                        foreach (Token lex in ans)
                         {
                             sw.Write($"{lex.numberLine} {lex.numberSymbol} {lex.type} {lex.value} {lex.lexeme}\r\n");
                         }
@@ -72,7 +69,7 @@ namespace Compiler
         public static void OutputSimpleExpressionsParsing(string pathIn = "../../../tests/1.txt", string pathOut = "console")
         {
             List<string> ans = new List<string>();
-            List<Lexeme> lexemes = new List<Lexeme>();
+            List<Token> lexemes = new List<Token>();
             byte[] input = new byte[0];
 
             using (FileStream fstream = File.OpenRead(pathIn))
@@ -203,7 +200,7 @@ namespace Compiler
         public static void OutputSyntaxParsing(string pathIn = "../../../tests/1.txt", string pathOut = "console")
         {
             List<string> ans = new List<string>();
-            List<Lexeme> lexemes = new List<Lexeme>();
+            List<Token> lexemes = new List<Token>();
             byte[] input = new byte[0];
 
             using (FileStream fstream = File.OpenRead(pathIn))
@@ -327,5 +324,5 @@ namespace Compiler
                 }
             }
         }
-    }
+    }*/
 }

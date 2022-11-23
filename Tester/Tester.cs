@@ -1,15 +1,16 @@
 ﻿using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
-using System.Globalization;
-using System.Reflection.PortableExecutable;
-using static System.Net.Mime.MediaTypeNames;
+using System.Threading.Tasks;
+using Compiler;
 
-namespace Compiler
+namespace Tester
 {
     class Tester
     {
-        struct Folder{
+        struct Folder
+        {
             public string name;
             public int countTest;
             public Folder(string name = "string", int countTest = 0)
@@ -24,13 +25,13 @@ namespace Compiler
         {
             switch (key)
             {
-                case "1":
+                case "-l":
                     folders = new Folder[] { new("string", 14), new("indifier", 9), new("integer", 19), new("real", 28), new("space", 2), new("comment", 9), new("key word", 4), new("operation sign", 3), new("separator", 3), new("errors", 3) };
                     break;
-                case "2":
+                case "-sp":
                     folders = new Folder[] { new("simple expressions", 14) };
                     break;
-                case "3":
+                case "-p":
                     folders = new Folder[] { new("syntax", 14) };
                     break;
             }
@@ -49,10 +50,30 @@ namespace Compiler
                     string pathIn = Environment.CurrentDirectory + $"/tests/{folders[numberFolder].name}/" + $"{numberTestStr}_input.txt";
                     string pathOut = Environment.CurrentDirectory + $"/tests/{folders[numberFolder].name}/" + $"{numberTestStr}_out.txt";
                     string pathCheck = Environment.CurrentDirectory + $"/tests/{folders[numberFolder].name}/" + $"{numberTestStr}_correct.txt";
+                    Lexer lexer = new Lexer(pathIn);
                     switch (key)
                     {
-                        case "1":
-                            //SkillCompiler.OutputLexemeParsing(pathIn, pathOut);
+                        case "-l":
+                            try
+                            {
+                                using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
+                                {
+                                    Token token = lexer.GetNextToken();
+                                    sw.Write($"{token}\r\n");
+                                    while (token.Type != TokenType.Eof)
+                                    {
+                                        token = lexer.GetNextToken();
+                                        sw.Write($"{token}\r\n");
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
+                                {
+                                    sw.Write($"ERROR: {ex.Message}\r\n");
+                                }
+                            }
                             break;
                         case "2":
                             //SkillCompiler.OutputSimpleExpressionsParsing(pathIn, pathOut);
@@ -81,7 +102,7 @@ namespace Compiler
                     {
                         for (int i = 0; i < checkFile.Length; i++)
                         {
-                            if (checkFile[i] != outFile[i]) 
+                            if (checkFile[i] != outFile[i])
                             {
                                 flag = false;
                             }
@@ -102,9 +123,9 @@ namespace Compiler
             }
             Console.WriteLine($"OK: {countOK}  ERRORS: {countERROR}");
             Console.WriteLine("-------------------------------");
-            Console.WriteLine("Чтобы запустить проверку тестов с подробным результатом введите 1 \nЧтобы завершить программу нажмите Enter");
+            Console.WriteLine("To run detailed tests, type 'go'");
             string? input = Console.ReadLine();
-            if(input == "1")
+            if (input == "go")
             {
                 StartDetailTest(key);
             }
@@ -131,12 +152,6 @@ namespace Compiler
                     using (StreamReader sr = new StreamReader(pathOut, Encoding.Default))
                     {
                         Console.WriteLine("Out:\n" + sr.ReadToEnd());
-                    }
-                    Console.WriteLine("\nЧтобы завершить введите 0\nЧтобы перейти к следующему тесту нажмите Enter");
-                    string? input = Console.ReadLine();
-                    if(input == "0")
-                    {
-                        return;
                     }
                 }
             }

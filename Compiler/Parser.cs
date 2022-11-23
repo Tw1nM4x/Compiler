@@ -14,7 +14,7 @@ namespace Compiler
         Call,
         Variable,
         Number,
-        String,
+        String
     }
     internal class Node
     {
@@ -32,12 +32,12 @@ namespace Compiler
     internal class Parser
     {
         static int notClosedBrackets = 0;
-        public static Lexeme currentLex;
+        public static Token currentLex;
         static void NextLexeme(ref byte[] inputBytes)
         {
             if (inputBytes.Length > 0)
             {
-                currentLex = Lexer.GetFirstLexeme(ref inputBytes);
+                //currentLex = Lexer.GetFirstLexeme(ref inputBytes);
             }
         }
         public static Node Parse(ref byte[] inputBytes)
@@ -46,14 +46,14 @@ namespace Compiler
             List<Node?> var = new List<Node?>{ };
             List<Node?> body = new List<Node?> { };
             NextLexeme(ref inputBytes);
-            if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "program")
+            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "program")
             {
                 body.Add(ParseProgram(ref inputBytes));
                 NextLexeme(ref inputBytes);
             }
-            while (currentLex.type == TypeLexeme.Key_word && (currentLex.value == "var" || currentLex.value == "procedure" || currentLex.value == "label" || currentLex.value == "const" || currentLex.value == "type"))
+            while (currentLex.Type == TokenType.Key_word && (currentLex.Value == "var" || currentLex.Value == "procedure" || currentLex.Value == "label" || currentLex.Value == "const" || currentLex.Value == "type"))
             {
-                switch (currentLex.value)
+                switch (currentLex.Value)
                 {
                     case "var":
                         body.Add(ParseVar(ref inputBytes));
@@ -72,7 +72,7 @@ namespace Compiler
                         break;
                 }
             }
-            if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "begin")
+            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "begin")
             {
                 body.Add(ParseMainBlock(ref inputBytes));
                 res = new Node(TypeNode.Call, "program", body);
@@ -87,16 +87,16 @@ namespace Compiler
         {
             Node res;
             NextLexeme(ref inputBytes);
-            if (currentLex.type == TypeLexeme.Indifier)
+            if (currentLex.Type == TokenType.Indifier)
             {
-                res = new Node(TypeNode.Variable, currentLex.value, null);
+                res = new Node(TypeNode.Variable, currentLex.Value, null);
             }
             else
             {
                 throw new Exception("ERROR: expected Indifier");
             }
             NextLexeme(ref inputBytes);
-            if (!(currentLex.type == TypeLexeme.Separator && currentLex.value == ";"))
+            if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
             {
                 throw new Exception("ERROR: expected ';'");
             }
@@ -109,10 +109,10 @@ namespace Compiler
             if (inputBytes.Length > 0)
             {
                 NextLexeme(ref inputBytes);
-                while (currentLex.type == TypeLexeme.Indifier)
+                while (currentLex.Type == TokenType.Indifier)
                 {
                     Node child = ParseType(ref inputBytes);
-                    if (!(currentLex.type == TypeLexeme.Separator && currentLex.value == ";"))
+                    if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
                     {
                         throw new Exception("ERROR: expected ';'");
                     }
@@ -138,16 +138,16 @@ namespace Compiler
         {
             Node nameType;
             Node type;
-            if (currentLex.type == TypeLexeme.Indifier)
+            if (currentLex.Type == TokenType.Indifier)
             {
-                nameType = new Node(TypeNode.Variable, currentLex.value, null);
+                nameType = new Node(TypeNode.Variable, currentLex.Value, null);
                 NextLexeme(ref inputBytes);
             }
             else
             {
                 throw new Exception("ERROR: expected indifier");
             }
-            if (currentLex.type == TypeLexeme.Operation_sign && currentLex.value == "=")
+            if (currentLex.Type == TokenType.Operation_sign && currentLex.Value == "=")
             {
                 NextLexeme(ref inputBytes);
                 type = ParseTypeVariable(ref inputBytes);
@@ -162,24 +162,24 @@ namespace Compiler
         {
             List<Node?> children = new List<Node?>();
             NextLexeme(ref inputBytes);
-            while (currentLex.type == TypeLexeme.Indifier)
+            while (currentLex.Type == TokenType.Indifier)
             {
-                Node var = new Node(TypeNode.Variable, currentLex.value, null);
+                Node var = new Node(TypeNode.Variable, currentLex.Value, null);
                 NextLexeme(ref inputBytes);
-                if (currentLex.type == TypeLexeme.Operation_sign && currentLex.value == "=")
+                if (currentLex.Type == TokenType.Operation_sign && currentLex.Value == "=")
                 {
                     Node value;
                     NextLexeme(ref inputBytes);
-                    if (currentLex.type == TypeLexeme.String)
+                    if (currentLex.Type == TokenType.String)
                     {
-                        value = new Node(TypeNode.String, currentLex.value, null);
+                        value = new Node(TypeNode.String, currentLex.Value, null);
                         NextLexeme(ref inputBytes);
                     }
                     else
                     {
                         value = ParseSimpleExpression(ref inputBytes);
                     }
-                    if (currentLex.type == TypeLexeme.Separator && currentLex.value == ";")
+                    if (currentLex.Type == TokenType.Separator && currentLex.Value == ";")
                     {
                         children.Add(new Node(TypeNode.Call, "=", new List<Node?> { var, value }));
                         NextLexeme(ref inputBytes);
@@ -203,10 +203,10 @@ namespace Compiler
             if(inputBytes.Length > 0)
             {
                 NextLexeme(ref inputBytes);
-                while (currentLex.type == TypeLexeme.Indifier)
+                while (currentLex.Type == TokenType.Indifier)
                 {
                     Node child = ParseVariable(ref inputBytes);
-                    if (!(currentLex.type == TypeLexeme.Separator && currentLex.value == ";"))
+                    if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
                     {
                         throw new Exception("ERROR: expected ';'");
                     }
@@ -235,16 +235,16 @@ namespace Compiler
             List<Node?> body = new List<Node?> { };
             List<Node?> parameters = new List<Node?> { };
             NextLexeme(ref inputBytes);
-            if (currentLex.type == TypeLexeme.Indifier)
+            if (currentLex.Type == TokenType.Indifier)
             {
-                name = currentLex.value;
+                name = currentLex.Value;
                 NextLexeme(ref inputBytes);
-                if (currentLex.type == TypeLexeme.Separator && currentLex.value == "(")
+                if (currentLex.Type == TokenType.Separator && currentLex.Value == "(")
                 {
                     do
                     {
                         NextLexeme(ref inputBytes);
-                        if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "var")
+                        if (currentLex.Type == TokenType.Key_word && currentLex.Value == "var")
                         {
                             NextLexeme(ref inputBytes);
                             parameters.Add(new Node(TypeNode.UnaryOperation, "var", new List<Node?> { ParseVariable(ref inputBytes) }));
@@ -254,13 +254,13 @@ namespace Compiler
                             parameters.Add(ParseVariable(ref inputBytes));
                         }
                     } 
-                    while (currentLex.type == TypeLexeme.Separator && currentLex.value == ";");
+                    while (currentLex.Type == TokenType.Separator && currentLex.Value == ";");
 
-                    if (currentLex.type == TypeLexeme.Separator && currentLex.value == ")")
+                    if (currentLex.Type == TokenType.Separator && currentLex.Value == ")")
                     {
                         NextLexeme(ref inputBytes);
                         body.Add(new Node(TypeNode.Call, name, parameters));
-                        if (!(currentLex.type == TypeLexeme.Separator && currentLex.value == ";"))
+                        if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
                         {
                             throw new Exception("ERROR: expected ';'");
                         }
@@ -274,15 +274,15 @@ namespace Compiler
                         throw new Exception("expected ')'");
                     }
                 }
-                while(currentLex.type == TypeLexeme.Key_word && currentLex.value == "var")
+                while(currentLex.Type == TokenType.Key_word && currentLex.Value == "var")
                 {
                     body.Add(ParseVar(ref inputBytes));
                 }
-                if(currentLex.type == TypeLexeme.Key_word && currentLex.value == "begin")
+                if(currentLex.Type == TokenType.Key_word && currentLex.Value == "begin")
                 {
                     body.Add(ParseBlock(ref inputBytes));
                     res = new Node(TypeNode.Call, "procedure", body);
-                    if (!(currentLex.type == TypeLexeme.Separator && currentLex.value == ";"))
+                    if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
                     {
                         throw new Exception("ERROR: expected ';'");
                     }
@@ -305,10 +305,10 @@ namespace Compiler
         public static Node ParseRecord(ref byte[] inputBytes)
         {
             List<Node?> children = new List<Node?>();
-            while (currentLex.type == TypeLexeme.Indifier)
+            while (currentLex.Type == TokenType.Indifier)
             {
                 Node child = ParseVariable(ref inputBytes);
-                if (!(currentLex.type == TypeLexeme.Separator && currentLex.value == ";"))
+                if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
                 {
                     throw new Exception("ERROR: expected ';'");
                 }
@@ -319,7 +319,7 @@ namespace Compiler
                 }
                 NextLexeme(ref inputBytes);
             }
-            if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "end")
+            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "end")
             {
                 children.Add(new Node(TypeNode.Call, "end", null));
                 NextLexeme(ref inputBytes);
@@ -335,21 +335,21 @@ namespace Compiler
             Node? ifArray = null;
             List<Node?> names = new List<Node?> { };
             Node type;
-            if (currentLex.type == TypeLexeme.Indifier)
+            if (currentLex.Type == TokenType.Indifier)
             {
-                names.Add(new Node(TypeNode.Variable, currentLex.value, null));
+                names.Add(new Node(TypeNode.Variable, currentLex.Value, null));
             }
             else
             {
                 throw new Exception("ERROR: expected indifier");
             }
             NextLexeme(ref inputBytes);
-            while (currentLex.type == TypeLexeme.Separator && currentLex.value == ",")
+            while (currentLex.Type == TokenType.Separator && currentLex.Value == ",")
             {
                 NextLexeme(ref inputBytes);
-                if (currentLex.type == TypeLexeme.Indifier)
+                if (currentLex.Type == TokenType.Indifier)
                 {
-                    names.Add(new Node(TypeNode.Variable, currentLex.value, null));
+                    names.Add(new Node(TypeNode.Variable, currentLex.Value, null));
                 }
                 else
                 {
@@ -357,10 +357,10 @@ namespace Compiler
                 }
                 NextLexeme(ref inputBytes);
             }
-            if (currentLex.type == TypeLexeme.Operation_sign && currentLex.value == ":")
+            if (currentLex.Type == TokenType.Operation_sign && currentLex.Value == ":")
             {
                 NextLexeme(ref inputBytes);
-                if (currentLex.type == TypeLexeme.Indifier || currentLex.type == TypeLexeme.Key_word)
+                if (currentLex.Type == TokenType.Indifier || currentLex.Type == TokenType.Key_word)
                 {
                     type = ParseTypeVariable(ref inputBytes);
                 }
@@ -373,7 +373,7 @@ namespace Compiler
             {
                 throw new Exception("ERROR: expected ':'");
             }
-            if (currentLex.type == TypeLexeme.Operation_sign && currentLex.value == "=")
+            if (currentLex.Type == TokenType.Operation_sign && currentLex.Value == "=")
             {
                 NextLexeme(ref inputBytes);
                 Node value = ParseSimpleExpression(ref inputBytes);
@@ -413,16 +413,16 @@ namespace Compiler
             Node sizes;
             List<Node?> body = new List<Node?> { };
             List<Node?> ordinalType = new List<Node?> { };
-            if (currentLex.type == TypeLexeme.Separator && currentLex.value == "[")
+            if (currentLex.Type == TokenType.Separator && currentLex.Value == "[")
             {
                 NextLexeme(ref inputBytes);
                 ordinalType.Add(ParseArrayOrdinalType(ref inputBytes));
-                while (currentLex.type == TypeLexeme.Separator && currentLex.value == ",")
+                while (currentLex.Type == TokenType.Separator && currentLex.Value == ",")
                 {
                     NextLexeme(ref inputBytes);
                     ordinalType.Add(ParseArrayOrdinalType(ref inputBytes));
                 }
-                if (currentLex.type == TypeLexeme.Separator && currentLex.value == "]")
+                if (currentLex.Type == TokenType.Separator && currentLex.Value == "]")
                 {
                     NextLexeme(ref inputBytes);
                 }
@@ -436,10 +436,10 @@ namespace Compiler
                 throw new Exception("ERROR: expected '['");
             }
             sizes = new Node(TypeNode.Call, "[]", ordinalType);
-            if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "of")
+            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "of")
             {
                 NextLexeme(ref inputBytes);
-                if (currentLex.type == TypeLexeme.Indifier || currentLex.type == TypeLexeme.Key_word)
+                if (currentLex.Type == TokenType.Indifier || currentLex.Type == TokenType.Key_word)
                 {
                     type = ParseTypeVariable(ref inputBytes);
                 }
@@ -460,9 +460,9 @@ namespace Compiler
         {
             Node ifArrayOrProcedure = new Node(TypeNode.ERROR, "");
             string type;
-            if (currentLex.type == TypeLexeme.Indifier || currentLex.type == TypeLexeme.Key_word)
+            if (currentLex.Type == TokenType.Indifier || currentLex.Type == TokenType.Key_word)
             {
-                type = currentLex.value;
+                type = currentLex.Value;
                 if (type == "array")
                 {
                     NextLexeme(ref inputBytes);
@@ -494,7 +494,7 @@ namespace Compiler
         public static Node ParseArrayOrdinalType(ref byte[] inputBytes)
         {
             Node left = ParseSimpleExpression(ref inputBytes);
-            if (currentLex.type == TypeLexeme.Separator && currentLex.value == "..")
+            if (currentLex.Type == TokenType.Separator && currentLex.Value == "..")
             {
                 NextLexeme(ref inputBytes);
             }
@@ -507,31 +507,37 @@ namespace Compiler
         }
         public static Node ParseMainBlock(ref byte[] inputBytes)
         {
+            //переделать
             List<Node?> children = new List<Node?>();
             NextLexeme(ref inputBytes);
-            while (currentLex.type != TypeLexeme.End_file)
+            while (currentLex.Type != TokenType.Key_word || currentLex.Value != "end")
             {
                 children.Add(ParseStatement(ref inputBytes));
-                if (currentLex.type == TypeLexeme.Separator && currentLex.value == ";")
+                if (currentLex.Type == TokenType.Separator && currentLex.Value == ";")
                 {
                     NextLexeme(ref inputBytes);
+                    if (currentLex.Type == TokenType.Eof)
+                    {
+                        throw new Exception("ERROR: expected 'end.'");
+                    }
                 }
                 else
                 {
-                    if(!(currentLex.type == TypeLexeme.End_file))
+                    if(!(currentLex.Type == TokenType.Eof))
                     {
                         throw new Exception("ERROR: expected ';'");
                     }
                 }
             }
-            if (currentLex.type == TypeLexeme.End_file)
+            NextLexeme(ref inputBytes);
+            if (currentLex.Type == TokenType.Separator && currentLex.Value == ".")
             {
                 children.Add(new Node(TypeNode.Call, "end.", null));
                 NextLexeme(ref inputBytes);
             }
             else
             {
-                throw new Exception("ERROR: expected 'end.'");
+                throw new Exception("ERROR: expected '.'");
             }
             return new Node(TypeNode.Call, "begin", children);
         }
@@ -539,23 +545,23 @@ namespace Compiler
         {
             List<Node?> children = new List<Node?>();
             NextLexeme(ref inputBytes);
-            while (!(currentLex.type == TypeLexeme.Key_word && currentLex.value == "end"))
+            while (!(currentLex.Type == TokenType.Key_word && currentLex.Value == "end"))
             {
                 children.Add(ParseStatement(ref inputBytes));
 
-                if (currentLex.type == TypeLexeme.Separator && currentLex.value == ";")
+                if (currentLex.Type == TokenType.Separator && currentLex.Value == ";")
                 {
                     NextLexeme(ref inputBytes);
                 }
                 else
                 {
-                    if (!(currentLex.type == TypeLexeme.Key_word))
+                    if (!(currentLex.Type == TokenType.Key_word))
                     {
                         throw new Exception("ERROR: expected ';'");
                     }
                 }
             }
-            if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "end")
+            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "end")
             {
                 children.Add(new Node(TypeNode.Call, "end", null));
                 NextLexeme(ref inputBytes);
@@ -569,15 +575,15 @@ namespace Compiler
         public static Node? ParseStatement(ref byte[] inputBytes)
         {
             Node ? res = null;
-            if (currentLex.type == TypeLexeme.Indifier)
+            if (currentLex.Type == TokenType.Indifier)
             {
                 res = ParseSimpleStatement(ref inputBytes);
             }
             else
             {
-                if (currentLex.type == TypeLexeme.Key_word || (currentLex.type == TypeLexeme.Separator && currentLex.value == ";"))
+                if (currentLex.Type == TokenType.Key_word || (currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
                 {
-                    switch (currentLex.value)
+                    switch (currentLex.Value)
                     {
                         case "begin":
                             res = ParseBlock(ref inputBytes);
@@ -621,13 +627,13 @@ namespace Compiler
             string operation = "";
             Node? left = null;
             Node? right = null;
-            if (currentLex.type == TypeLexeme.Indifier)
+            if (currentLex.Type == TokenType.Indifier)
             {
-                left = new Node(TypeNode.Variable, currentLex.value, null);
+                left = new Node(TypeNode.Variable, currentLex.Value, null);
                 NextLexeme(ref inputBytes);
-                while (currentLex.type == TypeLexeme.Separator && (currentLex.value == "[" || currentLex.value == "."))
+                while (currentLex.Type == TokenType.Separator && (currentLex.Value == "[" || currentLex.Value == "."))
                 {
-                    string separator = currentLex.value;
+                    string separator = currentLex.Value;
                     NextLexeme(ref inputBytes);
                     if (left.children == null)
                     {
@@ -659,9 +665,9 @@ namespace Compiler
             {
                 throw new Exception("ERROR: expected indifier");
             }
-            if (currentLex.type == TypeLexeme.Operation_sign && (currentLex.value == ":=" || currentLex.value == "+=" || currentLex.value == "-=" || currentLex.value == "*=" || currentLex.value == "/="))
+            if (currentLex.Type == TokenType.Operation_sign && (currentLex.Value == ":=" || currentLex.Value == "+=" || currentLex.Value == "-=" || currentLex.Value == "*=" || currentLex.Value == "/="))
             {
-                operation = currentLex.value;
+                operation = currentLex.Value;
                 if (inputBytes.Length > 0)
                 {
                     NextLexeme(ref inputBytes);
@@ -670,9 +676,9 @@ namespace Compiler
                 {
                     throw new Exception("ERROR: expected expression");
                 }
-                if(currentLex.type == TypeLexeme.String)
+                if(currentLex.Type == TokenType.String)
                 {
-                    right = new Node(TypeNode.String, currentLex.value, null);
+                    right = new Node(TypeNode.String, currentLex.Value, null);
                     NextLexeme(ref inputBytes);
                 }
                 else
@@ -682,7 +688,7 @@ namespace Compiler
             }
             else
             {
-                if(currentLex.type == TypeLexeme.Operation_sign && currentLex.value == ":")
+                if(currentLex.Type == TokenType.Operation_sign && currentLex.Value == ":")
                 {
                     return ParseGotoLabel(ref inputBytes, label: left.value);
                 }
@@ -701,11 +707,11 @@ namespace Compiler
             Node? finalValue = null;
             Node? statement = null;
             NextLexeme(ref inputBytes);
-            if (currentLex.type == TypeLexeme.Indifier)
+            if (currentLex.Type == TokenType.Indifier)
             {
-                controllVar = currentLex.value;
+                controllVar = currentLex.Value;
                 NextLexeme(ref inputBytes);
-                if (currentLex.type == TypeLexeme.Operation_sign && currentLex.value == ":=")
+                if (currentLex.Type == TokenType.Operation_sign && currentLex.Value == ":=")
                 {
                     if (inputBytes.Length > 0)
                     {
@@ -727,9 +733,9 @@ namespace Compiler
             {
                 throw new Exception("ERROR: expected indifier");
             }
-            if(currentLex.type == TypeLexeme.Key_word && (currentLex.value == "to" || currentLex.value == "downto"))
+            if(currentLex.Type == TokenType.Key_word && (currentLex.Value == "to" || currentLex.Value == "downto"))
             {
-                toOrDownto = currentLex.value;
+                toOrDownto = currentLex.Value;
                 if (inputBytes.Length > 0)
                 {
                     NextLexeme(ref inputBytes);
@@ -745,7 +751,7 @@ namespace Compiler
             {
                 throw new Exception("ERROR: expected 'to' or 'downto'");
             }
-            if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "do")
+            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "do")
             {
                 if (inputBytes.Length > 0)
                 {
@@ -773,11 +779,11 @@ namespace Compiler
             NextLexeme(ref inputBytes);
             condition = ParseLogicalExpression(ref inputBytes);
 
-            if(currentLex.type == TypeLexeme.Key_word && currentLex.value == "then")
+            if(currentLex.Type == TokenType.Key_word && currentLex.Value == "then")
             {
                 NextLexeme(ref inputBytes);
                 Node? statement = ParseStatement(ref inputBytes);
-                if(statement.type == TypeNode.ERROR && currentLex.type == TypeLexeme.Key_word && currentLex.value == "else")
+                if(statement.type == TypeNode.ERROR && currentLex.Type == TokenType.Key_word && currentLex.Value == "else")
                 {
                     statement = null;
                 }
@@ -788,7 +794,7 @@ namespace Compiler
                 throw new Exception("ERROR: expected 'then'");
             }
 
-            if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "else")
+            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "else")
             {
                 NextLexeme(ref inputBytes);
                 elseStatement = new Node(TypeNode.Call, "else", new List<Node?> { ParseStatement(ref inputBytes) });
@@ -810,7 +816,7 @@ namespace Compiler
             NextLexeme(ref inputBytes);
             condition = ParseLogicalExpression(ref inputBytes);
 
-            if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "do")
+            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "do")
             {
                 NextLexeme(ref inputBytes);
                 statement = new Node(TypeNode.Call, "do", new List<Node?> { ParseStatement(ref inputBytes) });
@@ -826,21 +832,21 @@ namespace Compiler
         {
             List<Node?> children = new List<Node?> { };
             NextLexeme(ref inputBytes);
-            if (currentLex.type == TypeLexeme.Indifier)
+            if (currentLex.Type == TokenType.Indifier)
             {
-                children.Add(new Node(TypeNode.Call, currentLex.value, null));
+                children.Add(new Node(TypeNode.Call, currentLex.Value, null));
             }
             else
             {
                 throw new Exception("ERROR: expected indifier");
             }
             NextLexeme(ref inputBytes);
-            while (currentLex.type == TypeLexeme.Separator && currentLex.value == ",")
+            while (currentLex.Type == TokenType.Separator && currentLex.Value == ",")
             {
-                children.Add(new Node(TypeNode.Call, currentLex.value, null));
+                children.Add(new Node(TypeNode.Call, currentLex.Value, null));
                 NextLexeme(ref inputBytes);
             }
-            if (currentLex.type == TypeLexeme.Separator && currentLex.value == ";")
+            if (currentLex.Type == TokenType.Separator && currentLex.Value == ";")
             {
                 NextLexeme(ref inputBytes);
             }
@@ -854,17 +860,17 @@ namespace Compiler
         {
             Node lab;
             lab = new Node(TypeNode.Call, label, null);
-            currentLex.value = ";";
-            currentLex.type = TypeLexeme.Separator;
+            currentLex.Value = ";";
+            currentLex.Type = TokenType.Separator;
             return new Node(TypeNode.Call, ":", new List<Node?> { lab });
         }
         public static Node ParseGoto(ref byte[] inputBytes)
         {
             Node label;
             NextLexeme(ref inputBytes);
-            if (currentLex.type == TypeLexeme.Indifier)
+            if (currentLex.Type == TokenType.Indifier)
             {
-                label = new Node(TypeNode.Call, currentLex.value, null);
+                label = new Node(TypeNode.Call, currentLex.Value, null);
                 NextLexeme(ref inputBytes);
             }
             else
@@ -878,23 +884,23 @@ namespace Compiler
             List<Node?> children = new List<Node?>();
 
             NextLexeme(ref inputBytes);
-            if (!(currentLex.type == TypeLexeme.Key_word && currentLex.value == "until"))
+            if (!(currentLex.Type == TokenType.Key_word && currentLex.Value == "until"))
             {
                 children.Add(ParseStatement(ref inputBytes));
             }
 
-            while (currentLex.type == TypeLexeme.Separator && currentLex.value == ";")
+            while (currentLex.Type == TokenType.Separator && currentLex.Value == ";")
             {
                 NextLexeme(ref inputBytes);
-                if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "until")
+                if (currentLex.Type == TokenType.Key_word && currentLex.Value == "until")
                 {
                     break;
                 }
-                Console.WriteLine(currentLex.value);
+                Console.WriteLine(currentLex.Value);
                 children.Add(ParseStatement(ref inputBytes));
             }
 
-            if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "until")
+            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "until")
             {
                 NextLexeme(ref inputBytes);
                 children.Add(new Node(TypeNode.Call, "until", new List<Node?> { ParseLogicalExpression(ref inputBytes) }));
@@ -909,14 +915,14 @@ namespace Compiler
         public static Node ParseProcedure(ref byte[] inputBytes, string name)
         {
             List<Node?> parameter = new List<Node?>() { };
-            if (currentLex.type == TypeLexeme.Separator && currentLex.value == "(")
+            if (currentLex.Type == TokenType.Separator && currentLex.Value == "(")
             {
                 NextLexeme(ref inputBytes);
-                while (currentLex.type == TypeLexeme.String || currentLex.type == TypeLexeme.Indifier || currentLex.type == TypeLexeme.Integer || currentLex.type == TypeLexeme.Real)
+                while (currentLex.Type == TokenType.String || currentLex.Type == TokenType.Indifier || currentLex.Type == TokenType.Integer || currentLex.Type == TokenType.Real)
                 {
-                    parameter.Add(new Node(TypeNode.Call, currentLex.value, null));
+                    parameter.Add(new Node(TypeNode.Call, currentLex.Value, null));
                     NextLexeme(ref inputBytes);
-                    if (currentLex.type == TypeLexeme.Separator && currentLex.value == ",")
+                    if (currentLex.Type == TokenType.Separator && currentLex.Value == ",")
                     {
                         NextLexeme(ref inputBytes);
                     }
@@ -925,7 +931,7 @@ namespace Compiler
                         break;
                     }
                 }
-                if (currentLex.type == TypeLexeme.Separator && currentLex.value == ")")
+                if (currentLex.Type == TokenType.Separator && currentLex.Value == ")")
                 {
                     NextLexeme(ref inputBytes);
                 }
@@ -943,12 +949,12 @@ namespace Compiler
             {
                 left = ParseLogicalTerm(ref inputBytes, inComparison);
             }
-            while (currentLex.type == TypeLexeme.Key_word && currentLex.value == "or")
+            while (currentLex.Type == TokenType.Key_word && currentLex.Value == "or")
             {
-                Lexeme operation = currentLex;
+                Token operation = currentLex;
                 NextLexeme(ref inputBytes);
                 Node right = ParseLogicalTerm(ref inputBytes, inComparison);
-                left = new Node(TypeNode.BinOperation, operation.value, new List<Node?> { left, right });
+                left = new Node(TypeNode.BinOperation, operation.Value, new List<Node?> { left, right });
                 if (right.type == TypeNode.ERROR)
                 {
                     return new Node(TypeNode.ERROR, right.value, null);
@@ -959,12 +965,12 @@ namespace Compiler
         public static Node ParseLogicalTerm(ref byte[] inputBytes, bool inComparison = false)
         {
             Node left = ParseLogicalFactor(ref inputBytes, inComparison);
-            while (currentLex.type == TypeLexeme.Key_word && currentLex.value == "and")
+            while (currentLex.Type == TokenType.Key_word && currentLex.Value == "and")
             {
-                Lexeme operation = currentLex;
+                Token operation = currentLex;
                 NextLexeme(ref inputBytes);
                 Node right = ParseLogicalFactor(ref inputBytes, inComparison);
-                left = new Node(TypeNode.BinOperation, operation.value, new List<Node?> { left, right });
+                left = new Node(TypeNode.BinOperation, operation.Value, new List<Node?> { left, right });
                 if (right.type == TypeNode.ERROR)
                 {
                     return new Node(TypeNode.ERROR, right.value, null);
@@ -977,7 +983,7 @@ namespace Compiler
             Node left;
             if (inComparison)
             {
-                if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "not")
+                if (currentLex.Type == TokenType.Key_word && currentLex.Value == "not")
                 {
                     NextLexeme(ref inputBytes);
                     left = new Node(TypeNode.UnaryOperation, "not", new List<Node?> { ParseSimpleExpression(ref inputBytes) });
@@ -989,7 +995,7 @@ namespace Compiler
             }
             else
             {
-                if (currentLex.type == TypeLexeme.Key_word && currentLex.value == "not")
+                if (currentLex.Type == TokenType.Key_word && currentLex.Value == "not")
                 {
                     NextLexeme(ref inputBytes);
                     Node not = ParseСomparison(ref inputBytes);
@@ -1013,30 +1019,30 @@ namespace Compiler
         public static Node ParseСomparison(ref byte[] inputBytes)
         {
             Node left;
-            if (currentLex.type == TypeLexeme.String)
+            if (currentLex.Type == TokenType.String)
             {
-                left = new Node(TypeNode.String, currentLex.value, null);
+                left = new Node(TypeNode.String, currentLex.Value, null);
                 NextLexeme(ref inputBytes);
             }
             else
             {
                 left = ParseLogicalExpression(ref inputBytes, inComparison: true);
             }
-            if (currentLex.type == TypeLexeme.Operation_sign && (currentLex.value == "<" || currentLex.value == "<=" || currentLex.value == ">" || currentLex.value == ">=" || currentLex.value == "=" || currentLex.value == "<>"))
+            if (currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "<" || currentLex.Value == "<=" || currentLex.Value == ">" || currentLex.Value == ">=" || currentLex.Value == "=" || currentLex.Value == "<>"))
             {
-                Lexeme operation = currentLex;
+                Token operation = currentLex;
                 NextLexeme(ref inputBytes);
                 Node right;
-                if (operation.type == TypeLexeme.Operation_sign && operation.value == "=" && currentLex.type == TypeLexeme.String)
+                if (operation.Type == TokenType.Operation_sign && operation.Value == "=" && currentLex.Type == TokenType.String)
                 {
-                    right = new Node(TypeNode.String, currentLex.value, null);
+                    right = new Node(TypeNode.String, currentLex.Value, null);
                     NextLexeme(ref inputBytes);
                 }
                 else
                 {
                     right = ParseLogicalExpression(ref inputBytes, inComparison: true);
                 }
-                left = new Node(TypeNode.BinOperation, operation.value, new List<Node?> { left, right });
+                left = new Node(TypeNode.BinOperation, operation.Value, new List<Node?> { left, right });
                 if (right.type == TypeNode.ERROR)
                 {
                     return new Node(TypeNode.ERROR, right.value, null);
@@ -1046,7 +1052,7 @@ namespace Compiler
             {
                 throw new Exception("ERROR: don't have operation sign of comparison");
             }
-            while (notClosedBrackets > 0 && currentLex.type == TypeLexeme.Separator && currentLex.value == ")")
+            while (notClosedBrackets > 0 && currentLex.Type == TokenType.Separator && currentLex.Value == ")")
             {
                 notClosedBrackets -= 1;
                 NextLexeme(ref inputBytes);
@@ -1056,12 +1062,12 @@ namespace Compiler
         public static Node ParseSimpleExpression(ref byte[] inputBytes)
         {
             Node left = ParseTerm(ref inputBytes);
-            while (currentLex.type == TypeLexeme.Operation_sign && (currentLex.value == "+" || currentLex.value == "-"))
+            while (currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "+" || currentLex.Value == "-"))
             {
-                Lexeme operation = currentLex;
+                Token operation = currentLex;
                 NextLexeme(ref inputBytes);
                 Node right = ParseTerm(ref inputBytes);
-                left = new Node(TypeNode.BinOperation, operation.value, new List<Node?> { left, right });
+                left = new Node(TypeNode.BinOperation, operation.Value, new List<Node?> { left, right });
                 if (right.type == TypeNode.ERROR)
                 {
                     return new Node(TypeNode.ERROR, right.value, null);
@@ -1072,9 +1078,9 @@ namespace Compiler
         public static Node ParseTerm(ref byte[] inputBytes)
         {
             Node left = ParseFactor(ref inputBytes, withUnOp: true);
-            while (left.type == TypeNode.Variable && currentLex.type == TypeLexeme.Separator && (currentLex.value == "[" || currentLex.value == "."))
+            while (left.type == TypeNode.Variable && currentLex.Type == TokenType.Separator && (currentLex.Value == "[" || currentLex.Value == "."))
                         {
-                            string separator = currentLex.value;
+                            string separator = currentLex.Value;
                             NextLexeme(ref inputBytes);
                             if (left.children == null)
                             {
@@ -1106,7 +1112,7 @@ namespace Compiler
                 if (inputBytes.Length > 0)
                 {
                     Node checkEnd = ParseFactor(ref inputBytes, withUnOp: true);
-                    if (checkEnd.type != TypeNode.ERROR || (currentLex.type == TypeLexeme.Separator && currentLex.value == ")"))
+                    if (checkEnd.type != TypeNode.ERROR || (currentLex.Type == TokenType.Separator && currentLex.Value == ")"))
                     {
                         NextLexeme(ref inputBytes);
                         Node check = ParseFactor(ref inputBytes);
@@ -1116,9 +1122,9 @@ namespace Compiler
                         }
                     }
                 }
-                while (currentLex.type == TypeLexeme.Operation_sign && (currentLex.value == "*" || currentLex.value == "/"))
+                while (currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "*" || currentLex.Value == "/"))
                 {
-                    Lexeme operation = currentLex;
+                    Token operation = currentLex;
                     NextLexeme(ref inputBytes);
                     Node right = ParseFactor(ref inputBytes, withUnOp: true);
                     if (right.type == TypeNode.ERROR)
@@ -1126,9 +1132,9 @@ namespace Compiler
                         throw new Exception("expected factor");
                     }
                     NextLexeme(ref inputBytes);
-                    while (right.type == TypeNode.Variable && currentLex.type == TypeLexeme.Separator && (currentLex.value == "[" || currentLex.value == "."))
+                    while (right.type == TypeNode.Variable && currentLex.Type == TokenType.Separator && (currentLex.Value == "[" || currentLex.Value == "."))
                     {
-                        string separator = currentLex.value;
+                        string separator = currentLex.Value;
                         NextLexeme(ref inputBytes);
                         if (right.children == null)
                         {
@@ -1155,7 +1161,7 @@ namespace Compiler
                             }
                         }
                     }
-                    left = new Node(TypeNode.BinOperation, operation.value, new List<Node?> { left, right });
+                    left = new Node(TypeNode.BinOperation, operation.Value, new List<Node?> { left, right });
                     if (right.type == TypeNode.ERROR)
                     {
                         return new Node(TypeNode.ERROR, right.value, null);
@@ -1170,7 +1176,7 @@ namespace Compiler
         }
         public static Node ParseFactor(ref byte[] inputBytes, bool withUnOp = false)
         {
-            if (currentLex.type == TypeLexeme.Separator && currentLex.value == "(")
+            if (currentLex.Type == TokenType.Separator && currentLex.Value == "(")
             {
                 Node e;
                 if (inputBytes.Length > 0)
@@ -1182,7 +1188,7 @@ namespace Compiler
                 {
                     throw new Exception("expected ')'");
                 }
-                if(!(currentLex.type == TypeLexeme.Separator && currentLex.value == ")"))
+                if(!(currentLex.Type == TokenType.Separator && currentLex.Value == ")"))
                 {
                     if (inputBytes.Length == 0)
                     {
@@ -1195,20 +1201,20 @@ namespace Compiler
                 }
                 return e;
             }
-            if (currentLex.type == TypeLexeme.Real || currentLex.type == TypeLexeme.Integer)
+            if (currentLex.Type == TokenType.Real || currentLex.Type == TokenType.Integer)
             {
-                Lexeme factor = currentLex;
-                return new Node(TypeNode.Number, factor.value, null);
+                Token factor = currentLex;
+                return new Node(TypeNode.Number, factor.Value, null);
             }
-            if (currentLex.type == TypeLexeme.Indifier)
+            if (currentLex.Type == TokenType.Indifier)
             {
-                Lexeme factor = currentLex;
-                return new Node(TypeNode.Variable, factor.value, null);
+                Token factor = currentLex;
+                return new Node(TypeNode.Variable, factor.Value, null);
             }
 
-            if (withUnOp && (currentLex.type == TypeLexeme.Operation_sign && (currentLex.value == "+" || currentLex.value == "-")))
+            if (withUnOp && (currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "+" || currentLex.Value == "-")))
             {
-                string unOp = currentLex.value;
+                string unOp = currentLex.Value;
                 NextLexeme(ref inputBytes);
                 Node factor = ParseFactor(ref inputBytes);
                 if (factor.type == TypeNode.ERROR)
@@ -1225,14 +1231,14 @@ namespace Compiler
             List<Node?> body = new List<Node?> { };
             body.Add(ParseSimpleExpression(ref inputBytes));
             bool bracketClose = false;
-            while (currentLex.type == TypeLexeme.Separator && (currentLex.value == "," || currentLex.value == "]"))
+            while (currentLex.Type == TokenType.Separator && (currentLex.Value == "," || currentLex.Value == "]"))
             {
-                switch (currentLex.value)
+                switch (currentLex.Value)
                 {
                     case "]":
                         bracketClose = true;
                         NextLexeme(ref inputBytes);
-                        if (currentLex.value == "[")
+                        if (currentLex.Value == "[")
                         {
                             bracketClose = false;
                             NextLexeme(ref inputBytes);
@@ -1253,9 +1259,9 @@ namespace Compiler
         }
         public static Node ParseRecordField(ref byte[] inputBytes)
         {
-            if(currentLex.type == TypeLexeme.Indifier)
+            if(currentLex.Type == TokenType.Indifier)
             {
-                Node field = new Node(TypeNode.Variable, currentLex.value);
+                Node field = new Node(TypeNode.Variable, currentLex.Value);
                 NextLexeme(ref inputBytes);
                 return new Node(TypeNode.UnaryOperation, ".", new List<Node?> { field });
             }

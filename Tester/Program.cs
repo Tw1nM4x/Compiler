@@ -9,12 +9,25 @@ namespace Tester
 {
     static class Menu
     {
-        public static void Main()
+        public static void Main(string[] args)
         {
-            Lexer.CreateTableDFA();
-            Console.WriteLine($"тесты");
-            Console.WriteLine($"Ключи:\n1 - Лексический анализ\n2 - Анализ простейшего выражения\n3 - Синтаксический анализ");
-            string? input = Console.ReadLine();
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Options:");
+                Console.WriteLine("  -help     Display help");
+                return;
+            }
+            if (args.Contains("-help"))
+            {
+                Console.WriteLine("Usage:");
+                Console.WriteLine("  dotnet run [options]");
+                Console.WriteLine("Options:");
+                Console.WriteLine("  -l       lexical parser");
+                Console.WriteLine("  -sp      simple expression parser");
+                Console.WriteLine("  -p       parser (syntax analyzer)");
+                return;
+            }
+            Tester.StartTest(args[0]);
         }
     }
 }
