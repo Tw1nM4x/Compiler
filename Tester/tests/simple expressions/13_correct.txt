@@ -1,1 +1,1 @@
-(1,7) ERROR: expected factor
+(1,6) ERROR: expected factor

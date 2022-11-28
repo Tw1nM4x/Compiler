@@ -39,26 +39,24 @@ namespace Compiler
                         Console.Write($"{token}\r\n");
                     }
                 }
-                if (args[1] == "-par" || args[1] == "-spar")
+                if (args[1] == "-spar")
                 {
-                    Parser parser = new Parser(lexer);
-                    Node firstNode;
-                    if (args[1] == "-par")
+                    SimpleParser sParser = new SimpleParser(lexer);
+                    Node firstNode = sParser.ParseExpression();
+                    if (lexer.LastToken.Type != TokenType.Eof)
                     {
-                        firstNode = parser.ParseProgram(isMain: true);
-                    }
-                    else
-                    {
-                        firstNode = parser.ParseSimpleExpression();
-                        if(lexer.LastToken.Type != TokenType.Eof)
-                        {
-                            throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol, "expected operation sign");
-                        }
+                        throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, "expected operation sign");
                     }
                     Console.Write(firstNode.ToString(new List<bool>()) + "\r\n");
                 }
+                if (args[1] == "-par")
+                {
+                    Parser parser = new Parser(lexer);
+                    Node firstNode = parser.ParseProgram(isMain: true);
+                    Console.Write(firstNode.ToString(new List<bool>()) + "\r\n");
+                }
             }
-            catch(ExceptionWithPosition e)
+            catch (ExceptionWithPosition e)
             {
                 Console.Write($"{e}\r\n");
             }

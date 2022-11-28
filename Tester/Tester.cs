@@ -78,19 +78,20 @@ namespace Tester
                     {
                         try
                         {
-                            Parser parser = new Parser(lexer);
-                            Node firstNode;
-                            if (key == "-par")
+                            Node firstNode = new Node();
+                            if (key == "-spar")
                             {
-                                firstNode = parser.ParseProgram(isMain: true);
-                            }
-                            else
-                            {
-                                firstNode = parser.ParseSimpleExpression();
+                                SimpleParser sParser = new SimpleParser(lexer);
+                                firstNode = sParser.ParseExpression();
                                 if (lexer.LastToken.Type != TokenType.Eof)
                                 {
                                     throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, "expected operation sign");
                                 }
+                            }
+                            if (key == "-par")
+                            {
+                                Parser parser = new Parser(lexer);
+                                firstNode = parser.ParseProgram(isMain: true);
                             }
                             using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
                             {

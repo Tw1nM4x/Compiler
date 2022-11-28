@@ -688,7 +688,6 @@
         public ExpressionNode ParseTerm()
         {
             ExpressionNode left = ParseFactor(withUnOp: true);
-            //throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected operation sign");
             while ((currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "*" || currentLex.Value == "/")) ||
                    (currentLex.Type == TokenType.Key_word && currentLex.Value == "and"))
             {
