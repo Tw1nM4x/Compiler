@@ -1,5 +1,4 @@
-program
-├─── CheckRecord
+program CheckRecord
 ├─── type
 │    └─── =
 │         ├─── t
@@ -7,18 +6,17 @@ program
 │              ├─── :
 │              │    ├─── a
 │              │    └─── string
-│              ├─── :
-│              │    ├─── b
-│              │    └─── integer
-│              └─── end
+│              └─── :
+│                   ├─── b
+│                   └─── integer
 ├─── var
 │    └─── :
 │         ├─── e
 │         └─── t
 └─── begin
      ├─── :=
-     │    ├─── e
-     │    │    └─── .
-     │    │         └─── a
-     │    └─── hello
-     └─── end.
+     │    ├─── .
+     │    │    ├─── e
+     │    │    └─── a
+     │    └─── 'hello'
+     └─── end

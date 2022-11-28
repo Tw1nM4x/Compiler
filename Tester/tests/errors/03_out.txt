@@ -1,1 +1,2 @@
-ERROR: Incorrect lexeme
+1 1 Operation_sign @ @
+1 2 Eof  

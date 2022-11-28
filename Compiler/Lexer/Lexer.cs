@@ -6,7 +6,10 @@ namespace Compiler
     {
         public int CurrentLine = 1;
         public int CurrentSymbol = 1;
-        static string[] keyWords = new string[] { "and", "array", "as", "asm", "begin", "case", "const", "constructor", 
+        public Token LastToken;
+        private const int COUNT_STATUS = 10;
+        private const int COUNT_SYMBOLS = 256;
+        private static string[] keyWords = new string[] { "and", "array", "as", "asm", "begin", "case", "const", "constructor", 
             "destructor", "div", "do", "downto", "else", "end", "file", "for", "foreach", "function", "goto", 
             "implementation", "if", "in", "inherited", "inline", "interface", "label", "mod", "nil", "not", "object", 
             "of", "operator", "or", "packed", "procedure", "program", "record", "repeat", "self", "set", "shl", "shr", 
@@ -14,10 +17,8 @@ namespace Compiler
             "false", "new", "true", "as", "class", "dispinterface", "except", "exports", "finalization", "finally", 
             "initialization", "inline", "is", "library", "on", "out", "packed", "property", "raise", "resourcestring", 
             "threadvar", "try" };
-        const int COUNT_STATUS = 10;
-        const int COUNT_SYMBOLS = 256;
-        static int[,] Table = new int[COUNT_STATUS, COUNT_SYMBOLS];
-        byte[] Input;
+        private static int[,] Table = new int[COUNT_STATUS, COUNT_SYMBOLS];
+        private byte[] Input;
         public Lexer(string path)
         {
             CreateTableDFA();
@@ -29,7 +30,7 @@ namespace Compiler
                 fstream.Read(Input, 0, Input.Length);
             }
         }
-        static TokenType GetTypeLexeme(int index)
+        TokenType GetTokenType(int index)
         {
             switch (index)
             {
@@ -61,25 +62,31 @@ namespace Compiler
                     return TokenType.Eof;
 
             }
-            throw new Exception("Incorrect lexeme");
+            throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
         }
-        /*
-         0 - состояние ошибки (ERROR)
-         1 - состояние начальное
-         2 - состояние String
-         3 - состояние Indifier
-         4 - состояние Integer x10
-         5 - состояние Integer x2
-         6 - состояние Integer x8
-         7 - состояние Integer x16
-         8 - состояние Real
-         9 - состояние String whith Char
-        -------------------------
-         10 - состояние Key_word
-         11 - состояние Eof
-         12 - состояние Operation_sign
-         13 - состояние Separator
-        */
+        int GetIndexTokenType(TokenType token)
+        {
+            switch (token)
+            {
+                case TokenType.String:
+                    return 2;
+                case TokenType.Indifier:
+                    return 3;
+                case TokenType.Integer:
+                    return 4;
+                case TokenType.Real:
+                    return 8;
+                case TokenType.Key_word:
+                    return 10;
+                case TokenType.Eof:
+                    return 11;
+                case TokenType.Operation_sign:
+                    return 12;
+                case TokenType.Separator:
+                    return 13;
+            }
+            return 0;
+        }
         public void CreateTableDFA()
         {
             //string
@@ -116,6 +123,7 @@ namespace Compiler
             Table[1, (int)'/'] = 12;
             Table[1, (int)'>'] = 12;
             Table[1, (int)'<'] = 12;
+            Table[1, (int)'@'] = 12;
             //separator
             Table[1, (int)','] = 13;
             Table[1, (int)';'] = 13;
@@ -186,17 +194,16 @@ namespace Compiler
                 }
                 Array.Resize(ref array, array.Length - countFirstElements);
             }
-
             string GetString(byte[] input, int start, int end)
             {
                 return Encoding.Default.GetString(input[start..end]);
             }
-
             Token Out(ref byte[] inputBytes)
             {
-                Token outLex = new Token(CurrentLine, CurrentSymbol, GetTypeLexeme(statusDFA), GetValueLexeme(GetTypeLexeme(statusDFA), GetString(inputBytes,0,lexemeLenght)), GetString(inputBytes, 0, lexemeLenght));
+                Token outLex = new Token(CurrentLine, CurrentSymbol, GetTokenType(statusDFA), GetValueLexeme(GetTokenType(statusDFA), GetString(inputBytes,0,lexemeLenght)), GetString(inputBytes, 0, lexemeLenght));
                 CutFirstElementsFromArray(ref inputBytes, lexemeLenght);
                 CurrentSymbol += lexemeLenght;
+                LastToken = outLex;
                 return outLex;
             }
 
@@ -242,7 +249,7 @@ namespace Compiler
                         }
                         else
                         {
-                            throw new Exception("Incorrect lexeme");
+                            throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                         }
                         break;
                 }
@@ -273,7 +280,7 @@ namespace Compiler
 
             for (int i = lexemeLenght; i < Input.Length; i++)
             {
-                if (Input[i] == 13 || Input[i] == 10)
+                if (Input[i] == '\n' || Input[i] == '\r')
                 {
                     break;
                 }
@@ -284,7 +291,7 @@ namespace Compiler
                         lexemeLenght += 1;
                         statusDFA = Table[statusDFA, Char.ToLower((char)Input[i])];
                         //string
-                        if (statusDFA == 2 && Input[i] == '\'')
+                        if (statusDFA == GetIndexTokenType(TokenType.String) && Input[i] == '\'')
                         {
                             countQuotesInString += 1;
                             if (countQuotesInString % 2 == 0)
@@ -307,40 +314,36 @@ namespace Compiler
                             }
                         }
                         //if real have '.'
-                        if (statusDFA == 8 && Input[i] == '.')
+                        if (statusDFA == GetIndexTokenType(TokenType.Real) && Input[i] == '.')
                         {
                             if (GetString(Input, 0, Input.Length).Substring(0, lexemeLenght).ToLower().IndexOf('e') != -1)
                             {
-                                throw new Exception("Incorrect lexeme");
+                                throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                             }
                             if ((Input[0] == '%' || Input[0] == '&' || Input[0] == '$') && i + 1 < Input.Length && Input[i + 1] >= '0' && Input[i + 1] <= '9')
                             {
-                                throw new Exception("Incorrect lexeme");
+                                throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                             }
                         }
                         //if real have 'e'
-                        if (statusDFA == 8 && Char.ToLower((char)Input[i]) == 'e')
+                        if (statusDFA == GetIndexTokenType(TokenType.Real) && Char.ToLower((char)Input[i]) == 'e')
                         {
                             if (GetString(Input, 0, lexemeLenght - 1).ToLower().IndexOf('e') != -1)
                             {
-                                throw new Exception("Incorrect lexeme");
+                                throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                             }
                         }
                         //if real have '-' or '+'
-                        if (statusDFA == 8 && (Input[i] == '-' || Input[i] == '+'))
+                        if (statusDFA == GetIndexTokenType(TokenType.Real) && (Input[i] == '-' || Input[i] == '+'))
                         {
                             if (Char.ToLower((char)Input[i - 1]) != 'e')
                             {
-                                throw new Exception("Incorrect lexeme");
+                                throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                             }
                         }
                     }
                     else
                     {
-                        if (lexemeLenght == 0)
-                        {
-                            lexemeLenght = 1;
-                        }
                         break;
                     }
                 }
@@ -350,37 +353,31 @@ namespace Compiler
                 }
             }
             //string
-            if (statusDFA == 2 && countQuotesInString % 2 == 1)
+            if (statusDFA == GetIndexTokenType(TokenType.String) && countQuotesInString % 2 == 1)
             {
-                throw new Exception("Incorrect lexeme");
+                throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
             }
             //if key word or end file
-            if (statusDFA == 3)
+            if (statusDFA == GetIndexTokenType(TokenType.Indifier) && keyWords.Contains(GetString(Input, 0, lexemeLenght).ToLower()))
             {
-                foreach (string keyWord in keyWords)
-                {
-                    if (GetString(Input, 0, lexemeLenght).ToLower() == keyWord)
-                    {
-                        statusDFA = 10;
-                        return Out(ref Input);
-                    }
-                }
+                statusDFA = GetIndexTokenType(TokenType.Key_word);
+                return Out(ref Input);
             }
             //if only % or & or $
             if (statusDFA >= 5 && statusDFA <= 7 && lexemeLenght == 1)
             {
-                throw new Exception("Incorrect lexeme");
+                throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
             }
             //if out system integer
             if (statusDFA >= 4 && statusDFA <= 7 && lexemeLenght < Input.Length)
             {
                 if ((Input[lexemeLenght] >= '0' && Input[lexemeLenght] <= '9') || (Char.ToLower((char)Input[lexemeLenght]) >= 'a' && Char.ToLower((char)Input[lexemeLenght]) <= 'z'))
                 {
-                    throw new Exception("Incorrect lexeme");
+                    throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                 }
             }
             //check real with last 'e' or '-' or '+'
-            if (statusDFA == 8 && (Char.ToLower((char)Input[lexemeLenght - 1]) == 'e' || Input[lexemeLenght - 1] == '-' || Input[lexemeLenght - 1] == '+'))
+            if (statusDFA == GetIndexTokenType(TokenType.Real) && (Char.ToLower((char)Input[lexemeLenght - 1]) == 'e' || Input[lexemeLenght - 1] == '-' || Input[lexemeLenght - 1] == '+'))
             {
                 int offset = 1;
                 if(Input[lexemeLenght - 1] == '-' || Input[lexemeLenght - 1] == '+')
@@ -391,7 +388,7 @@ namespace Compiler
                 {
                     if(Input[lexemeLenght - offset - 1] == '.')
                     {
-                        throw new Exception("Incorrect lexeme");
+                        throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                     }
                     else
                     {
@@ -400,10 +397,10 @@ namespace Compiler
                 }
                 else
                 {
-                    throw new Exception("Incorrect lexeme");
+                    throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                 }
             }
-            if (statusDFA == 12)
+            if (statusDFA == GetIndexTokenType(TokenType.Operation_sign))
             {
                 if (lexemeLenght < Input.Length &&
                     ((Input[lexemeLenght - 1] == '<' && Input[lexemeLenght] == '<') ||
@@ -421,21 +418,21 @@ namespace Compiler
                     lexemeLenght += 1;
                 }
             }
-            if (statusDFA == 13)
+            if (statusDFA == GetIndexTokenType(TokenType.Separator))
             {
                 if (lexemeLenght < Input.Length && (Input[lexemeLenght - 1] == '.' && Input[lexemeLenght] == '.'))
                 { 
                     lexemeLenght += 1;
                 }
             }
-            if (statusDFA == 8 && lexemeLenght < Input.Length && (Input[lexemeLenght - 1] == '.' && Input[lexemeLenght] == '.'))
+            if (statusDFA == GetIndexTokenType(TokenType.Real) && lexemeLenght < Input.Length && (Input[lexemeLenght - 1] == '.' && Input[lexemeLenght] == '.'))
             {
-                statusDFA = 4;
+                statusDFA = GetIndexTokenType(TokenType.Integer);
                 lexemeLenght -= 1;
             }
             return Out(ref Input);
         }
-        public static string GetValueLexeme(TokenType typeLexeme, string lexeme)
+        public string GetValueLexeme(TokenType typeLexeme, string lexeme)
         {
             string valueLexeme = "";
             switch (typeLexeme)
@@ -455,7 +452,7 @@ namespace Compiler
                                     int symbol = Int32.Parse(symbolStr);
                                     if (symbol > 65535)
                                     {
-                                        throw new Exception("Overflow symbol in string");
+                                        throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow symbol in string");
                                     }
                                     valueLexeme += (char)symbol;
                                     symbolStr = "";
@@ -476,7 +473,7 @@ namespace Compiler
                                         int symbol = Int32.Parse(symbolStr);
                                         if (symbol > 65535)
                                         {
-                                            throw new Exception("Overflow symbol in string");
+                                            throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow symbol in string");
                                         }
                                         valueLexeme += (char)symbol;
                                         symbolStr = "";
@@ -501,14 +498,14 @@ namespace Compiler
                             int symbol = Int32.Parse(symbolStr);
                             if (symbol > 65535)
                             {
-                                throw new Exception("Overflow symbol in string");
+                                throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow symbol in string");
                             }
                             valueLexeme += (char)symbol;
                             symbolStr = "";
                         }
                         if (valueLexeme.Length > 255)
                         {
-                            throw new Exception("Overflow string");
+                            throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow string");
                         }
                         break;
                     }
@@ -517,7 +514,7 @@ namespace Compiler
                         valueLexeme = lexeme;
                         if (valueLexeme.Length > 127)
                         {
-                            throw new Exception("Overflow indifier");
+                            throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow indifier");
                         }
                         break;
                     }
@@ -554,7 +551,7 @@ namespace Compiler
                             value = (value * typeInt) + convertChar;
                             if (value > 2147483648)
                             {
-                                throw new Exception("Overflow integer");
+                                throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow integer");
                             }
                         }
                         valueLexeme = value.ToString();

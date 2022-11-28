@@ -1,5 +1,4 @@
-program
-├─── CheckReadAndWrite
+program CheckReadAndWrite
 ├─── var
 │    └─── :
 │         ├─── b
@@ -9,4 +8,4 @@ program
      │    └─── b
      ├─── write
      │    └─── b
-     └─── end.
+     └─── end

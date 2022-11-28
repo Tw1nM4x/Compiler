@@ -1,5 +1,4 @@
-﻿program
-├─── CheckRepeat
+﻿program CheckRepeat
 ├─── var
 │    ├─── :
 │    │    ├─── a
@@ -14,9 +13,8 @@
      ├─── repeat
      │    ├─── :=
      │    │    ├─── b
-     │    │    └─── no
-     │    └─── until
-     │         └─── >
-     │              ├─── a
-     │              └─── 6
-     └─── end.
+     │    │    └─── 'no'
+     │    └─── >
+     │         ├─── a
+     │         └─── 6
+     └─── end

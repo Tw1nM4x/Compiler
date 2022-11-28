@@ -1,5 +1,4 @@
-program
-├─── CheckGoto
+program CheckGoto
 ├─── var
 │    ├─── :
 │    │    ├─── a
@@ -11,10 +10,10 @@ program
 │    └─── a
 └─── begin
      ├─── :
-     │    └─── a
-     ├─── :=
-     │    ├─── b
-     │    └─── true
+     │    ├─── a
+     │    └─── :=
+     │         ├─── b
+     │         └─── 'true'
      ├─── goto
      │    └─── a
-     └─── end.
+     └─── end

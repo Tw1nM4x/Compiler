@@ -1,1 +1,1 @@
-ERROR: Incorrect lexeme
+(2,1) ERROR: Incorrect lexeme

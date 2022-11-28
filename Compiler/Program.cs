@@ -19,17 +19,17 @@ namespace Compiler
             if (args.Contains("-help"))
             {
                 Console.WriteLine("Usage:");
-                Console.WriteLine("  dotnet run [file] [options]");
+                Console.WriteLine("  dotnet run [file] [option]");
                 Console.WriteLine("Options:");
-                Console.WriteLine("  -l       lexical parser");
-                Console.WriteLine("  -sp      simple expression parser");
-                Console.WriteLine("  -p       parser (syntax analyzer)");
+                Console.WriteLine("  -l       Lexical parser");
+                Console.WriteLine("  -spar    Simple expression parser");
+                Console.WriteLine("  -par     Parser (syntax analyzer)");
                 return;
             }
             try
             {
                 Lexer lexer = new Lexer(args[0]);
-                if (args.Contains("-l"))
+                if (args[1] == "-l")
                 {
                     Token token = lexer.GetNextToken();
                     Console.Write($"{token}\r\n");
@@ -39,46 +39,29 @@ namespace Compiler
                         Console.Write($"{token}\r\n");
                     }
                 }
-            }
-            catch(Exception e)
-            {
-                Console.Write($"ERROR: {e.Message}\r\n");
-            }
-            /*string? input = Console.ReadLine();
-            if (input == "1" || input == "2" || input == "3")
-            {
-                Tester.StartTest(input);
-            }
-            if (input == "")
-            {
-                Console.WriteLine($"Введите имя файла (файл в формате .txt должен храниться в папке tests)");
-                string? fileName = Console.ReadLine();
-                string path = $"../../../tests/{fileName}.txt";
-                if (!File.Exists(path))
+                if (args[1] == "-par" || args[1] == "-spar")
                 {
-                    Console.WriteLine($"Такого файла не сущестует");
-                    return;
+                    Parser parser = new Parser(lexer);
+                    Node firstNode;
+                    if (args[1] == "-par")
+                    {
+                        firstNode = parser.ParseProgram(isMain: true);
+                    }
+                    else
+                    {
+                        firstNode = parser.ParseSimpleExpression();
+                        if(lexer.LastToken.Type != TokenType.Eof)
+                        {
+                            throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol, "expected operation sign");
+                        }
+                    }
+                    Console.Write(firstNode.ToString(new List<bool>()) + "\r\n");
                 }
-                Console.WriteLine($"Введите ключ");
-                string? key = Console.ReadLine();
-                switch (key)
-                {
-                    case "1":
-                        SkillCompiler.OutputLexemeParsing(path, "console");
-                        break;
-                    case "2":
-                        SkillCompiler.OutputSimpleExpressionsParsing(path, "console");
-                        break;
-                    case "3":
-                        SkillCompiler.OutputSyntaxParsing(path, "console");
-                        break;
-                    default:
-                        Console.WriteLine($"Такого ключа не существует");
-                        break;
-                }
-                Console.WriteLine("\nЧтобы завершить программу нажмите Enter");
-                Console.ReadLine();
-            }*/
+            }
+            catch(ExceptionWithPosition e)
+            {
+                Console.Write($"{e}\r\n");
+            }
         }
     }
 }

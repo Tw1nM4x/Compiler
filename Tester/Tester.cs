@@ -21,17 +21,17 @@ namespace Tester
         }
         static Folder[] folders = new Folder[] { };
 
-        public static void StartTest(string key)
+        public static void StartTest(string key) 
         {
             switch (key)
             {
                 case "-l":
                     folders = new Folder[] { new("string", 14), new("indifier", 9), new("integer", 19), new("real", 28), new("space", 2), new("comment", 9), new("key word", 4), new("operation sign", 3), new("separator", 3), new("errors", 3) };
                     break;
-                case "-sp":
+                case "-spar":
                     folders = new Folder[] { new("simple expressions", 14) };
                     break;
-                case "-p":
+                case "-par":
                     folders = new Folder[] { new("syntax", 14) };
                     break;
             }
@@ -51,36 +51,59 @@ namespace Tester
                     string pathOut = Environment.CurrentDirectory + $"/tests/{folders[numberFolder].name}/" + $"{numberTestStr}_out.txt";
                     string pathCheck = Environment.CurrentDirectory + $"/tests/{folders[numberFolder].name}/" + $"{numberTestStr}_correct.txt";
                     Lexer lexer = new Lexer(pathIn);
-                    switch (key)
+                    if(key == "-l")
                     {
-                        case "-l":
-                            try
+                        try
+                        {
+                            using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
                             {
-                                using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
+                                Token token = lexer.GetNextToken();
+                                sw.Write($"{token}\r\n");
+                                while (token.Type != TokenType.Eof)
                                 {
-                                    Token token = lexer.GetNextToken();
+                                    token = lexer.GetNextToken();
                                     sw.Write($"{token}\r\n");
-                                    while (token.Type != TokenType.Eof)
-                                    {
-                                        token = lexer.GetNextToken();
-                                        sw.Write($"{token}\r\n");
-                                    }
                                 }
                             }
-                            catch (Exception ex)
+                        }
+                        catch (ExceptionWithPosition ex)
+                        {
+                            using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
                             {
-                                using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
+                                sw.Write($"{ex}\r\n");
+                            }
+                        }
+                    }
+                    if(key == "-spar" || key == "-par")
+                    {
+                        try
+                        {
+                            Parser parser = new Parser(lexer);
+                            Node firstNode;
+                            if (key == "-par")
+                            {
+                                firstNode = parser.ParseProgram(isMain: true);
+                            }
+                            else
+                            {
+                                firstNode = parser.ParseSimpleExpression();
+                                if (lexer.LastToken.Type != TokenType.Eof)
                                 {
-                                    sw.Write($"ERROR: {ex.Message}\r\n");
+                                    throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, "expected operation sign");
                                 }
                             }
-                            break;
-                        case "2":
-                            //SkillCompiler.OutputSimpleExpressionsParsing(pathIn, pathOut);
-                            break;
-                        case "3":
-                            //SkillCompiler.OutputSyntaxParsing(pathIn, pathOut);
-                            break;
+                            using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
+                            {
+                                sw.Write(firstNode.ToString(new List<bool>()) + "\r\n");
+                            }
+                        }
+                        catch (ExceptionWithPosition ex)
+                        {
+                            using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
+                            {
+                                sw.Write($"{ex}\r\n");
+                            }
+                        }
                     }
                     string checkFile;
                     string outFile;
@@ -92,24 +115,7 @@ namespace Tester
                     {
                         outFile = sr.ReadToEnd();
                     }
-
-                    bool flag = true;
-                    if (checkFile.Length != outFile.Length)
-                    {
-                        flag = false;
-                    }
-                    else
-                    {
-                        for (int i = 0; i < checkFile.Length; i++)
-                        {
-                            if (checkFile[i] != outFile[i])
-                            {
-                                flag = false;
-                            }
-                        }
-                    }
-
-                    if (flag)
+                    if (checkFile == outFile)
                     {
                         Console.WriteLine($"{numberTest}-OK");
                         countOK += 1;
@@ -122,8 +128,7 @@ namespace Tester
                 }
             }
             Console.WriteLine($"OK: {countOK}  ERRORS: {countERROR}");
-            Console.WriteLine("-------------------------------");
-            Console.WriteLine("To run detailed tests, type 'go'");
+            Console.WriteLine("\nWrite 'go' to see details");
             string? input = Console.ReadLine();
             if (input == "go")
             {
@@ -137,7 +142,7 @@ namespace Tester
                 Console.WriteLine($"----------{folders[numberFolder].name}----------");
                 for (int numberTest = 1; numberTest <= folders[numberFolder].countTest; numberTest++)
                 {
-                    Console.WriteLine($"{numberTest})\n");
+                    Console.WriteLine($"{numberTest}-----------------------------------\n");
                     string numberTestStr = numberTest.ToString();
                     if (numberTestStr.Length < 2)
                     {
@@ -147,11 +152,17 @@ namespace Tester
                     string pathOut = Environment.CurrentDirectory + $"/tests/{folders[numberFolder].name}/" + $"{numberTestStr}_out.txt";
                     using (StreamReader sr = new StreamReader(pathIn, Encoding.Default))
                     {
-                        Console.WriteLine("In:\n" + sr.ReadToEnd() + "\n");
+                        Console.WriteLine(sr.ReadToEnd() + "\n");
                     }
                     using (StreamReader sr = new StreamReader(pathOut, Encoding.Default))
                     {
-                        Console.WriteLine("Out:\n" + sr.ReadToEnd());
+                        Console.WriteLine(sr.ReadToEnd());
+                    }
+                    Console.WriteLine("Press Enter to continue");
+                    string? input = Console.ReadLine();
+                    if (input != "")
+                    {
+                        return;
                     }
                 }
             }

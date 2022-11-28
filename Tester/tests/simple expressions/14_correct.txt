@@ -1,1 +1,1 @@
-(1,8) ERROR: expected operation sign
+(1,8) ERROR: expected ')'
