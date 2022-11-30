@@ -83,15 +83,26 @@ namespace Tester
                             {
                                 SimpleParser sParser = new SimpleParser(lexer);
                                 firstNode = sParser.ParseExpression();
-                                if (lexer.LastToken.Type != TokenType.Eof)
+                                if (lexer.GetLastToken().Type != TokenType.Eof)
                                 {
                                     throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, "expected operation sign");
                                 }
                             }
                             if (key == "-par")
                             {
-                                Parser parser = new Parser(lexer);
-                                firstNode = parser.ParseProgram(isMain: true);
+                                try
+                                {
+                                    Parser parser = new Parser(lexer);
+                                    firstNode = parser.ParseProgram();
+                                }
+                                catch (ExceptionWithPosition ex)
+                                {
+                                    throw ex;
+                                }
+                                catch (Exception ex)
+                                {
+                                    throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, ex.Message);
+                                }
                             }
                             using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
                             {

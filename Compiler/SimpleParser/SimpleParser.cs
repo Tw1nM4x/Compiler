@@ -19,35 +19,35 @@ namespace Compiler
             this.lexer = lexer;
             NextToken();
         }
-        public ExpressionNode ParseExpression()
+        public NodeExpression ParseExpression()
         {
-            ExpressionNode left = ParseTerm();
+            NodeExpression left = ParseTerm();
             while ((currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "+" || currentLex.Value == "-")))
             {
                 string operation = currentLex.Value;
                 NextToken();
-                ExpressionNode right = ParseTerm();
+                NodeExpression right = ParseTerm();
                 left = new NodeBinOp(operation, left, right);
             }
             return left;
         }
-        public ExpressionNode ParseTerm()
+        public NodeExpression ParseTerm()
         {
-            ExpressionNode left = ParseFactor(withUnOp: true);
+            NodeExpression left = ParseFactor(withUnOp: true);
             while ((currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "*" || currentLex.Value == "/")))
             {
                 string operation = currentLex.Value;
                 NextToken();
-                ExpressionNode right = ParseFactor(withUnOp: true);
+                NodeExpression right = ParseFactor(withUnOp: true);
                 left = new NodeBinOp(operation, left, right);
             }
             return left;
         }
-        public ExpressionNode ParseFactor(bool withUnOp = false)
+        public NodeExpression ParseFactor(bool withUnOp = false)
         {
             if (currentLex.Type == TokenType.Separator && currentLex.Value == "(")
             {
-                ExpressionNode e;
+                NodeExpression e;
                 NextToken();
                 if (currentLex.Type != TokenType.Eof)
                 {
@@ -100,10 +100,10 @@ namespace Compiler
             }
             if (currentLex.Type == TokenType.Indifier)
             {
-                ExpressionNode ans;
+                NodeExpression ans;
                 Token factor = currentLex;
                 NextToken();
-                ans = new NodeVar(factor.Value);
+                ans = new NodeVar(new SymVar(factor.Value, new SymType("var")));
                 return ans;
             }
 

@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Compiler
 {
-    public class StatementNode : Node { }
-    public class NullStmt : StatementNode
+    public class NodeStatement : Node { }
+    public class NullStmt : NodeStatement
     {
         public NullStmt() { }
         public override string ToString(List<bool> isLeftParents)
@@ -15,13 +15,13 @@ namespace Compiler
             return "";
         }
     }
-    public class LabelStmt : StatementNode
+    public class LabelStmt : NodeStatement
     {
-        NodeVar name;
-        StatementNode stmt;
-        public LabelStmt(NodeVar name, StatementNode stmt)
+        NodeVar var_;
+        NodeStatement stmt;
+        public LabelStmt(NodeVar name, NodeStatement stmt)
         {
-            this.name = name;
+            this.var_ = name;
             this.stmt = stmt;
         }
         public override string ToString(List<bool> isLeftParents)
@@ -29,17 +29,17 @@ namespace Compiler
             string res;
             string prefix = GetPrefixNode(isLeftParents);
             res = $":\r\n";
-            res += prefix + $"├─── {name.ToString(ListAddRight(isLeftParents))}\r\n";
+            res += prefix + $"├─── {var_.ToString(ListAddRight(isLeftParents))}\r\n";
             res += prefix + $"└─── {stmt.ToString(ListAddRight(isLeftParents))}";
             return res;
         }
     }
-    public class AssignmentStmt : StatementNode
+    public class AssignmentStmt : NodeStatement
     {
         string opname;
-        ExpressionNode left;
-        ExpressionNode right;
-        public AssignmentStmt(string opname, ExpressionNode left, ExpressionNode right)
+        NodeExpression left;
+        NodeExpression right;
+        public AssignmentStmt(string opname, NodeExpression left, NodeExpression right)
         {
             this.opname = opname;
             this.left = left;
@@ -55,25 +55,30 @@ namespace Compiler
             return res;
         }
     }
-    public class CallStmt : StatementNode
+    public class CallStmt : NodeStatement
     {
-        string name;
-        List<ExpressionNode?>? args;
-        public CallStmt(string name, List<ExpressionNode?>? arg)
+        SymProc proc;
+        List<NodeExpression?>? args;
+        public CallStmt(Symbol proc, List<NodeExpression?>? arg)
         {
-            this.name = name;
+            this.proc = (SymProc) proc;
+            this.args = arg;
+        }
+        public CallStmt(SymProc proc, List<NodeExpression?>? arg)
+        {
+            this.proc = proc;
             this.args = arg;
         }
         public override string ToString(List<bool> isLeftParents)
         {
             string res;
             string prefix = GetPrefixNode(isLeftParents);
-            res = $"{name}";
+            res = $"{proc.GetName()}";
             if (args != null && args.Count > 0)
             {
                 res += $"\r\n";
                 int i = 1;
-                foreach (ExpressionNode? arg in args)
+                foreach (NodeExpression? arg in args)
                 {
                     if (i == args.Count)
                     {
@@ -95,28 +100,12 @@ namespace Compiler
             return res;
         }
     }
-    public class GotoStmt : StatementNode
+    public class IfStmt : NodeStatement
     {
-        ExpressionNode label;
-        public GotoStmt(ExpressionNode label)
-        {
-            this.label = label;
-        }
-        public override string ToString(List<bool> isLeftParents)
-        {
-            string res;
-            string prefix = GetPrefixNode(isLeftParents);
-            res = $"goto\r\n";
-            res += prefix + $"└─── {label.ToString(ListAddRight(isLeftParents))}";
-            return res;
-        }
-    }
-    public class IfStmt : StatementNode
-    {
-        ExpressionNode condition;
-        StatementNode body;
-        StatementNode elseBody;
-        public IfStmt(ExpressionNode condition, StatementNode body, StatementNode elseBody)
+        NodeExpression condition;
+        NodeStatement body;
+        NodeStatement elseBody;
+        public IfStmt(NodeExpression condition, NodeStatement body, NodeStatement elseBody)
         {
             this.condition = condition;
             this.body = body;
@@ -133,11 +122,11 @@ namespace Compiler
             return res;
         }
     }
-    public class WhileStmt : StatementNode
+    public class WhileStmt : NodeStatement
     {
-        ExpressionNode condition;
-        StatementNode body;
-        public WhileStmt(ExpressionNode condition, StatementNode body)
+        NodeExpression condition;
+        NodeStatement body;
+        public WhileStmt(NodeExpression condition, NodeStatement body)
         {
             this.condition = condition;
             this.body = body;
@@ -152,14 +141,14 @@ namespace Compiler
             return res;
         }
     }
-    public class ForStmt : StatementNode
+    public class ForStmt : NodeStatement
     {
         NodeVar controlVar;
-        ExpressionNode initialVal;
+        NodeExpression initialVal;
         string toOrDownto;
-        ExpressionNode finalVal;
-        StatementNode body;
-        public ForStmt(NodeVar controlVar, ExpressionNode initialVal, string toOrDownto, ExpressionNode finalVal, StatementNode body)
+        NodeExpression finalVal;
+        NodeStatement body;
+        public ForStmt(NodeVar controlVar, NodeExpression initialVal, string toOrDownto, NodeExpression finalVal, NodeStatement body)
         {
             this.controlVar = controlVar;
             this.initialVal = initialVal;
@@ -181,11 +170,11 @@ namespace Compiler
             return res;
         }
     }
-    public class RepeatStmt : StatementNode
+    public class RepeatStmt : NodeStatement
     {
-        ExpressionNode condition;
-        List<StatementNode> body;
-        public RepeatStmt(List<StatementNode> body, ExpressionNode condition)
+        NodeExpression condition;
+        List<NodeStatement> body;
+        public RepeatStmt(List<NodeStatement> body, NodeExpression condition)
         {
             this.condition = condition;
             this.body = body;
@@ -195,7 +184,7 @@ namespace Compiler
             string res;
             string prefix = GetPrefixNode(isLeftParents);
             res = $"repeat\r\n";
-            foreach (StatementNode? stmt in body)
+            foreach (NodeStatement? stmt in body)
             {
                 res += prefix + $"├─── {stmt.ToString(ListAddLeft(isLeftParents))}\r\n";
             }
@@ -203,24 +192,10 @@ namespace Compiler
             return res;
         }
     }
-    public class CommandStmt : StatementNode
+    public class BlockStmt : NodeStatement
     {
-        string name;
-        public CommandStmt(string name)
-        {
-            this.name = name;
-        }
-        public override string ToString(List<bool> isLeftParents)
-        {
-            string res;
-            res = $"{name}";
-            return res;
-        }
-    }
-    public class BlockStmt : StatementNode
-    {
-        List<StatementNode> body;
-        public BlockStmt(List<StatementNode> body)
+        List<NodeStatement> body;
+        public BlockStmt(List<NodeStatement> body)
         {
             this.body = body;
         }
@@ -230,7 +205,7 @@ namespace Compiler
             string prefix = GetPrefixNode(isLeftParents);
             isLeftParents.Add(true);
             res = $"begin\r\n";
-            foreach (StatementNode? stmt in body)
+            foreach (NodeStatement? stmt in body)
             {
                 res += prefix + $"├─── {stmt.ToString(isLeftParents)}\r\n";
             }

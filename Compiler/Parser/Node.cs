@@ -39,12 +39,12 @@ namespace Compiler
             return newList;
         }
     }
-    public class MainProgramNode : Node 
+    public class NodeMainProgram : Node 
     {
         string? name;
-        List<TypesNode?> types;
+        List<NodeDefs> types;
         BlockStmt body;
-        public MainProgramNode(string? name, List<TypesNode?> types, BlockStmt body)
+        public NodeMainProgram(string? name, List<NodeDefs> types, BlockStmt body)
         {
             this.name = name;
             this.types = types;
@@ -55,22 +55,19 @@ namespace Compiler
             string res;
             string prefix = GetPrefixNode(isLeftParents);
             res = $"program {name}\r\n";
-            foreach (TypesNode? type in types)
+            foreach (NodeDefs type in types)
             {
-                if(type != null)
-                {
-                    res += prefix + $"├─── {type.ToString(ListAddLeft(isLeftParents))}\r\n";
-                }
+                res += prefix + $"├─── {type.ToString(ListAddLeft(isLeftParents))}\r\n";
             }
             res += prefix + $"└─── {body.ToString(ListAddRight(isLeftParents))}";
             return res;
         }
     }
-    public class ProgramNode : Node
+    public class NodeProgram : Node
     {
-        List<TypesNode?> types;
+        List<NodeDefs?> types;
         BlockStmt body;
-        public ProgramNode(List<TypesNode?> types, BlockStmt body)
+        public NodeProgram(List<NodeDefs?> types, BlockStmt body)
         {
             this.types = types;
             this.body = body;
@@ -80,7 +77,7 @@ namespace Compiler
             string res;
             string prefix = GetPrefixNode(isLeftParents);
             res = $"program\r\n";
-            foreach (TypesNode? type in types)
+            foreach (NodeDefs? type in types)
             {
                 if (type != null)
                 {

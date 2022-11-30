@@ -6,9 +6,13 @@ using System.Threading.Tasks;
 
 namespace Compiler
 {
-    public class Symbol
+    public class Symbol : Node
     {
         string name;
+        public string GetName()
+        {
+            return name;
+        }
         public Symbol(string name)
         {
             this.name = name;
@@ -17,6 +21,16 @@ namespace Compiler
     public class SymVar : Symbol
     {
         SymType type;
+        public SymType GetTypeVar()
+        {
+            SymType buildsType = type;
+            while (buildsType.GetType().Name == "SymTypeAlias")
+            {
+                SymTypeAlias symTypeAlias = (SymTypeAlias)type;
+                buildsType = symTypeAlias.GetOriginalType();
+            }
+            return buildsType;
+        }
         public SymVar(string name, SymType type) : base(name)
         {
             this.type = type;
@@ -24,11 +38,11 @@ namespace Compiler
     }
     public class SymParamVar : SymVar
     {
-        public SymParamVar(string name, SymType type) : base(name, type) { }
+        public SymParamVar(SymVar var) : base(var.GetName(), var.GetTypeVar()) { }
     }
     public class SymParamOut : SymVar
     {
-        public SymParamOut(string name, SymType type) : base(name, type) { }
+        public SymParamOut(SymVar var) : base(var.GetName(), var.GetTypeVar()) { }
     }
     public class SymVarConst : SymVar
     {
@@ -44,14 +58,37 @@ namespace Compiler
     }
     public class SymProc : Symbol
     {
-        SymTable parameters;
+        bool unlimitedParameters = false;
+        SymTable params_;
         SymTable locals;
         BlockStmt body;
-        public SymProc(string name, SymTable parameters, SymTable locals, BlockStmt body) : base(name)
+        public int GetCountParams()
         {
-            this.parameters = parameters;
+            if (unlimitedParameters)
+            {
+                return -1;
+            }
+            else
+            {
+                return params_.GetSize();
+            }
+        }
+        public BlockStmt GetBody()
+        {
+            return body;
+        }
+        public SymProc(string name, SymTable params_, SymTable locals, BlockStmt body) : base(name)
+        {
+            this.params_ = params_;
             this.locals = locals;
             this.body = body;
+        }
+        public SymProc(string name) : base(name)
+        {
+            unlimitedParameters = true;
+            this.params_ = new SymTable(new Dictionary<string, Symbol>());
+            this.locals = new SymTable(new Dictionary<string, Symbol>());
+            this.body = new BlockStmt(new List<NodeStatement>());
         }
     }
 }

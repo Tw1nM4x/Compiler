@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Compiler
 {
-    public class TypesNode : Node { }
-    public class ConstTypesNode : TypesNode 
+    public class NodeDefs : Node { }
+    public class ConstTypesNode : NodeDefs 
     {
         List<ConstDeclarationNode> body;
         public ConstTypesNode(List<ConstDeclarationNode> body)
@@ -41,7 +41,7 @@ namespace Compiler
             return res;
         }
     }
-    public class VarTypesNode : TypesNode
+    public class VarTypesNode : NodeDefs
     {
         List<VarDeclarationNode> body;
         public VarTypesNode(List<VarDeclarationNode> body)
@@ -75,7 +75,7 @@ namespace Compiler
             return res;
         }
     }
-    public class TypeTypesNode : TypesNode
+    public class TypeTypesNode : NodeDefs
     {
         List<DeclarationNode> body;
         public TypeTypesNode(List<DeclarationNode> body)
@@ -109,78 +109,51 @@ namespace Compiler
             return res;
         }
     }
-    public class LabelTypesNode : TypesNode
+    public class ProcedureTypesNode : NodeDefs
     {
-        List<string> body;
-        public LabelTypesNode(List<string> body)
+        List<VarDeclarationNode> params_;
+        List<NodeDefs> localsTypes;
+        SymProc symProc;
+        public ProcedureTypesNode(List<VarDeclarationNode> params_, List<NodeDefs> localsTypes, SymProc symProc)
         {
-            this.body = body;
+            this.params_ = params_;
+            this.localsTypes = localsTypes;
+            this.symProc = symProc;
         }
         public override string ToString(List<bool> isLeftParents)
         {
             string res;
             string prefix = GetPrefixNode(isLeftParents);
-            res = $"label\r\n";
-            int i = 1;
-            foreach (string el in body)
-            {
-                if (i == body.Count)
-                {
-                    if (el != null)
-                    {
-                        res += prefix + $"└─── {el}";
-                    }
-                }
-                else
-                {
-                    if (el != null)
-                    {
-                        res += prefix + $"├─── {el}\r\n";
-                    }
-                    i++;
-                }
-            }
-            return res;
-        }
-    }
-    public class ProcedureTypesNode : TypesNode
-    {
-        string name;
-        List<DeclarationNode> param;
-        Node program;
-        public ProcedureTypesNode(string name, List<DeclarationNode> param, Node program)
-        {
-            this.name = name;
-            this.param = param;
-            this.program = program;
-        }
-        public override string ToString(List<bool> isLeftParents)
-        {
-            string res;
-            string prefix = GetPrefixNode(isLeftParents);
-            res = $"procedure\r\n";
-            res += prefix + $"├─── {name}\r\n";
-            foreach(DeclarationNode el in param)
+            res = $"procedure {symProc.GetName()}\r\n";
+            foreach (VarDeclarationNode el in params_)
             {
                 res += prefix + $"├─── {el.ToString(ListAddLeft(isLeftParents))}\r\n";
             }
-            res += prefix + $"└─── {program.ToString(ListAddRight(isLeftParents))}";
+            foreach (NodeDefs? el in localsTypes)
+            {
+                res += prefix + $"├─── {el.ToString(ListAddLeft(isLeftParents))}\r\n";
+            }
+            res += prefix + $"└─── {symProc.GetBody().ToString(ListAddRight(isLeftParents))}";
             return res;
         }
     }
     public class DeclarationNode : Node { }
     public class VarDeclarationNode : DeclarationNode
     {
-        List<string> name;
-        TypeNode type;
-        ExpressionNode? value = null;
-        public ExpressionNode? GetValue()
+        List<SymVar> vars;
+        SymType type;
+        NodeExpression? value = null;
+        public List<SymVar> GetVars()
+        {
+            return vars;
+        }
+        public NodeExpression? GetValue()
         {
             return value;
         }
-        public VarDeclarationNode(List<string> name, TypeNode type, ExpressionNode? value)
+        public VarDeclarationNode(List<SymVar> name, SymType type, NodeExpression? value)
         {
-            this.name = name;
+            this.vars = name;
             this.type = type;
             this.value = value;
         }
@@ -189,11 +162,20 @@ namespace Compiler
             string res;
             string prefix = GetPrefixNode(isLeftParents);
             res = $":\r\n";
-            foreach (string el in name)
+            if(vars.Count > 1)
             {
-                res += prefix + $"├─── {el}\r\n";
+                res += prefix + $"├─── \r\n";
+                for (int i = 0; i < vars.Count - 1; i++)
+                {
+                    res += prefix + $"│    ├─── {vars[i].GetName()}\r\n";
+                }
+                res += prefix + $"│    └─── {vars[^1].GetName()}\r\n";
             }
-            if(value != null)
+            else
+            {
+                res += prefix + $"├─── {vars[0].GetName()}\r\n";
+            }
+            if (value != null)
             {
                 res += prefix + $"├─── {type.ToString(ListAddLeft(isLeftParents))}\r\n";
                 res += prefix + $"└─── =\r\n" +
@@ -206,27 +188,11 @@ namespace Compiler
             return res;
         }
     }
-    public class RefVarDeclarationNode : DeclarationNode
-    {
-        VarDeclarationNode body;
-        public RefVarDeclarationNode(VarDeclarationNode body)
-        {
-            this.body = body;
-        }
-        public override string ToString(List<bool> isLeftParents)
-        {
-            string res;
-            string prefix = GetPrefixNode(isLeftParents);
-            res = $"var\r\n";
-            res += prefix + $"└─── {body.ToString(ListAddRight(isLeftParents))}";
-            return res;
-        }
-    }
     public class TypeDeclarationNode : DeclarationNode
     {
         string name;
-        TypeNode type;
-        public TypeDeclarationNode(string name, TypeNode type)
+        SymTypeAlias type;
+        public TypeDeclarationNode(string name, SymTypeAlias type)
         {
             this.name = name;
             this.type = type;
@@ -237,15 +203,15 @@ namespace Compiler
             string prefix = GetPrefixNode(isLeftParents);
             res = $"=\r\n";
             res += prefix + $"├─── {name}\r\n";
-            res += prefix + $"└─── {type.ToString(ListAddRight(isLeftParents))}";
+            res += prefix + $"└─── {type.GetOriginalType().ToString(ListAddRight(isLeftParents))}";
             return res;
         }
     }
     public class ConstDeclarationNode : DeclarationNode
     {
         string name;
-        ExpressionNode value;
-        public ConstDeclarationNode(string name, ExpressionNode value)
+        NodeExpression value;
+        public ConstDeclarationNode(string name, NodeExpression value)
         {
             this.name = name;
             this.value = value;

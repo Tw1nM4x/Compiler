@@ -2,7 +2,7 @@ const
 a = 5;
 b = 'hello';
 c = 5.5e10;
-a = c;
+d = c;
 
 begin
 ;

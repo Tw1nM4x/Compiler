@@ -9,6 +9,10 @@ namespace Compiler
     public class SymType : Symbol
     {
         public SymType(string name) : base(name) { }
+        public override string ToString(List<bool> isLeftParents)
+        {
+            return $"{GetName()}";
+        }
     }
     public class SymInteger : SymType
     {
@@ -22,16 +26,53 @@ namespace Compiler
     {
         public SymString(string name) : base(name) { }
     }
+    public class SymBoolean : SymType
+    {
+        public SymBoolean(string name) : base(name) { }
+    }
     public class SymArray : SymType
     {
-        SymType elem;
-        int low;
-        int hi;
-        public SymArray(string name, SymType elem, int low, int hi) : base(name)
+        List<OrdinalTypeNode> ordinalTypes;
+        SymType type;
+        public List<OrdinalTypeNode> GetOrdinalTypeNode()
         {
-            this.elem = elem;
-            this.low = low;
-            this.hi = hi;
+            return ordinalTypes;
+        }
+        public SymArray(string name, List<OrdinalTypeNode> ordinalTypes, SymType type) : base(name)
+        {
+            this.ordinalTypes = ordinalTypes;
+            this.type = type;
+        }
+        public override string ToString(List<bool> isLeftParents)
+        {
+            string res;
+            string prefix = GetPrefixNode(isLeftParents);
+            res = $"array\r\n";
+            foreach (OrdinalTypeNode ordinalType in ordinalTypes)
+            {
+                res += prefix + $"├─── {ordinalType.ToString(ListAddLeft(isLeftParents))}\r\n";
+            }
+            res += prefix + $"└─── {type.ToString(ListAddRight(isLeftParents))}";
+            return res;
+        }
+    }
+    public class OrdinalTypeNode : Node
+    {
+        NodeExpression from;
+        NodeExpression to;
+        public OrdinalTypeNode(NodeExpression from, NodeExpression to)
+        {
+            this.from = from;
+            this.to = to;
+        }
+        public override string ToString(List<bool> isLeftParents)
+        {
+            string res;
+            string prefix = GetPrefixNode(isLeftParents);
+            res = $"..\r\n";
+            res += prefix + $"├─── {from.ToString(ListAddLeft(isLeftParents))}\r\n";
+            res += prefix + $"└─── {to.ToString(ListAddRight(isLeftParents))}";
+            return res;
         }
     }
     public class SymRecord : SymType
@@ -41,13 +82,49 @@ namespace Compiler
         {
             this.fields = fields;
         }
+        public override string ToString(List<bool> isLeftParents)
+        {
+            string res;
+            string prefix = GetPrefixNode(isLeftParents);
+            res = $"record \r\n";
+            List<Symbol> symFields = new List<Symbol>(fields.GetData().Values);
+            int i = 1;
+            foreach (Symbol symField in symFields)
+            {
+                SymVar varField = (SymVar)symField;
+                if (i == symFields.Count)
+                {
+                    res += prefix + $"└─── {varField.GetName()}\r\n";
+                    res += prefix + $"     └─── {varField.GetTypeVar().ToString(ListAddRight(ListAddRight(isLeftParents)))}";
+                }
+                else
+                {
+                    res += prefix + $"├─── {varField.GetName()}\r\n";
+                    res += prefix + $"│    └─── {varField.GetTypeVar().ToString(ListAddLeft(ListAddRight(isLeftParents)))}\r\n";
+                    i++;
+                }
+            }
+            return res;
+        }
     }
     public class SymTypeAlias : SymType
     {
         SymType original;
+        public SymType GetOriginalType()
+        {
+            return original;
+        }
         public SymTypeAlias(string name, SymType original) : base(name)
         {
             this.original = original;
+        }
+        public override string ToString(List<bool> isLeftParents)
+        {
+            string res;
+            string prefix = GetPrefixNode(isLeftParents);
+            res = $"{GetName()}\r\n";
+            res += prefix + $"└─── {original.ToString(ListAddRight(isLeftParents))}";
+            return res;
         }
     }
 }

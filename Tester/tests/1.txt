@@ -1,2 +1,9 @@
+program FirstTime;
+type c = integer;
+var a:integer;
+var b:c;
 begin
+	a += b;
+	write(a,'hello');
+	read(a);
 end.

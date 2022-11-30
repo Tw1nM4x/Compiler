@@ -6,7 +6,7 @@ namespace Compiler
     {
         public int CurrentLine = 1;
         public int CurrentSymbol = 1;
-        public Token LastToken;
+        Token lastToken;
         private const int COUNT_STATUS = 10;
         private const int COUNT_SYMBOLS = 256;
         private static string[] keyWords = new string[] { "and", "array", "as", "asm", "begin", "case", "const", "constructor", 
@@ -29,6 +29,10 @@ namespace Compiler
                 this.Input = new byte[fstream.Length];
                 fstream.Read(Input, 0, Input.Length);
             }
+        }
+        public Token GetLastToken()
+        {
+            return lastToken;
         }
         TokenType GetTokenType(int index)
         {
@@ -203,7 +207,7 @@ namespace Compiler
                 Token outLex = new Token(CurrentLine, CurrentSymbol, GetTokenType(statusDFA), GetValueLexeme(GetTokenType(statusDFA), GetString(inputBytes,0,lexemeLenght)), GetString(inputBytes, 0, lexemeLenght));
                 CutFirstElementsFromArray(ref inputBytes, lexemeLenght);
                 CurrentSymbol += lexemeLenght;
-                LastToken = outLex;
+                lastToken = outLex;
                 return outLex;
             }
 
@@ -511,7 +515,7 @@ namespace Compiler
                     }
                 case TokenType.Indifier:
                     {
-                        valueLexeme = lexeme;
+                        valueLexeme = lexeme.ToLower();
                         if (valueLexeme.Length > 127)
                         {
                             throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow indifier");

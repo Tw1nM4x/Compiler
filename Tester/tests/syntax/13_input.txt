@@ -4,7 +4,7 @@ b,c : string;
 procedure pr(d,e:string; var i:integer);
 var c: integer;
 begin
-	if c = 'hello' then c := 0 else i := 1;
+	if c = 'hello' then c := '' else a := 1;
 end;
 begin
 	pr(b,c,a);

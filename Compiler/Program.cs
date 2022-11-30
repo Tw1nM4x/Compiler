@@ -43,7 +43,7 @@ namespace Compiler
                 {
                     SimpleParser sParser = new SimpleParser(lexer);
                     Node firstNode = sParser.ParseExpression();
-                    if (lexer.LastToken.Type != TokenType.Eof)
+                    if (lexer.GetLastToken().Type != TokenType.Eof)
                     {
                         throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, "expected operation sign");
                     }
@@ -51,9 +51,20 @@ namespace Compiler
                 }
                 if (args[1] == "-par")
                 {
-                    Parser parser = new Parser(lexer);
-                    Node firstNode = parser.ParseProgram(isMain: true);
-                    Console.Write(firstNode.ToString(new List<bool>()) + "\r\n");
+                    try
+                    {
+                        Parser parser = new Parser(lexer);
+                        Node firstNode = parser.ParseProgram();
+                        Console.Write(firstNode.ToString(new List<bool>()) + "\r\n");
+                    }
+                    catch (ExceptionWithPosition ex)
+                    {
+                        throw ex;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, ex.Message);
+                    }
                 }
             }
             catch (ExceptionWithPosition e)

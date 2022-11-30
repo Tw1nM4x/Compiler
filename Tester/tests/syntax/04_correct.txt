@@ -1,4 +1,4 @@
-﻿program Hello
+﻿program hello
 ├─── const
 │    └─── =
 │         ├─── b
@@ -11,6 +11,7 @@
 │    └─── :
 │         ├─── a
 │         └─── t
+│              └─── string
 └─── begin
      ├─── 
      └─── end
