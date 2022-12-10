@@ -17,8 +17,26 @@ namespace Compiler
             "false", "new", "true", "as", "class", "dispinterface", "except", "exports", "finalization", "finally", 
             "initialization", "inline", "is", "library", "on", "out", "packed", "property", "raise", "resourcestring", 
             "threadvar", "try" };
-        private static int[,] Table = new int[COUNT_STATUS, COUNT_SYMBOLS];
-        private byte[] Input;
+        private static int[,] tableDFA = new int[COUNT_STATUS, COUNT_SYMBOLS];
+        private byte[] input;
+        enum StatusDFA
+        {
+            Error = 0,
+            StartStatus = 1,
+            String = 2,
+            Indifier = 3,
+            Integer10 = 4,
+            Integer2 = 5,
+            Integer8 = 6,
+            Integer16 = 7,
+            Real = 8,
+            String_with_Char = 9,
+            Key_word = 10,
+            Eof = 11,
+            Operation_sign = 12,
+            Separator = 13,
+            Eof_ = 14
+        }
         public Lexer(string path)
         {
             CreateTableDFA();
@@ -26,13 +44,157 @@ namespace Compiler
             CurrentSymbol = 1;
             using (FileStream fstream = File.OpenRead(path))
             {
-                this.Input = new byte[fstream.Length];
-                fstream.Read(Input, 0, Input.Length);
+                this.input = new byte[fstream.Length];
+                fstream.Read(input, 0, input.Length);
             }
         }
         public Token GetLastToken()
         {
             return lastToken;
+        }
+        static OperationSign GetEnumOperationSign(string operationSignStr)
+        {
+            switch (operationSignStr)
+            {
+                case "=":
+                    return OperationSign.Equal;
+                case ":":
+                    return  OperationSign.Colon;
+                case "+":
+                    return  OperationSign.Plus;
+                case "-":
+                    return  OperationSign.Minus;
+                case "*":
+                    return  OperationSign.Multiply;
+                case "/":
+                    return  OperationSign.Divide;
+                case ">":
+                    return  OperationSign.Greater;
+                case "<":
+                    return  OperationSign.Less;
+                case "@":
+                    return  OperationSign.At;
+                case "<<":
+                    return  OperationSign.BitwiseShiftToTheLeft;
+                case ">>":
+                    return  OperationSign.BitwiseShiftToTheRight;
+                case "<>":
+                    return  OperationSign.NotEqual;
+                case "><":
+                    return  OperationSign.SymmetricalDifference;
+                case "<=":
+                    return  OperationSign.LessOrEqual;
+                case ">=":
+                    return  OperationSign.GreaterOrEqual;
+                case ":=":
+                    return  OperationSign.Assignment;
+                case "+=":
+                    return  OperationSign.Addition;
+                case "-=":
+                    return  OperationSign.Subtraction;
+                case "*=":
+                    return  OperationSign.Multiplication;
+                case "/=":
+                    return  OperationSign.Division;
+                default:
+                    return OperationSign.Unidentified;
+            }
+        }
+        public static string GetStrOperationSign(OperationSign operationSignOs)
+        {
+            switch (operationSignOs)
+            {
+                case OperationSign.Equal:
+                    return "=";
+                case OperationSign.Colon:
+                    return ":";
+                case OperationSign.Plus:
+                    return "+";
+                case OperationSign.Minus:
+                    return "-";
+                case OperationSign.Multiply:
+                    return "*";
+                case OperationSign.Divide:
+                    return "/";
+                case OperationSign.Greater:
+                    return "<";
+                case OperationSign.Less:
+                    return ">";
+                case OperationSign.At:
+                    return "@";
+                case OperationSign.BitwiseShiftToTheLeft:
+                    return "<<";
+                case OperationSign.BitwiseShiftToTheRight:
+                    return ">>";
+                case OperationSign.NotEqual:
+                    return "<>";
+                case OperationSign.SymmetricalDifference:
+                    return "><";
+                case OperationSign.LessOrEqual:
+                    return "<=";
+                case OperationSign.GreaterOrEqual:
+                    return ">=";
+                case OperationSign.Assignment:
+                    return ";=";
+                case OperationSign.Addition:
+                    return "+=";
+                case OperationSign.Subtraction:
+                    return "-=";
+                case OperationSign.Multiplication:
+                    return "*=";
+                case OperationSign.Division:
+                    return "/=";
+                default:
+                    return "";
+            }
+        }
+        static Separator GetEnumSeparator(string operationSignStr)
+        {
+            switch (operationSignStr)
+            {
+                case ",":
+                    return Separator.Сomma;
+                case ";":
+                    return Separator.Semiсolon;
+                case "(":
+                    return Separator.OpenParenthesis;
+                case ")":
+                    return Separator.CloseParenthesis;
+                case "[":
+                    return Separator.OpenBracket;
+                case "]":
+                    return Separator.CloswBracket;
+                case ".":
+                    return Separator.Point;
+                case "..":
+                    return Separator.DoublePoint;
+                default:
+                    return Separator.Unidentified;
+            }
+        }
+        public static string GetStrSeparator(Separator operationSignOs)
+        {
+            switch (operationSignOs)
+            {
+                case Separator.Сomma:
+                    return ",";
+                case Separator.Semiсolon:
+                    return ";";
+                case Separator.OpenParenthesis:
+                    return "(";
+                case Separator.CloseParenthesis:
+                    return ")";
+                case Separator.OpenBracket:
+                    return "[";
+                case Separator.CloswBracket:
+                    return "]";
+                case Separator.Point:
+                    return ".";
+                case Separator.DoublePoint:
+                    return "..";
+                default:
+                    return "";
+            }
         }
         TokenType GetTokenType(int index)
         {
@@ -68,126 +230,103 @@ namespace Compiler
             }
             throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
         }
-        int GetIndexTokenType(TokenType token)
-        {
-            switch (token)
-            {
-                case TokenType.String:
-                    return 2;
-                case TokenType.Indifier:
-                    return 3;
-                case TokenType.Integer:
-                    return 4;
-                case TokenType.Real:
-                    return 8;
-                case TokenType.Key_word:
-                    return 10;
-                case TokenType.Eof:
-                    return 11;
-                case TokenType.Operation_sign:
-                    return 12;
-                case TokenType.Separator:
-                    return 13;
-            }
-            return 0;
-        }
         public void CreateTableDFA()
         {
             //string
-            Table[1, (int)'\''] = 2;
-            Table[9, (int)'\''] = 2;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'\''] = (int)StatusDFA.String;
+            tableDFA[9, (int)'\''] = (int)StatusDFA.String;
             //string whith char
-            Table[1, (int)'#'] = 9;
-            Table[9, (int)'#'] = 9;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'#'] = (int)StatusDFA.String_with_Char;
+            tableDFA[(int)StatusDFA.String_with_Char, (int)'#'] = (int)StatusDFA.String_with_Char;
             //indifier
-            Table[1, (int)'_'] = 3;
-            Table[3, (int)'_'] = 3;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'_'] = (int)StatusDFA.Indifier;
+            tableDFA[(int)StatusDFA.Indifier,(int)'_'] = (int)StatusDFA.Indifier;
             //integer
-            Table[1, (int)'%'] = 5;
-            Table[1, (int)'&'] = 6;
-            Table[1, (int)'$'] = 7;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'%'] = (int)StatusDFA.Integer2;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'&'] = (int)StatusDFA.Integer8;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'$'] = (int)StatusDFA.Integer16;
             //real
-            Table[4, (int)'.'] = 8;
-            Table[4, (int)'e'] = 8;
-            Table[5, (int)'.'] = 8;
-            Table[5, (int)'e'] = 8;
-            Table[6, (int)'.'] = 8;
-            Table[6, (int)'e'] = 8;
-            Table[7, (int)'.'] = 8;
-            Table[7, (int)'e'] = 8;
-            Table[8, (int)'e'] = 8;
-            Table[8, (int)'-'] = 8;
-            Table[8, (int)'+'] = 8;
+            tableDFA[(int)StatusDFA.Integer10, (int)'.'] = (int)StatusDFA.Real;
+            tableDFA[(int)StatusDFA.Integer10, (int)'e'] = (int)StatusDFA.Real;
+            tableDFA[(int)StatusDFA.Integer2, (int)'.'] = (int)StatusDFA.Real;
+            tableDFA[(int)StatusDFA.Integer2, (int)'e'] = (int)StatusDFA.Real;
+            tableDFA[(int)StatusDFA.Integer8, (int)'.'] = (int)StatusDFA.Real;
+            tableDFA[(int)StatusDFA.Integer8, (int)'e'] = (int)StatusDFA.Real;
+            tableDFA[(int)StatusDFA.Integer16, (int)'.'] = (int)StatusDFA.Real;
+            tableDFA[(int)StatusDFA.Integer16, (int)'e'] = (int)StatusDFA.Real;
+            tableDFA[(int)StatusDFA.Real, (int)'e'] = (int)StatusDFA.Real;
+            tableDFA[(int)StatusDFA.Real, (int)'-'] = (int)StatusDFA.Real;
+            tableDFA[(int)StatusDFA.Real, (int)'+'] = (int)StatusDFA.Real;
             //operation sign
-            Table[1, (int)'='] = 12;
-            Table[1, (int)':'] = 12;
-            Table[1, (int)'+'] = 12;
-            Table[1, (int)'-'] = 12;
-            Table[1, (int)'*'] = 12;
-            Table[1, (int)'/'] = 12;
-            Table[1, (int)'>'] = 12;
-            Table[1, (int)'<'] = 12;
-            Table[1, (int)'@'] = 12;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'='] = (int)StatusDFA.Operation_sign;
+            tableDFA[(int)StatusDFA.StartStatus,(int)':'] = (int)StatusDFA.Operation_sign;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'+'] = (int)StatusDFA.Operation_sign;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'-'] = (int)StatusDFA.Operation_sign;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'*'] = (int)StatusDFA.Operation_sign;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'/'] = (int)StatusDFA.Operation_sign;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'>'] = (int)StatusDFA.Operation_sign;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'<'] = (int)StatusDFA.Operation_sign;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'@'] = (int)StatusDFA.Operation_sign;
             //separator
-            Table[1, (int)','] = 13;
-            Table[1, (int)';'] = 13;
-            Table[1, (int)'('] = 13;
-            Table[1, (int)')'] = 13;
-            Table[1, (int)'['] = 13;
-            Table[1, (int)']'] = 13;
-            Table[1, (int)'.'] = 13;
+            tableDFA[(int)StatusDFA.StartStatus,(int)','] = (int)StatusDFA.Separator;
+            tableDFA[(int)StatusDFA.StartStatus,(int)';'] = (int)StatusDFA.Separator;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'('] = (int)StatusDFA.Separator;
+            tableDFA[(int)StatusDFA.StartStatus,(int)')'] = (int)StatusDFA.Separator;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'['] = (int)StatusDFA.Separator;
+            tableDFA[(int)StatusDFA.StartStatus,(int)']'] = (int)StatusDFA.Separator;
+            tableDFA[(int)StatusDFA.StartStatus,(int)'.'] = (int)StatusDFA.Separator;
 
             for (int i = 0; i < COUNT_SYMBOLS; i++)
             {
                 //string
-                Table[2, i] = 2;
+                tableDFA[(int)StatusDFA.String,i] = (int)StatusDFA.String;
             }
             for (int i = (int)'a'; i <= (int)'z'; i++)
             {
                 //indifier
-                Table[1, i] = 3;
-                Table[3, i] = 3;
+                tableDFA[(int)StatusDFA.StartStatus,i] = (int)StatusDFA.Indifier;
+                tableDFA[(int)StatusDFA.Indifier,i] = (int)StatusDFA.Indifier;
             }
             for (int i = (int)'0'; i <= (int)'9'; i++)
             {
                 //indifier
-                Table[3, i] = 3;
+                tableDFA[(int)StatusDFA.Indifier,i] = (int)StatusDFA.Indifier;
                 //integer x10
-                Table[1, i] = 4;
-                Table[4, i] = 4;
+                tableDFA[(int)StatusDFA.StartStatus,i] = (int)StatusDFA.Integer10;
+                tableDFA[(int)StatusDFA.Integer10, i] = (int)StatusDFA.Integer10;
                 //integer x16
-                Table[7, i] = 7;
+                tableDFA[(int)StatusDFA.Integer16, i] = (int)StatusDFA.Integer16;
                 //real
-                Table[8, i] = 8;
+                tableDFA[(int)StatusDFA.Real, i] = (int)StatusDFA.Real;
                 //string whith char
-                Table[9, i] = 9;
+                tableDFA[(int)StatusDFA.String_with_Char, i] = (int)StatusDFA.String_with_Char;
             }
             for (int i = (int)'0'; i <= (int)'1'; i++)
             {
                 //integer x2
-                Table[5, i] = 5;
+                tableDFA[(int)StatusDFA.Integer2, i] = (int)StatusDFA.Integer2;
             }
             for (int i = (int)'0'; i <= (int)'7'; i++)
             {
                 //integer x8
-                Table[6, i] = 6;
+                tableDFA[(int)StatusDFA.Integer8, i] = (int)StatusDFA.Integer8;
             }
             for (int i = (int)'a'; i <= (int)'f'; i++)
             {
                 //integer x16
-                Table[7, i] = 7;
+                tableDFA[(int)StatusDFA.Integer16, i] = (int)StatusDFA.Integer16;
             }
         }
         public Token GetNextToken()
         {
-            int statusDFA = 1;
+            int currentStatusDFA = (int)StatusDFA.StartStatus;
             int lexemeLenght = 0;
             int countQuotesInString = 0;
 
-            if (Input.Length == 0)
+            if (input.Length == 0)
             {
-                statusDFA = 11;
-                return Out(ref Input);
+                currentStatusDFA = (int)StatusDFA.Eof;
+                return Out(ref input);
             }
 
             void CutFirstElementsFromArray(ref byte[] array, int countFirstElements)
@@ -204,52 +343,52 @@ namespace Compiler
             }
             Token Out(ref byte[] inputBytes)
             {
-                Token outLex = new Token(CurrentLine, CurrentSymbol, GetTokenType(statusDFA), GetValueLexeme(GetTokenType(statusDFA), GetString(inputBytes,0,lexemeLenght)), GetString(inputBytes, 0, lexemeLenght));
+                Token outLex = new Token(CurrentLine, CurrentSymbol, GetTokenType(currentStatusDFA), GetValueLexeme(GetTokenType(currentStatusDFA), GetString(inputBytes,0,lexemeLenght)), GetString(inputBytes, 0, lexemeLenght));
                 CutFirstElementsFromArray(ref inputBytes, lexemeLenght);
                 CurrentSymbol += lexemeLenght;
                 lastToken = outLex;
                 return outLex;
             }
 
-            while (Input[0] == '\n' || Input[0] == '\r' || Input[0] == ' ' || Input[0] == '\t' || Input[0] == '{' || (Input.Length > 1 && (Input[0] == '/' && Input[1] == '/')))
+            while (input[0] == '\n' || input[0] == '\r' || input[0] == ' ' || input[0] == '\t' || input[0] == '{' || (input.Length > 1 && (input[0] == '/' && input[1] == '/')))
             {
-                switch ((char)Input[0])
+                switch ((char)input[0])
                 {
                     case '\n':
                         CurrentLine += 1;
-                        CutFirstElementsFromArray(ref Input, 1);
+                        CutFirstElementsFromArray(ref input, 1);
                         break;
                     case '\r':
                         CurrentSymbol = 1;
-                        CutFirstElementsFromArray(ref Input, 1);
+                        CutFirstElementsFromArray(ref input, 1);
                         break;
                     case '\t':
                         CurrentSymbol += 4;
-                        CutFirstElementsFromArray(ref Input, 1);
+                        CutFirstElementsFromArray(ref input, 1);
                         break;
                     case ' ':
                         CurrentSymbol += 1;
-                        CutFirstElementsFromArray(ref Input, 1);
+                        CutFirstElementsFromArray(ref input, 1);
                         break;
                     case '{':
-                        if (GetString(Input, 0, Input.Length).IndexOf('}') != -1)
+                        if (GetString(input, 0, input.Length).IndexOf('}') != -1)
                         {
-                            while (Input[0] != '}')
+                            while (input[0] != '}')
                             {
                                 CurrentSymbol += 1;
-                                if(Input[0] == 13)
+                                if(input[0] == 13)
                                 {
                                     CurrentLine += 1;
                                     CurrentSymbol = 1;
                                 }
-                                if (Input[0] == 10)
+                                if (input[0] == 10)
                                 {
                                     CurrentSymbol = 1;
                                 }
-                                CutFirstElementsFromArray(ref Input, 1);
+                                CutFirstElementsFromArray(ref input, 1);
                             }
                             CurrentSymbol += 1;
-                            CutFirstElementsFromArray(ref Input, 1);
+                            CutFirstElementsFromArray(ref input, 1);
                         }
                         else
                         {
@@ -257,16 +396,16 @@ namespace Compiler
                         }
                         break;
                 }
-                if (Input.Length > 1)
+                if (input.Length > 1)
                 {
-                    if(Input[0] == '/' && Input[1] == '/')
+                    if(input[0] == '/' && input[1] == '/')
                     {
-                        while (Input.Length > 0)
+                        while (input.Length > 0)
                         {
-                            if (Input[0] != 13 && Input[0] != 10)
+                            if (input[0] != 13 && input[0] != 10)
                             {
                                 CurrentSymbol += 1;
-                                CutFirstElementsFromArray(ref Input, 1);
+                                CutFirstElementsFromArray(ref input, 1);
                             }
                             else
                             {
@@ -275,40 +414,40 @@ namespace Compiler
                         }
                     }
                 }
-                if(Input.Length == 0)
+                if(input.Length == 0)
                 {
-                    statusDFA = 14;
-                    return Out(ref Input);
+                    currentStatusDFA = 14;
+                    return Out(ref input);
                 }
             }
 
-            for (int i = lexemeLenght; i < Input.Length; i++)
+            for (int i = lexemeLenght; i < input.Length; i++)
             {
-                if (Input[i] == '\n' || Input[i] == '\r')
+                if (input[i] == '\n' || input[i] == '\r')
                 {
                     break;
                 }
-                if (statusDFA < COUNT_STATUS)
+                if (currentStatusDFA < COUNT_STATUS)
                 {
-                    if (Table[statusDFA, Char.ToLower((char)Input[i])] != 0)
+                    if (tableDFA[currentStatusDFA, Char.ToLower((char)input[i])] != (int)StatusDFA.Error)
                     {
                         lexemeLenght += 1;
-                        statusDFA = Table[statusDFA, Char.ToLower((char)Input[i])];
+                        currentStatusDFA = tableDFA[currentStatusDFA, Char.ToLower((char)input[i])];
                         //string
-                        if (statusDFA == GetIndexTokenType(TokenType.String) && Input[i] == '\'')
+                        if (currentStatusDFA == (int)StatusDFA.String && input[i] == '\'')
                         {
                             countQuotesInString += 1;
                             if (countQuotesInString % 2 == 0)
                             {
-                                if (i + 1 < Input.Length && Input[i + 1] == '\'')
+                                if (i + 1 < input.Length && input[i + 1] == '\'')
                                 {
-                                    statusDFA = 1;
+                                    currentStatusDFA = (int)StatusDFA.StartStatus;
                                 }
                                 else
                                 {
-                                    if (i + 1 < Input.Length && Input[i + 1] == '#')
+                                    if (i + 1 < input.Length && input[i + 1] == '#')
                                     {
-                                        statusDFA = 1;
+                                        currentStatusDFA = (int)StatusDFA.StartStatus;
                                     }
                                     else
                                     {
@@ -318,29 +457,29 @@ namespace Compiler
                             }
                         }
                         //if real have '.'
-                        if (statusDFA == GetIndexTokenType(TokenType.Real) && Input[i] == '.')
+                        if (currentStatusDFA == (int)StatusDFA.Real && input[i] == '.')
                         {
-                            if (GetString(Input, 0, Input.Length).Substring(0, lexemeLenght).ToLower().IndexOf('e') != -1)
+                            if (GetString(input, 0, input.Length).Substring(0, lexemeLenght).ToLower().IndexOf('e') != -1)
                             {
                                 throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                             }
-                            if ((Input[0] == '%' || Input[0] == '&' || Input[0] == '$') && i + 1 < Input.Length && Input[i + 1] >= '0' && Input[i + 1] <= '9')
+                            if ((input[0] == '%' || input[0] == '&' || input[0] == '$') && i + 1 < input.Length && input[i + 1] >= '0' && input[i + 1] <= '9')
                             {
                                 throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                             }
                         }
                         //if real have 'e'
-                        if (statusDFA == GetIndexTokenType(TokenType.Real) && Char.ToLower((char)Input[i]) == 'e')
+                        if (currentStatusDFA == (int)StatusDFA.Real && Char.ToLower((char)input[i]) == 'e')
                         {
-                            if (GetString(Input, 0, lexemeLenght - 1).ToLower().IndexOf('e') != -1)
+                            if (GetString(input, 0, lexemeLenght - 1).ToLower().IndexOf('e') != -1)
                             {
                                 throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                             }
                         }
                         //if real have '-' or '+'
-                        if (statusDFA == GetIndexTokenType(TokenType.Real) && (Input[i] == '-' || Input[i] == '+'))
+                        if (currentStatusDFA == (int)StatusDFA.Real && (input[i] == '-' || input[i] == '+'))
                         {
-                            if (Char.ToLower((char)Input[i - 1]) != 'e')
+                            if (Char.ToLower((char)input[i - 1]) != 'e')
                             {
                                 throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                             }
@@ -357,40 +496,43 @@ namespace Compiler
                 }
             }
             //string
-            if (statusDFA == GetIndexTokenType(TokenType.String) && countQuotesInString % 2 == 1)
+            if (currentStatusDFA == (int)StatusDFA.String && countQuotesInString % 2 == 1)
             {
                 throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
             }
-            //if key word or end file
-            if (statusDFA == GetIndexTokenType(TokenType.Indifier) && keyWords.Contains(GetString(Input, 0, lexemeLenght).ToLower()))
+            //if key word
+            if (currentStatusDFA == (int)StatusDFA.Indifier)
             {
-                statusDFA = GetIndexTokenType(TokenType.Key_word);
-                return Out(ref Input);
+                if(Enum.TryParse((GetString(input, 0, lexemeLenght).ToUpper()), out KeyWord res))
+                {
+                    currentStatusDFA = (int)StatusDFA.Key_word;
+                    return Out(ref input);
+                }
             }
             //if only % or & or $
-            if (statusDFA >= 5 && statusDFA <= 7 && lexemeLenght == 1)
+            if (currentStatusDFA >= (int)StatusDFA.Integer2 && currentStatusDFA <= (int)StatusDFA.Integer16 && lexemeLenght == 1)
             {
                 throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
             }
             //if out system integer
-            if (statusDFA >= 4 && statusDFA <= 7 && lexemeLenght < Input.Length)
+            if (currentStatusDFA >= (int)StatusDFA.Integer10 && currentStatusDFA <= (int)StatusDFA.Integer16 && lexemeLenght < input.Length)
             {
-                if ((Input[lexemeLenght] >= '0' && Input[lexemeLenght] <= '9') || (Char.ToLower((char)Input[lexemeLenght]) >= 'a' && Char.ToLower((char)Input[lexemeLenght]) <= 'z'))
+                if ((input[lexemeLenght] >= '0' && input[lexemeLenght] <= '9') || (Char.ToLower((char)input[lexemeLenght]) >= 'a' && Char.ToLower((char)input[lexemeLenght]) <= 'z'))
                 {
                     throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                 }
             }
             //check real with last 'e' or '-' or '+'
-            if (statusDFA == GetIndexTokenType(TokenType.Real) && (Char.ToLower((char)Input[lexemeLenght - 1]) == 'e' || Input[lexemeLenght - 1] == '-' || Input[lexemeLenght - 1] == '+'))
+            if (currentStatusDFA == (int)StatusDFA.Real && (Char.ToLower((char)input[lexemeLenght - 1]) == 'e' || input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+'))
             {
                 int offset = 1;
-                if(Input[lexemeLenght - 1] == '-' || Input[lexemeLenght - 1] == '+')
+                if(input[lexemeLenght - 1] == '-' || input[lexemeLenght - 1] == '+')
                 {
                     offset = 2;
                 }
-                if(GetString(Input, 0, lexemeLenght - offset).ToLower().IndexOf('.') != -1)
+                if(GetString(input, 0, lexemeLenght - offset).ToLower().IndexOf('.') != -1)
                 {
-                    if(Input[lexemeLenght - offset - 1] == '.')
+                    if(input[lexemeLenght - offset - 1] == '.')
                     {
                         throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                     }
@@ -404,45 +546,46 @@ namespace Compiler
                     throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
                 }
             }
-            if (statusDFA == GetIndexTokenType(TokenType.Operation_sign))
+            if (currentStatusDFA == (int)StatusDFA.Operation_sign)
             {
-                if (lexemeLenght < Input.Length &&
-                    ((Input[lexemeLenght - 1] == '<' && Input[lexemeLenght] == '<') ||
-                    (Input[lexemeLenght - 1] == '>' && Input[lexemeLenght] == '>') ||
-                    (Input[lexemeLenght - 1] == '*' && Input[lexemeLenght] == '*') ||
-                    (Input[lexemeLenght - 1] == '<' && Input[lexemeLenght] == '>') ||
-                    (Input[lexemeLenght - 1] == '<' && Input[lexemeLenght] == '=') ||
-                    (Input[lexemeLenght - 1] == '>' && Input[lexemeLenght] == '=') ||
-                    (Input[lexemeLenght - 1] == ':' && Input[lexemeLenght] == '=') ||
-                    (Input[lexemeLenght - 1] == '+' && Input[lexemeLenght] == '=') ||
-                    (Input[lexemeLenght - 1] == '-' && Input[lexemeLenght] == '=') ||
-                    (Input[lexemeLenght - 1] == '*' && Input[lexemeLenght] == '=') ||
-                    (Input[lexemeLenght - 1] == '/' && Input[lexemeLenght] == '=')))
+                if (lexemeLenght < input.Length &&
+                    ((input[lexemeLenght - 1] == '<' && input[lexemeLenght] == '<') ||
+                    (input[lexemeLenght - 1] == '>' && input[lexemeLenght] == '>') ||
+                    (input[lexemeLenght - 1] == '*' && input[lexemeLenght] == '*') ||
+                    (input[lexemeLenght - 1] == '<' && input[lexemeLenght] == '>') ||
+                    (input[lexemeLenght - 1] == '<' && input[lexemeLenght] == '=') ||
+                    (input[lexemeLenght - 1] == '>' && input[lexemeLenght] == '=') ||
+                    (input[lexemeLenght - 1] == ':' && input[lexemeLenght] == '=') ||
+                    (input[lexemeLenght - 1] == '+' && input[lexemeLenght] == '=') ||
+                    (input[lexemeLenght - 1] == '-' && input[lexemeLenght] == '=') ||
+                    (input[lexemeLenght - 1] == '*' && input[lexemeLenght] == '=') ||
+                    (input[lexemeLenght - 1] == '/' && input[lexemeLenght] == '=')))
                 {
                     lexemeLenght += 1;
                 }
             }
-            if (statusDFA == GetIndexTokenType(TokenType.Separator))
+            if (currentStatusDFA == (int)StatusDFA.Separator)
             {
-                if (lexemeLenght < Input.Length && (Input[lexemeLenght - 1] == '.' && Input[lexemeLenght] == '.'))
+                if (lexemeLenght < input.Length && (input[lexemeLenght - 1] == '.' && input[lexemeLenght] == '.'))
                 { 
                     lexemeLenght += 1;
                 }
             }
-            if (statusDFA == GetIndexTokenType(TokenType.Real) && lexemeLenght < Input.Length && (Input[lexemeLenght - 1] == '.' && Input[lexemeLenght] == '.'))
+            if (currentStatusDFA == (int)StatusDFA.Real && lexemeLenght < input.Length && (input[lexemeLenght - 1] == '.' && input[lexemeLenght] == '.'))
             {
-                statusDFA = GetIndexTokenType(TokenType.Integer);
+                currentStatusDFA = (int)StatusDFA.Integer10;
                 lexemeLenght -= 1;
             }
-            return Out(ref Input);
+            return Out(ref input);
         }
-        public string GetValueLexeme(TokenType typeLexeme, string lexeme)
+        public object GetValueLexeme(TokenType typeLexeme, string lexeme)
         {
-            string valueLexeme = "";
+            object valueLexeme = "";
             switch (typeLexeme)
             {
                 case TokenType.String:
                     {
+                        string valueLexemeString = "";
                         bool nowSymbol = false;
                         int countQuotes = 0;
                         string symbolStr = "";
@@ -458,13 +601,13 @@ namespace Compiler
                                     {
                                         throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow symbol in string");
                                     }
-                                    valueLexeme += (char)symbol;
+                                    valueLexemeString += (char)symbol;
                                     symbolStr = "";
                                 }
                                 nowSymbol = false;
                                 if (i + 1 < lexeme.Length && lexeme[i + 1] == '\'')
                                 {
-                                    valueLexeme += lexeme[i];
+                                    valueLexemeString += lexeme[i];
                                     i++;
                                 }
                             }
@@ -479,7 +622,7 @@ namespace Compiler
                                         {
                                             throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow symbol in string");
                                         }
-                                        valueLexeme += (char)symbol;
+                                        valueLexemeString += (char)symbol;
                                         symbolStr = "";
                                     }
                                     nowSymbol = true;
@@ -488,7 +631,7 @@ namespace Compiler
                                 {
                                     if (!nowSymbol)
                                     {
-                                        valueLexeme += lexeme[i];
+                                        valueLexemeString += lexeme[i];
                                     }
                                     else
                                     {
@@ -504,22 +647,25 @@ namespace Compiler
                             {
                                 throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow symbol in string");
                             }
-                            valueLexeme += (char)symbol;
+                            valueLexemeString += (char)symbol;
                             symbolStr = "";
                         }
-                        if (valueLexeme.Length > 255)
+                        if (valueLexemeString.Length > 255)
                         {
                             throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow string");
                         }
+                        valueLexeme = valueLexemeString;
                         break;
                     }
                 case TokenType.Indifier:
                     {
-                        valueLexeme = lexeme.ToLower();
-                        if (valueLexeme.Length > 127)
+                        string valueLexemeString = "";
+                        valueLexemeString = lexeme.ToLower();
+                        if (valueLexemeString.Length > 127)
                         {
                             throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow indifier");
                         }
+                        valueLexeme = valueLexemeString;
                         break;
                     }
                 case TokenType.Integer:
@@ -558,7 +704,8 @@ namespace Compiler
                                 throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow integer");
                             }
                         }
-                        valueLexeme = value.ToString();
+                        int valueInt = (int)value;
+                        valueLexeme = valueInt;
                         break;
                     }
                 case TokenType.Real:
@@ -618,26 +765,25 @@ namespace Compiler
                                 value = Convert.ToDouble(lexeme);
                                 break;
                         }
-                        valueLexeme = value.ToString("E10").Replace(",", ".");
-                        if (valueLexeme == "∞")
-                        {
-                            valueLexeme = "+Inf";
-                        }
+                        valueLexeme = value;
                         break;
                     }
                 case TokenType.Key_word:
                     {
-                        valueLexeme = lexeme.ToLower();
+                        Enum.TryParse(lexeme.ToUpper(), out KeyWord res);
+                        valueLexeme = res;
                         break;
                     }
                 case TokenType.Operation_sign:
                     {
-                        valueLexeme = lexeme;
+                        OperationSign res = GetEnumOperationSign(lexeme);
+                        valueLexeme = res;
                         break;
                     }
                 case TokenType.Separator:
                     {
-                        valueLexeme = lexeme;
+                        Separator res = GetEnumSeparator(lexeme);
+                        valueLexeme = res;
                         break;
                     }
             }

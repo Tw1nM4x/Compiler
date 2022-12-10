@@ -26,7 +26,7 @@ namespace Compiler
             SymType buildsType = type;
             while (buildsType.GetType().Name == "SymTypeAlias")
             {
-                SymTypeAlias symTypeAlias = (SymTypeAlias)type;
+                SymTypeAlias symTypeAlias = (SymTypeAlias)buildsType;
                 buildsType = symTypeAlias.GetOriginalType();
             }
             return buildsType;

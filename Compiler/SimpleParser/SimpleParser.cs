@@ -8,7 +8,7 @@ namespace Compiler
 {
     public class SimpleParser
     {
-        Lexer lexer;
+        readonly Lexer lexer;
         Token currentLex;
         void NextToken()
         {
@@ -22,9 +22,9 @@ namespace Compiler
         public NodeExpression ParseExpression()
         {
             NodeExpression left = ParseTerm();
-            while ((currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "+" || currentLex.Value == "-")))
+            while (currentLex.Type == TokenType.Operation_sign && ((OperationSign)currentLex.Value == OperationSign.Plus || (OperationSign)currentLex.Value == OperationSign.Minus))
             {
-                string operation = currentLex.Value;
+                string operation = Lexer.GetStrOperationSign((OperationSign)currentLex.Value);
                 NextToken();
                 NodeExpression right = ParseTerm();
                 left = new NodeBinOp(operation, left, right);
@@ -33,19 +33,19 @@ namespace Compiler
         }
         public NodeExpression ParseTerm()
         {
-            NodeExpression left = ParseFactor(withUnOp: true);
-            while ((currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "*" || currentLex.Value == "/")))
+            NodeExpression left = ParseFactor();
+            while (currentLex.Type == TokenType.Operation_sign && ((OperationSign)currentLex.Value == OperationSign.Multiply || (OperationSign)currentLex.Value == OperationSign.Divide))
             {
-                string operation = currentLex.Value;
+                string operation = Lexer.GetStrOperationSign((OperationSign)currentLex.Value);
                 NextToken();
-                NodeExpression right = ParseFactor(withUnOp: true);
+                NodeExpression right = ParseFactor();
                 left = new NodeBinOp(operation, left, right);
             }
             return left;
         }
-        public NodeExpression ParseFactor(bool withUnOp = false)
+        public NodeExpression ParseFactor()
         {
-            if (currentLex.Type == TokenType.Separator && currentLex.Value == "(")
+            if (currentLex.Type == TokenType.Separator && (Separator)currentLex.Value == Separator.OpenParenthesis)
             {
                 NodeExpression e;
                 NextToken();
@@ -57,7 +57,7 @@ namespace Compiler
                 {
                     throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ')'");
                 }
-                if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ")"))
+                if (!(currentLex.Type == TokenType.Separator && (Separator)currentLex.Value == Separator.CloseParenthesis))
                 {
                     throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ')'");
                 }
@@ -69,7 +69,7 @@ namespace Compiler
                 Token factor = currentLex;
                 try
                 {
-                    int result = int.Parse(factor.Value);
+                    int result = (int)factor.Value;
                     NextToken();
                     return new NodeInt(result);
                 }
@@ -82,14 +82,15 @@ namespace Compiler
             {
                 Token factor = currentLex;
                 NextToken();
-                return new NodeString(factor.Value);
+                return new NodeString((string)factor.Value);
             }
             if (currentLex.Type == TokenType.Real)
             {
                 Token factor = currentLex;
                 try
                 {
-                    float result = float.Parse(factor.Value.Replace(".", ","));
+                    string factorStr = (string)factor.Value;
+                    float result = float.Parse(factorStr.Replace(".", ","));
                     NextToken();
                     return new NodeReal(result);
                 }
@@ -103,7 +104,7 @@ namespace Compiler
                 NodeExpression ans;
                 Token factor = currentLex;
                 NextToken();
-                ans = new NodeVar(new SymVar(factor.Value, new SymType("var")));
+                ans = new NodeVar(new SymVar((string)factor.Value, new SymType("var")));
                 return ans;
             }
 

@@ -1,0 +1,17 @@
+﻿program hello
+├─── const
+│    └─── =
+│         ├─── b
+│         └─── 7
+├─── type
+│    └─── =
+│         ├─── t
+│         └─── string
+├─── var
+│    └─── :
+│         ├─── a
+│         └─── t
+│              └─── string
+└─── begin
+     ├─── 
+     └─── end

@@ -1,5 +1,0 @@
-1 2 Operation_sign - -
-1 4 Operation_sign + +
-1 6 Operation_sign / /
-1 8 Operation_sign = =
-1 9 Eof  

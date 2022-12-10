@@ -1,0 +1,5 @@
+1 1 Operation_sign Colon :
+1 2 Operation_sign Assignment :=
+1 4 Operation_sign Plus +
+1 5 Operation_sign Addition +=
+1 7 Eof  

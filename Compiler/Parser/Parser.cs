@@ -1,6 +1,6 @@
 ﻿namespace Compiler
 {
-    public class Parser
+   /* public class Parser
     {
         Lexer lexer;
         Token currentLex;
@@ -866,5 +866,5 @@
                 throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected indifier");
             }
         }
-    }
+    }*/
 }

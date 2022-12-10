@@ -26,13 +26,15 @@ namespace Tester
             switch (key)
             {
                 case "-l":
-                    folders = new Folder[] { new("string", 14), new("indifier", 9), new("integer", 19), new("real", 28), new("space", 2), new("comment", 9), new("key word", 4), new("operation sign", 3), new("separator", 3), new("errors", 3) };
+                    folders = new Folder[] { new("lexer/string", 14), new("lexer/indifier", 9), new("lexer/integer", 19), new("lexer/real", 28), new("lexer/space", 2),
+                        new("lexer/comment", 9), new("lexer/key word", 4), new("lexer/operation sign", 3), new("lexer/separator", 3), new("lexer/errors", 3) };
                     break;
                 case "-spar":
                     folders = new Folder[] { new("simple expressions", 14) };
                     break;
                 case "-par":
-                    folders = new Folder[] { new("syntax", 14) };
+                    folders = new Folder[] { new("parser/defs", 8), new("parser/composite data types", 5), new("parser/scalar data types", 0),
+                        new("parser/control structures", 7), new("parser/procedures", 0) };
                     break;
             }
             int countOK = 0;
@@ -92,8 +94,8 @@ namespace Tester
                             {
                                 try
                                 {
-                                    Parser parser = new Parser(lexer);
-                                    firstNode = parser.ParseProgram();
+                                    //Parser parser = new Parser(lexer);
+                                    //firstNode = parser.ParseProgram();
                                 }
                                 catch (ExceptionWithPosition ex)
                                 {

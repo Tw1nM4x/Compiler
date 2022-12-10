@@ -1,0 +1,4 @@
+1 1 Real 0,01 1e-2
+1 5 Separator Point .
+1 6 Integer 0 0
+1 7 Eof  

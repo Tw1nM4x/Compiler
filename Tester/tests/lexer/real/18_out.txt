@@ -1,0 +1,4 @@
+1 1 Indifier e e
+1 2 Operation_sign Minus -
+1 3 Integer 2 2
+1 4 Eof  

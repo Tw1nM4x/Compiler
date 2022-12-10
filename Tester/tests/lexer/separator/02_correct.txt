@@ -1,0 +1,4 @@
+1 1 Separator OpenParenthesis (
+1 2 Separator DoublePoint ..
+1 4 Separator CloseParenthesis )
+1 5 Eof  

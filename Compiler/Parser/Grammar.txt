@@ -1,52 +1,51 @@
-+ mainProgram ::= 'proram' identifier ';' {types} block '.'
+ mainProgram ::= 'proram' identifier ';' {types} block '.'
 
-	+ binOp ::= simpleExpression
-	+ simpleExpression ::= simpleTerm { '+' simpleTerm | '-' simpleTerm }
-	+ simpleTerm ::= simpleFactor { '*' simpleFactor | '/' simpleFactor }
-	+ simpleFactor ::= int | real | var | '(' simpleExpression ')' | unOp | call
-	+ unOp ::= ( ('+' / '-') simpleFactor ) | ( '@' var )
-	+ call ::= identifier '(' simpleFactor { ',' simpleFactor } ')'
-	+ var ::= identifier
-	+ int ::= integer
-	+ real ::= real
+	 binOp ::= simpleExpression
+	 simpleExpression ::= simpleTerm { '+' simpleTerm | '-' simpleTerm }
+	 simpleTerm ::= simpleFactor { '*' simpleFactor | '/' simpleFactor }
+	 simpleFactor ::= int | real | var | '(' simpleExpression ')' | unOp | call
+	 unOp ::= ( ('+' | '-') simpleFactor ) | ( '@' var )
+	 call ::= identifier '(' simpleFactor { ',' simpleFactor } ')'
+	 var ::= identifier
+	 int ::= integer
+	 real ::= real
 
-+ expression ::= simpleExp ('<' | '<=' | '>' | '>=' | '=' | '<>') simpleExp
-+ simpleExp ::= term { ('or' | 'xor' | '+' | '-') term }
-+ term ::= factor { ( 'and' | '/' | '*' ) factor }
-+ factor ::= '(' exp ')' | notFactor | syntaxNode
-- notFactor ::= 'not' factor
+ expression ::= simpleExp ('<' | '<=' | '>' | '>=' | '=' | '<>') simpleExp
+ simpleExp ::= term { ('or' | 'xor' | '+' | '-') term }
+ term ::= factor { ( 'and' | '/' | '*' ) factor }
+ factor ::= '(' exp ')' | notFactor | syntaxNode
+ notFactor ::= 'not' factor
 
-	+ statement ::= [simpleStmt | structStmt]
-	+ simpleStmt ::= assignment | call | goto | 'exit' | label
-	+ structStmt ::= if | for | while | repeat | block
+	 statement ::= [simpleStmt | structStmt]
+	 simpleStmt ::= assignment | call | goto | 'exit' | label
+	 structStmt ::= if | for | while | repeat | block
 
-	+ assignment ::= var (':=' | '+=' | '-=' | '*=' | '/=') ( simpleExpression | string )
-	+ goto ::= 'goto' var ';'
-	+ label ::= var ':'
-	+ if ::= 'if' expression 'then' statement ['else' statement]
-	+ for ::= 'for' contrlVar ':=' initialVal 'to' finalVal 'do' statement
-	+ while ::= 'while' expression 'do' statement
-	+ repeat ::= 'repeat' {statement ';'} 'until' expression
-	+ block ::= 'begin' [(statement) {';' (statement)}] 'end'
+	 assignment ::= var (':=' | '+=' | '-=' | '*=' | '/=') ( simpleExpression | string )
+	 goto ::= 'goto' var ';'
+	 label ::= var ':'
+	 if ::= 'if' expression 'then' statement ['else' statement]
+	 for ::= 'for' contrlVar ':=' initialVal 'to' finalVal 'do' statement
+	 while ::= 'while' expression 'do' statement
+	 repeat ::= 'repeat' {statement ';'} 'until' expression
+	 block ::= 'begin' [(statement) {';' (statement)}] 'end'
 
-
-+ types ::= variables | const | typesType | procedure | labelDecl
-+ variables ::= { varDeclaration ';'}
-+ varDeclaration ::= identifier ':' type
-+ const ::= { identifier '=' ( simpleExpression | string ) ';' }
-+ typesType ::= { typeDeclaration ';' }
-- procedure ::= 'procedure' identifier formalParameterList ';' {types} block ';'
-- labelDecl ::= 'label' indifier { ',' indifier } ';'
+ types ::= variables | const | typesType | procedure | labelDecl
+ variables ::= { varDeclaration ';'}
+ varDeclaration ::= identifier ':' type
+ const ::= { identifier '=' ( simpleExpression | string ) ';' }
+ typesType ::= { typeDeclaration ';' }
+ procedure ::= 'procedure' identifier formalParameterList ';' {types} block ';'
+ labelDecl ::= 'label' indifier { ',' indifier } ';'
 //function ::= 'function' identifier formalParameterList ':' type ';' program
 
--- type ::= simpleType | structuredType
--- simpleType ::= 'integer' | 'real' | 'string'
--- structuredType ::= arrayType | recordType | proceduralType
--- arrayType ::= indifier ':' 'array' '[' (ordinal type) { ',' (ordinal type) } ']' 'of' type
--- ordinal type ::= simpleExpression '..' simpleExpression
--- recordType ::= 'record' { typeDeclaration } 'end'
--- typeDeclaration ::= identifier '=' type
--- proceduralType ::= 'procedure' formalParameterList
+ type ::= simpleType | structuredType
+ simpleType ::= 'integer' | 'real' | 'string'
+ structuredType ::= arrayType | recordType | proceduralType
+ arrayType ::= indifier ':' 'array' '[' (ordinal type) { ',' (ordinal type) } ']' 'of' type
+ ordinal type ::= simpleExpression '..' simpleExpression
+ recordType ::= 'record' { typeDeclaration } 'end'
+ typeDeclaration ::= identifier '=' type
+ proceduralType ::= 'procedure' formalParameterList
 //funcType ::= 'procedure' formalParameterList ':' type
--- formalParameterList ::= '(' varDeclaration { ',' varDeclaration } ')'
--- recordType ::= 'record' { (varDeclaration) } 'end'
+ formalParameterList ::= '(' varDeclaration { ',' varDeclaration } ')'
+ recordType ::= 'record' { (varDeclaration) } 'end'

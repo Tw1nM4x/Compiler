@@ -1,0 +1,3 @@
+1 1 Separator Point .
+1 2 Integer 1 1
+1 3 Eof  

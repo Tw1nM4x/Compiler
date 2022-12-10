@@ -15,25 +15,6 @@ namespace Compiler
             return "";
         }
     }
-    public class LabelStmt : NodeStatement
-    {
-        NodeVar var_;
-        NodeStatement stmt;
-        public LabelStmt(NodeVar name, NodeStatement stmt)
-        {
-            this.var_ = name;
-            this.stmt = stmt;
-        }
-        public override string ToString(List<bool> isLeftParents)
-        {
-            string res;
-            string prefix = GetPrefixNode(isLeftParents);
-            res = $":\r\n";
-            res += prefix + $"├─── {var_.ToString(ListAddRight(isLeftParents))}\r\n";
-            res += prefix + $"└─── {stmt.ToString(ListAddRight(isLeftParents))}";
-            return res;
-        }
-    }
     public class AssignmentStmt : NodeStatement
     {
         string opname;

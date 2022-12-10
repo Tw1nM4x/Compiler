@@ -1,0 +1,5 @@
+1 2 Operation_sign Minus -
+1 4 Operation_sign Plus +
+1 6 Operation_sign Divide /
+1 8 Operation_sign Equal =
+1 9 Eof  
