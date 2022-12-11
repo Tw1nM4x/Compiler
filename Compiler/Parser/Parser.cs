@@ -575,7 +575,7 @@
             NodeExpression left = ParseTerm();
             while (Expect(OperationSign.Plus, OperationSign.Minus, KeyWord.OR, KeyWord.XOR))
             {
-                OperationSign operation = (OperationSign)currentLex.Value;
+                object operation = currentLex.Value;
                 NextToken();
                 NodeExpression right = ParseTerm();
                 left = new NodeBinOp(operation, left, right );
@@ -587,7 +587,7 @@
             NodeExpression left = ParseFactor();
             while (Expect(OperationSign.Multiply, OperationSign.Divide, KeyWord.AND))
             {
-                OperationSign operation = (OperationSign)currentLex.Value;
+                object operation = currentLex.Value;
                 NextToken();
                 NodeExpression right = ParseFactor();
                 left = new NodeBinOp(operation, left, right);
@@ -655,7 +655,7 @@
             }
             if (Expect(OperationSign.Plus, OperationSign.Minus, KeyWord.NOT))
             {
-                OperationSign unOp = (OperationSign)currentLex.Value;
+                object unOp = currentLex.Value;
                 NextToken();
                 NodeExpression factor = ParseFactor();
                 return new NodeUnOp(unOp, factor);

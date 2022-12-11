@@ -5,7 +5,7 @@ program checkif
 │         └─── integer
 └─── begin
      ├─── if
-     │    ├─── 
+     │    ├─── or
      │    │    ├─── <
      │    │    │    ├─── i
      │    │    │    └─── 6

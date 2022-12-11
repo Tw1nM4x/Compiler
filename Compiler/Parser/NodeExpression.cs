@@ -38,10 +38,10 @@ namespace Compiler
     }
     public class NodeBinOp : NodeExpression
     {
-        OperationSign opname;
+        object opname;
         NodeExpression left;
         NodeExpression right;
-        public NodeBinOp(OperationSign opname, NodeExpression left, NodeExpression right)
+        public NodeBinOp(object opname, NodeExpression left, NodeExpression right)
         {
             this.opname = opname;
             this.left = left;
@@ -52,7 +52,11 @@ namespace Compiler
         {
             SymType leftType = left.GetCachedType();
             SymType rightType = right.GetCachedType();
-            string opnameStr = Lexer.GetStrOperationSign(opname);
+            string? opnameStr = opname.ToString();
+            if (opname.GetType() == typeof(OperationSign))
+            {
+                opnameStr = Lexer.GetStrOperationSign((OperationSign)opname);
+            }
             if (leftType.GetType().Name == "SymRecord" || rightType.GetType().Name == "SymRecord" || leftType.GetType().Name == "SymArray" || rightType.GetType().Name == "SymArray")
             {
                 throw new Exception("Operator is not overloaded");
@@ -96,7 +100,16 @@ namespace Compiler
         {
             string res;
             string prefix = GetPrefixNode(isLeftParents);
-            res = $"{Lexer.GetStrOperationSign(opname)}\r\n";
+            string? opnameStr = opname.ToString();
+            if(opnameStr != null)
+            {
+                opnameStr = opnameStr.ToLower();
+            }
+            if (opname.GetType() == typeof(OperationSign))
+            {
+                opnameStr = Lexer.GetStrOperationSign((OperationSign)opname);
+            }
+            res = $"{opnameStr}\r\n";
             res += prefix + $"├─── {left.ToString(ListAddLeft(isLeftParents))}\r\n";
             res += prefix + $"└─── {right.ToString(ListAddRight(isLeftParents))}";
             return res;
@@ -108,9 +121,9 @@ namespace Compiler
     }
     public class NodeUnOp : NodeExpression
     {
-        OperationSign opname;
+        object opname;
         NodeExpression arg;
-        public NodeUnOp(OperationSign opname, NodeExpression arg)
+        public NodeUnOp(object opname, NodeExpression arg)
         {
             this.opname = opname;
             this.arg = arg;
@@ -124,7 +137,16 @@ namespace Compiler
         {
             string res;
             string prefix = GetPrefixNode(isLeftParents);
-            res = $"{Lexer.GetStrOperationSign(opname)}\r\n";
+            string? opnameStr = opname.ToString();
+            if (opnameStr != null)
+            {
+                opnameStr = opnameStr.ToLower();
+            }
+            if (opname.GetType() == typeof(OperationSign))
+            {
+                opnameStr = Lexer.GetStrOperationSign((OperationSign)opname);
+            }
+            res = $"{opnameStr}\r\n";
             res += prefix + $"└─── {arg.ToString(ListAddRight(isLeftParents))}";
             return res;
         }
