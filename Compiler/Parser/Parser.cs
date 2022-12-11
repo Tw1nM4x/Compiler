@@ -1,19 +1,58 @@
 ﻿namespace Compiler
 {
-   /* public class Parser
+    public class Parser
     {
         Lexer lexer;
         Token currentLex;
         SymTableStack symTableStack;
-        public string PrintSymTable()
-        {
-            string ans = "";
-
-            return ans;
-        }
         void NextToken()
         {
             currentLex = lexer.GetNextToken();
+        }
+        private bool Expect(params object[] requires)
+        {
+            foreach(object require in requires)
+            {
+                if (Equals(currentLex.Value, require))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private void Require(object require)
+        {
+            if (!Expect(require))
+            {
+                if (require.GetType() == typeof(Separator))
+                {
+                    require = Lexer.GetStrSeparator((Separator)require);
+                }
+                if (require.GetType() == typeof(OperationSign))
+                {
+                    require = Lexer.GetStrOperationSign((OperationSign)require);
+                }
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"expected '{require}'");
+            }
+            NextToken();
+        }
+        private bool ExpectType(params TokenType[] types)
+        {
+            foreach (TokenType type in types)
+            {
+                if (currentLex.Type == type)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private void RequireType(TokenType type)
+        {
+            if(!ExpectType(type))
+            {
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"expected {type}");
+            }
         }
         public Parser(Lexer lexer)
         {
@@ -34,56 +73,43 @@
             string? name = null;
             List<NodeDefs> types = new List<NodeDefs>();
             BlockStmt body;
-            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "program")
+            if (Expect(KeyWord.PROGRAM))
             {
                 name = ParseNameProgram();
             }
             types = ParseDefs();
-            if (currentLex.Type != TokenType.Key_word || currentLex.Value != "begin")
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected 'begin'");
-            }
+            Require(KeyWord.BEGIN);
             body = ParseBlock();
-            if (currentLex.Type != TokenType.Separator || currentLex.Value != ".")
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected '.'");
-            }
+            Require(Separator.Point);
             return new NodeMainProgram(name, types, body);
         }
         public string ParseNameProgram()
         {
             string res;
             NextToken();
-            if (currentLex.Type != TokenType.Indifier)
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected Indifier");
-            }
-            res = currentLex.Value;
+            RequireType(TokenType.Identifier);
+            res = (string)currentLex.Value;
             NextToken();
-            if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected ';'");
-            }
-            NextToken();
+            Require(Separator.Semiсolon);
             return res;
         }
         public List<NodeDefs> ParseDefs()
         {
             List<NodeDefs> types = new List<NodeDefs>();
-            while (currentLex.Type == TokenType.Key_word && (currentLex.Value == "var" || currentLex.Value == "procedure" || currentLex.Value == "label" || currentLex.Value == "const" || currentLex.Value == "type"))
+            while (Expect(KeyWord.VAR, KeyWord.CONST, KeyWord.TYPE, KeyWord.PROCEDURE))
             {
                 switch (currentLex.Value)
                 {
-                    case "var":
+                    case KeyWord.VAR:
                         types.Add(ParseVarDefs());
                         break;
-                    case "const":
+                    case KeyWord.CONST:
                         types.Add(ParseConstDefs());
                         break;
-                    case "type":
+                    case KeyWord.TYPE:
                         types.Add(ParseTypeDefs());
                         break;
-                    case "procedure":
+                    case KeyWord.PROCEDURE:
                         types.Add(ParseProcedureDefs());
                         break;
                 }
@@ -94,29 +120,18 @@
         {
             List<ConstDeclarationNode> body = new List<ConstDeclarationNode>();
             NextToken();
-            if (currentLex.Type != TokenType.Indifier)
+            RequireType(TokenType.Identifier);
+            while (ExpectType(TokenType.Identifier))
             {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected indifier");
-            }
-            while (currentLex.Type == TokenType.Indifier)
-            {
-                string name = currentLex.Value;
+                string name = (string)currentLex.Value;
                 NextToken();
-                if (!(currentLex.Type == TokenType.Operation_sign && currentLex.Value == "="))
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected '='");
-                }
+                Require(OperationSign.Equal);
                 NodeExpression value;
-                NextToken();
                 value = ParseExpression();
-                if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected ';'");
-                }
+                Require(Separator.Semiсolon);
                 SymVarConst varConst = new SymVarConst(name, new SymType("const"));
                 symTableStack.Add(name, varConst);
                 body.Add(new ConstDeclarationNode(name, value));
-                NextToken();
             }
             return new ConstTypesNode(body);
         }
@@ -124,19 +139,11 @@
         {
             List<VarDeclarationNode> body = new List<VarDeclarationNode>();
             NextToken();
-            if (currentLex.Type != TokenType.Indifier)
+            RequireType(TokenType.Identifier);
+            while (ExpectType(TokenType.Identifier))
             {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected indifier");
-            }
-            while (currentLex.Type == TokenType.Indifier)
-            {
-                VarDeclarationNode var = ParseVarDef();
-                body.Add(var);
-                if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ';'");
-                }
-                NextToken();
+                body.Add(ParseVarDef());
+                Require(Separator.Semiсolon);
             }
             return new VarTypesNode(body);
         }
@@ -144,14 +151,10 @@
         {
             List<DeclarationNode> body = new List<DeclarationNode>();
             NextToken();
-            while (currentLex.Type == TokenType.Indifier)
+            while (currentLex.Type == TokenType.Identifier)
             {
                 body.Add(ParseTypeDef());
-                if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected ';'");
-                }
-                NextToken();
+                Require(Separator.Semiсolon);
             }
             return new TypeTypesNode(body);
         }
@@ -161,32 +164,22 @@
             List<VarDeclarationNode> paramsNode = new List<VarDeclarationNode>();
             SymTable locals = new SymTable(new Dictionary<string, Symbol>());
             NextToken();
-            if (currentLex.Type != TokenType.Indifier)
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected indifier");
-            }
-            name = currentLex.Value;
+            RequireType(TokenType.Identifier);
+            name = (string)currentLex.Value;
             NextToken();
             symTableStack.AddTable(locals);
-            if (currentLex.Type == TokenType.Separator && currentLex.Value == "(")
+            if (Expect(Separator.OpenParenthesis))
             {
                 do
                 {
                     NextToken();
                     VarDeclarationNode varDef;
-                    if (currentLex.Type == TokenType.Key_word)
+                    if (Expect(KeyWord.VAR, KeyWord.OUT))
                     {
-                        if (currentLex.Value == "var" || currentLex.Value == "out")
-                        {
-                            string param = currentLex.Value;
-                            NextToken();
-                            varDef = ParseVarDef(param);
-                            paramsNode.Add(varDef);
-                        }
-                        else
-                        {
-                            throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected indifier");
-                        }
+                        KeyWord param = (KeyWord)currentLex.Value;
+                        NextToken();
+                        varDef = ParseVarDef(param);
+                        paramsNode.Add(varDef);
                     }
                     else
                     {
@@ -194,71 +187,45 @@
                         paramsNode.Add(varDef);
                     }
                 } 
-                while (currentLex.Type == TokenType.Separator && currentLex.Value == ";");
-
-                if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ")"))
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected ')'");
-                }
-                NextToken();
+                while (Expect(Separator.Semiсolon));
+                Require(Separator.CloseParenthesis);
             }
-            if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ';'");
-            }
-            NextToken();
+            Require(Separator.Semiсolon);
 
             SymTable params_ = new SymTable(symTableStack.GetBackTable());
             List<NodeDefs> localsTypes = ParseDefs();
             locals = symTableStack.GetBackTable();
-            if (!(currentLex.Type == TokenType.Key_word && currentLex.Value == "begin"))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected 'begin'");
-            }
+            Require(KeyWord.BEGIN);
             BlockStmt body = ParseBlock();
-            if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ';'");
-            }
-            NextToken();
+            Require(Separator.Semiсolon);
             symTableStack.PopBack();
             SymProc symProc = new SymProc(name, params_, locals, body);
             symTableStack.Add(name, symProc);
             return new ProcedureTypesNode(paramsNode, localsTypes, symProc);
         }
-        public VarDeclarationNode ParseVarDef(string param = "")
+        public VarDeclarationNode ParseVarDef(KeyWord? param = null)
         {
             List<string> names = new List<string>();
             List<SymVar> vars = new List<SymVar> ();
             SymType type;
             NodeExpression? value = null;
-            if (!(currentLex.Type == TokenType.Indifier))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected indifier");
-            }
-            names.Add(currentLex.Value);
+            RequireType(TokenType.Identifier);
+            names.Add((string)currentLex.Value);
             NextToken();
-            while (currentLex.Type == TokenType.Separator && currentLex.Value == ",")
+            while (Expect(Separator.Comma))
             {
                 NextToken();
-                if (currentLex.Type != TokenType.Indifier)
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected indifier");
-                }
-                names.Add(currentLex.Value);
+                RequireType(TokenType.Identifier);
+                names.Add((string)currentLex.Value);
                 NextToken();
             }
-            if (!(currentLex.Type == TokenType.Operation_sign && currentLex.Value == ":"))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ':'");
-            }
-            NextToken();
-            if (!(currentLex.Type == TokenType.Indifier || currentLex.Type == TokenType.Key_word))
+            Require(OperationSign.Colon);
+            if (!(ExpectType(TokenType.Identifier) || ExpectType(TokenType.Key_word)))
             {
                 throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected type variable");
             }
             type = ParseType();
-            if (currentLex.Type == TokenType.Operation_sign && currentLex.Value == "=")
+            if (Expect(OperationSign.Equal))
             {
                 if (names.Count > 1)
                 {
@@ -272,10 +239,10 @@
                 SymVar var = new SymVar(name, type);
                 switch (param)
                 {
-                    case "var":
+                    case KeyWord.VAR:
                         symTableStack.Add(name, new SymParamVar(var));
                         break;
-                    case "out":
+                    case KeyWord.OUT:
                         symTableStack.Add(name, new SymParamOut(var));
                         break;
                     default:
@@ -290,17 +257,10 @@
         {
             string nameType;
             SymType type;
-            if (currentLex.Type != TokenType.Indifier)
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected indifier");
-            }
-            nameType = currentLex.Value;
+            RequireType(TokenType.Identifier);
+            nameType = (string)currentLex.Value;
             NextToken();
-            if (!(currentLex.Type == TokenType.Operation_sign && currentLex.Value == "="))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected =");
-            }
-            NextToken();
+            Require(OperationSign.Equal);
             type = ParseType();
             SymTypeAlias typeAlias = new SymTypeAlias(type.GetName(), type);
             symTableStack.Add(nameType, type);
@@ -308,7 +268,7 @@
         }
         public SymType ParseType()
         {
-            if (!(currentLex.Type == TokenType.Indifier || currentLex.Type == TokenType.Key_word))
+            if (!(ExpectType(TokenType.Identifier) || ExpectType(TokenType.Key_word)))
             {
                 throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected type variable");
             }
@@ -316,28 +276,28 @@
             NextToken();
             switch (type.Value)
             {
-                case "array":
+                case KeyWord.ARRAY:
                     return ParseArrayType();
-                case "record":
+                case KeyWord.RECORD:
                     return ParseRecordType();
-                case "string":
-                    return (SymType)symTableStack.Get(type.Value);
+                case KeyWord.STRING:
+                    return (SymType)symTableStack.Get("string");
                 case "integer":
-                    return (SymType)symTableStack.Get(type.Value);
+                    return (SymType)symTableStack.Get("integer");
                 case "real":
-                    return (SymType)symTableStack.Get(type.Value);
+                    return (SymType)symTableStack.Get("real");
                 default:
                     SymType original;
-                    Symbol sym = symTableStack.Get(type.Value);
                     try
                     {
+                        Symbol sym = symTableStack.Get((string)type.Value);
                         original = (SymType) sym;
                     }
                     catch
                     {
                         throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Identifier not found \"{type.Source}\"");
                     }
-                    return new SymTypeAlias(type.Value, original);
+                    return new SymTypeAlias((string)type.Value, original);
             }
         }
         public SymType ParseArrayType()
@@ -345,7 +305,7 @@
             SymType type;
             List<OrdinalTypeNode> ordinalTypes = new List<OrdinalTypeNode> ();
 
-            if (!(currentLex.Type == TokenType.Separator && currentLex.Value == "["))
+            if (!Expect(Separator.OpenBracket))
             {
                 throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected '['");
             }
@@ -354,18 +314,10 @@
                 NextToken();
                 ordinalTypes.Add(ParseArrayOrdinalType());
             }
-            while (currentLex.Type == TokenType.Separator && currentLex.Value == ",");
-            if (!(currentLex.Type == TokenType.Separator && currentLex.Value == "]"))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ']'");
-            }
-            NextToken();
-            if (!(currentLex.Type == TokenType.Key_word && currentLex.Value == "of"))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected 'of'");
-            }
-            NextToken();
-            if (currentLex.Type == TokenType.Indifier || currentLex.Type == TokenType.Key_word)
+            while (Expect(Separator.Comma));
+            Require(Separator.CloseBracket);
+            Require(KeyWord.OF);
+            if (ExpectType(TokenType.Identifier) || ExpectType(TokenType.Key_word))
             {
                 type = ParseType();
             }
@@ -378,11 +330,7 @@
         public OrdinalTypeNode ParseArrayOrdinalType()
         {
             NodeExpression from = ParseSimpleExpression();
-            if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ".."))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected '..'");
-            }
-            NextToken();
+            Require(Separator.DoublePoint);
             NodeExpression to = ParseSimpleExpression();
             return new OrdinalTypeNode(from, to);
         }
@@ -390,70 +338,53 @@
         {
             SymTable fields = new SymTable(new Dictionary<string, Symbol>());
             symTableStack.AddTable(fields);
-            while (currentLex.Type == TokenType.Indifier)
+            while (currentLex.Type == TokenType.Identifier)
             {
                 ParseVarDef();
-                if (currentLex.Type == TokenType.Key_word && currentLex.Value == "end")
+                if (Expect(KeyWord.END))
                 {
                     break;
                 }
-                if (!(currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected ';'");
-                }
-                NextToken();
+                Require(Separator.Semiсolon);
             }
-            if (!(currentLex.Type == TokenType.Key_word && currentLex.Value == "end"))
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected 'end'");
-            }
+            Require(KeyWord.END);
             symTableStack.PopBack();
-            NextToken();
             return new SymRecord("record", fields);
         }
         public NodeStatement ParseStatement()
         {
             NodeStatement res = new NullStmt();
-            if (currentLex.Type == TokenType.Indifier)
+            if (ExpectType(TokenType.Identifier))
             {
                 res = ParseSimpleStatement();
+                return res;
             }
-            else
+            //structStmt
+            switch (currentLex.Value)
             {
-                //structStmt
-                if (currentLex.Type == TokenType.Key_word || (currentLex.Type == TokenType.Separator && currentLex.Value == ";"))
-                {
-                    switch (currentLex.Value)
-                    {
-                        case "begin":
-                            res = ParseBlock();
-                            break;
-                        case "if":
-                            res = ParseIf();
-                            break;
-                        case "for":
-                            res = ParseFor();
-                            break;
-                        case "while":
-                            res = ParseWhile();
-                            break;
-                        case "repeat":
-                            res = ParseRepeat();
-                            break;
-                        case ";":
-                            break;
-                        case "exit":
-                            res = new CallStmt(symTableStack.Get("exit"), null);
-                            NextToken();
-                            break;
-                        default:
-                            throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected statement");
-                    }
-                }
-                else
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected statement");
-                }
+                case KeyWord.BEGIN:
+                    res = ParseBlock();
+                    break;
+                case KeyWord.IF:
+                    res = ParseIf();
+                    break;
+                case KeyWord.FOR:
+                    res = ParseFor();
+                    break;
+                case KeyWord.WHILE:
+                    res = ParseWhile();
+                    break;
+                case KeyWord.REPEAT:
+                    res = ParseRepeat();
+                    break;
+                case Separator.Semiсolon:
+                    break;
+                case KeyWord.EXIT:
+                    res = new CallStmt(symTableStack.Get("exit"), null);
+                    NextToken();
+                    break;
+                default:
+                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected statement");
             }
             return res;
         }
@@ -466,27 +397,22 @@
 
             int lineStart = currentLex.NumberLine;
             int symStart = currentLex.NumberSymbol;
-            if (currentLex.Type == TokenType.Indifier)
-            {
-                name = currentLex.Value;
-                NextToken();
-            }
-            else
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected indifier");
-            }
+            RequireType(TokenType.Identifier);
+            name = (string)currentLex.Value;
+            NextToken();
             //assigmentStmt
-            if (currentLex.Type == TokenType.Operation_sign && (currentLex.Value == ":=" || currentLex.Value == "+=" || currentLex.Value == "-=" || currentLex.Value == "*=" || currentLex.Value == "/="))
+            if (Expect(OperationSign.Assignment, OperationSign.Addition, OperationSign.Subtraction, OperationSign.Multiplication, OperationSign.Division))
             {
                 SymVar var_ = (SymVar)symTableStack.Get(name);
                 left = new NodeVar(var_);
-                operation = currentLex.Value;
-                if ((var_.GetTypeVar().GetType().Name == "SymRecord" || var_.GetTypeVar().GetType().Name == "SymRecord" || var_.GetTypeVar().GetType().Name == "SymArray" || var_.GetTypeVar().GetType().Name == "SymArray") &&
+                operation = Lexer.GetStrOperationSign((OperationSign)currentLex.Value);
+                if ((var_.GetTypeVar().GetType() == typeof(SymRecord) || var_.GetTypeVar().GetType() == typeof(SymRecord) ||
+                    var_.GetTypeVar().GetType() == typeof(SymArray) || var_.GetTypeVar().GetType() == typeof(SymArray)) &&
                     (operation == "+=" || operation == "-=" || operation == "*=" || operation == "/="))
                 {
                     throw new ExceptionWithPosition(lineStart, symStart, $"Operator is not overloaded");
                 }
-                if (var_.GetTypeVar().GetType().Name == "SymString" && (operation == "*=" || operation == "/=" || operation == "-="))
+                if (var_.GetTypeVar().GetType() == typeof(SymString) && (operation == "*=" || operation == "/=" || operation == "-="))
                 {
                     throw new ExceptionWithPosition(lineStart, symStart, $"Operator is not overloaded");
                 }
@@ -508,68 +434,43 @@
         public BlockStmt ParseBlock()
         {
             List<NodeStatement> body = new List<NodeStatement>();
-            NextToken();
-            while (!(currentLex.Type == TokenType.Key_word && currentLex.Value == "end"))
+            while (!Expect(KeyWord.END))
             {
                 body.Add(ParseStatement());
-
-                if (currentLex.Type == TokenType.Separator && currentLex.Value == ";")
+                if (Expect(Separator.Semiсolon))
                 {
                     NextToken();
+                    continue;
                 }
-                else
+                if (!Expect(KeyWord.END))
                 {
-                    if (!(currentLex.Type == TokenType.Key_word))
-                    {
-                        throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected ';'");
-                    }
+                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ';'");
                 }
             }
-            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "end")
-            {
-                NextToken();
-            }
-            else
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected 'end'");
-            }
+            Require(KeyWord.END);
             return new BlockStmt(body);
         }
         public NodeStatement ParseFor()
         {
-            string toOrDownto = "";
+            KeyWord toOrDownto;
             NodeVar controlVar;
             NodeExpression initialValue;
             NodeExpression finalValue;
             NodeStatement? body;
             NextToken();
-            if (currentLex.Type != TokenType.Indifier)
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected indifier");
-            }
-            controlVar = new NodeVar((SymVar)symTableStack.Get(currentLex.Value));
+            RequireType(TokenType.Identifier);
+            controlVar = new NodeVar((SymVar)symTableStack.Get((string)currentLex.Value));
             NextToken();
-            if (currentLex.Type != TokenType.Operation_sign || currentLex.Value != ":=")
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ':='");
-            }
-            NextToken();
+            Require(OperationSign.Assignment);
             initialValue = ParseSimpleExpression();
-            if (currentLex.Type == TokenType.Key_word && (currentLex.Value == "to" || currentLex.Value == "downto"))
+            if (!Expect(KeyWord.TO, KeyWord.DOWNTO))
             {
-                toOrDownto = currentLex.Value;
-                NextToken();
-                finalValue = ParseSimpleExpression();
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected 'to' or 'downto'");
             }
-            else
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected 'to' or 'downto'");
-            }
-            if (currentLex.Type != TokenType.Key_word || currentLex.Value != "do")
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected 'do'");
-            }
+            toOrDownto = (KeyWord)currentLex.Value;
             NextToken();
+            finalValue = ParseSimpleExpression();
+            Require(KeyWord.DO);
             body = ParseStatement();
             return new ForStmt( controlVar, initialValue, toOrDownto, finalValue, body );
         }
@@ -581,17 +482,12 @@
 
             NextToken();
             condition = ParseExpression();
-
-            if(currentLex.Type != TokenType.Key_word || currentLex.Value != "then")
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected 'then'");
-            }
-            NextToken();
-            if (!(currentLex.Type == TokenType.Key_word && currentLex.Value == "else"))
+            Require(KeyWord.THEN);
+            if (!Expect(KeyWord.ELSE))
             {
                 body = ParseStatement();
             }
-            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "else")
+            if (Expect(KeyWord.ELSE))
             {
                 NextToken();
                 elseStatement = ParseStatement();
@@ -601,50 +497,30 @@
         public NodeStatement ParseWhile()
         {
             NodeExpression condition;
-            NodeStatement? body = null;
+            NodeStatement body;
 
             NextToken();
             condition = ParseExpression();
-            if (currentLex.Type != TokenType.Key_word || currentLex.Value != "do")
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected 'do'");
-            }
-            NextToken();
+            Require(KeyWord.DO);
             body = ParseStatement();
-
-            return new WhileStmt( condition, body );
+            return new WhileStmt(condition, body);
         }
         public NodeStatement ParseRepeat()
         {
             List<NodeStatement> body = new List<NodeStatement>();
             NodeExpression cond;
 
-            NextToken();
-            if (!(currentLex.Type == TokenType.Key_word && currentLex.Value == "until"))
-            {
-                body.Add(ParseStatement());
-            }
-
-            while (currentLex.Type == TokenType.Separator && currentLex.Value == ";")
+            do
             {
                 NextToken();
-                if (currentLex.Type == TokenType.Key_word && currentLex.Value == "until")
+                if (Expect(KeyWord.UNTIL))
                 {
                     break;
                 }
                 body.Add(ParseStatement());
-            }
-
-            if (currentLex.Type == TokenType.Key_word && currentLex.Value == "until")
-            {
-                NextToken();
-                cond = ParseExpression();
-            }
-            else
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected 'until'");
-            }
-
+            } while (Expect(Separator.Semiсolon));
+            Require(KeyWord.UNTIL);
+            cond = ParseExpression();
             return new RepeatStmt(body, cond);
         }
         public NodeStatement ParseProcedureStmt(string name, int lineProc, int symProc)
@@ -659,13 +535,13 @@
             {
                 throw new ExceptionWithPosition(lineProc, symProc, $"Identifier not found \"{name}\"");
             }
-            if (currentLex.Type == TokenType.Separator && currentLex.Value == "(")
+            if (Expect(Separator.OpenParenthesis))
             {
                 NextToken();
-                while (currentLex.Type == TokenType.String || currentLex.Type == TokenType.Indifier || currentLex.Type == TokenType.Integer || currentLex.Type == TokenType.Real)
+                while (!Expect(Separator.CloseParenthesis))
                 {
                     parameter.Add(ParseFactor());
-                    if (currentLex.Type == TokenType.Separator && currentLex.Value == ",")
+                    if (Expect(Separator.Comma))
                     {
                         NextToken();
                     }
@@ -674,11 +550,7 @@
                         break;
                     }
                 }
-                if (currentLex.Type == TokenType.Separator && currentLex.Value != ")")
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected ')'");
-                }
-                NextToken();
+                Require(Separator.CloseParenthesis);
             }
             if (proc.GetCountParams() != -1 && parameter.Count != proc.GetCountParams())
             {
@@ -689,10 +561,9 @@
         public NodeExpression ParseExpression()
         {
             NodeExpression left = ParseSimpleExpression();
-            while (currentLex.Type == TokenType.Operation_sign &&
-                  (currentLex.Value == "<" || currentLex.Value == "<=" || currentLex.Value == ">" || currentLex.Value == "=>" || currentLex.Value == "=" || currentLex.Value == "<>"))
+            while (Expect(OperationSign.Less, OperationSign.LessOrEqual, OperationSign.Greater, OperationSign.GreaterOrEqual, OperationSign.Equal, OperationSign.NotEqual))
             {
-                string operation = currentLex.Value;
+                OperationSign operation = (OperationSign)currentLex.Value;
                 NextToken();
                 NodeExpression right = ParseSimpleExpression();
                 left = new NodeBinOp(operation, left, right);
@@ -702,10 +573,9 @@
         public NodeExpression ParseSimpleExpression()
         {
             NodeExpression left = ParseTerm();
-            while ((currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "+" || currentLex.Value == "-")) ||
-                   (currentLex.Type == TokenType.Key_word && (currentLex.Value == "or" || currentLex.Value == "xor")))
+            while (Expect(OperationSign.Plus, OperationSign.Minus, KeyWord.OR, KeyWord.XOR))
             {
-                string operation = currentLex.Value;
+                OperationSign operation = (OperationSign)currentLex.Value;
                 NextToken();
                 NodeExpression right = ParseTerm();
                 left = new NodeBinOp(operation, left, right );
@@ -714,73 +584,45 @@
         }
         public NodeExpression ParseTerm()
         {
-            NodeExpression left = ParseFactor(withUnOp: true);
-            while ((currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "*" || currentLex.Value == "/")) ||
-                   (currentLex.Type == TokenType.Key_word && currentLex.Value == "and"))
+            NodeExpression left = ParseFactor();
+            while (Expect(OperationSign.Multiply, OperationSign.Divide, KeyWord.AND))
             {
-                string operation = currentLex.Value;
+                OperationSign operation = (OperationSign)currentLex.Value;
                 NextToken();
-                NodeExpression right = ParseFactor(withUnOp: true);
+                NodeExpression right = ParseFactor();
                 left = new NodeBinOp(operation, left, right);
             }
             return left;
         }
-        public NodeExpression ParseFactor(bool withUnOp = false)
+        public NodeExpression ParseFactor()
         {
-            if (currentLex.Type == TokenType.Separator && currentLex.Value == "(")
+            if (Expect(Separator.OpenParenthesis))
             {
                 NodeExpression e;
                 NextToken();
-                if (currentLex.Type != TokenType.Eof)
-                {
-                    e = ParseExpression();
-                }
-                else
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected ')'");
-                }
-                if(!(currentLex.Type == TokenType.Separator && currentLex.Value == ")"))
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ')'");
-                }
-                NextToken();
+                e = ParseExpression();
+                Require(Separator.CloseParenthesis);
                 return e;
             }
-            if (currentLex.Type == TokenType.Integer)
-            {
-                Token factor = currentLex;
-                try
-                {
-                    int result = int.Parse(factor.Value);
-                    NextToken();
-                    return new NodeInt(result);
-                }
-                catch (Exception ex)
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, ex.Message);
-                }
-            }
-            if (currentLex.Type == TokenType.String)
+            if (ExpectType(TokenType.Integer))
             {
                 Token factor = currentLex;
                 NextToken();
-                return new NodeString(factor.Value);
+                return new NodeInt((int)factor.Value);
             }
-            if (currentLex.Type == TokenType.Real)
+            if (ExpectType(TokenType.String))
             {
                 Token factor = currentLex;
-                try
-                {
-                    float result = float.Parse(factor.Value.Replace(".", ","));
-                    NextToken();
-                    return new NodeReal(result);
-                }
-                catch (Exception ex)
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, ex.Message);
-                }
+                NextToken();
+                return new NodeString((string)factor.Value);
             }
-            if (currentLex.Type == TokenType.Indifier)
+            if (ExpectType(TokenType.Real))
+            {
+                Token factor = currentLex;
+                NextToken();
+                return new NodeReal((double)factor.Value);
+            }
+            if (ExpectType(TokenType.Identifier))
             {
                 NodeExpression ans;
                 Token factor = currentLex;
@@ -788,60 +630,59 @@
                 SymVar symVar;
                 try
                 {
-                    symVar = (SymVar)symTableStack.Get(factor.Value);
+                    symVar = (SymVar)symTableStack.Get((string)factor.Value);
                 }
                 catch
                 {
                     throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Identifier not found \"{factor.Value}\"");
                 }
                 ans = new NodeVar(symVar);
-                while (currentLex.Type == TokenType.Separator && (currentLex.Value == "[" || currentLex.Value == "."))
+                while (Expect(Separator.OpenBracket, Separator.Point))
                 {
-                    string separator = currentLex.Value;
+                    Separator separator = (Separator)currentLex.Value;
                     NextToken();
                     switch (separator)
                     {
-                        case "[":
+                        case Separator.OpenBracket:
                             ans = ParsePositionArray(ans);
                             break;
-                        case ".":
+                        case Separator.Point:
                             ans = ParseRecordField(ans);
                             break;
                     }
                 }
                 return ans;
             }
-
-            if (withUnOp && ((currentLex.Type == TokenType.Operation_sign && (currentLex.Value == "+" || currentLex.Value == "-")) || (currentLex.Type == TokenType.Key_word && currentLex.Value == "not")))
+            if (Expect(OperationSign.Plus, OperationSign.Minus, KeyWord.NOT))
             {
-                string unOp = currentLex.Value;
+                OperationSign unOp = (OperationSign)currentLex.Value;
                 NextToken();
                 NodeExpression factor = ParseFactor();
                 return new NodeUnOp(unOp, factor);
             }
-
             throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected factor");
         }
         public NodeExpression ParsePositionArray(NodeExpression node)
         {
             List<NodeExpression?> body = new List<NodeExpression?> ();
-            body.Add(ParseSimpleExpression());
             bool bracketClose = false;
-            while (currentLex.Type == TokenType.Separator && (currentLex.Value == "," || currentLex.Value == "]"))
+
+            body.Add(ParseSimpleExpression());
+            while (Expect(Separator.Comma, Separator.CloseBracket))
             {
                 switch (currentLex.Value)
                 {
-                    case "]":
+                    case Separator.CloseBracket:
                         bracketClose = true;
                         NextToken();
-                        if (currentLex.Value == "[")
+                        if (Expect(Separator.OpenBracket))
                         {
                             bracketClose = false;
                             NextToken();
                             body.Add(ParseSimpleExpression());
                         }
                         break;
-                    case ",":
+                    case Separator.Comma:
                         NextToken();
                         body.Add(ParseSimpleExpression());
                         break;
@@ -855,16 +696,13 @@
         }
         public NodeExpression ParseRecordField(NodeExpression node)
         {
-            if(currentLex.Type == TokenType.Indifier)
+            if(!ExpectType(TokenType.Identifier))
             {
-                NodeExpression field = new NodeVar((SymVar)symTableStack.Get(currentLex.Value));
-                NextToken();
-                return new NodeRecordAccess(".", node, field);
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected Identifier");
             }
-            else
-            {
-                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected indifier");
-            }
+            NodeExpression field = new NodeVar((SymVar)symTableStack.Get((string)currentLex.Value));
+            NextToken();
+            return new NodeRecordAccess(OperationSign.Point, node, field);
         }
-    }*/
+    }
 }

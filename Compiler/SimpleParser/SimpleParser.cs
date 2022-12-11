@@ -14,6 +14,22 @@ namespace Compiler
         {
             currentLex = lexer.GetNextToken();
         }
+        private void Require(object require)
+        {
+            if (!Equals(currentLex.Value,require))
+            {
+                if (require.GetType() == typeof(Separator))
+                {
+                    require = Lexer.GetStrSeparator((Separator)require);
+                }
+                if (require.GetType() == typeof(OperationSign))
+                {
+                    require = Lexer.GetStrOperationSign((OperationSign)require);
+                }
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"expected '{require}'");
+            }
+            NextToken();
+        }
         public SimpleParser(Lexer lexer)
         {
             this.lexer = lexer;
@@ -24,7 +40,7 @@ namespace Compiler
             NodeExpression left = ParseTerm();
             while (currentLex.Type == TokenType.Operation_sign && ((OperationSign)currentLex.Value == OperationSign.Plus || (OperationSign)currentLex.Value == OperationSign.Minus))
             {
-                string operation = Lexer.GetStrOperationSign((OperationSign)currentLex.Value);
+                OperationSign operation = (OperationSign)currentLex.Value;
                 NextToken();
                 NodeExpression right = ParseTerm();
                 left = new NodeBinOp(operation, left, right);
@@ -36,7 +52,7 @@ namespace Compiler
             NodeExpression left = ParseFactor();
             while (currentLex.Type == TokenType.Operation_sign && ((OperationSign)currentLex.Value == OperationSign.Multiply || (OperationSign)currentLex.Value == OperationSign.Divide))
             {
-                string operation = Lexer.GetStrOperationSign((OperationSign)currentLex.Value);
+                OperationSign operation = (OperationSign)currentLex.Value;
                 NextToken();
                 NodeExpression right = ParseFactor();
                 left = new NodeBinOp(operation, left, right);
@@ -57,11 +73,7 @@ namespace Compiler
                 {
                     throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ')'");
                 }
-                if (!(currentLex.Type == TokenType.Separator && (Separator)currentLex.Value == Separator.CloseParenthesis))
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ')'");
-                }
-                NextToken();
+                Require(Separator.CloseParenthesis);
                 return e;
             }
             if (currentLex.Type == TokenType.Integer)
@@ -99,7 +111,7 @@ namespace Compiler
                     throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, ex.Message);
                 }
             }
-            if (currentLex.Type == TokenType.Indifier)
+            if (currentLex.Type == TokenType.Identifier)
             {
                 NodeExpression ans;
                 Token factor = currentLex;

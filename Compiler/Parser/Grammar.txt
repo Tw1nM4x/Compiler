@@ -35,13 +35,13 @@
  const ::= { identifier '=' ( simpleExpression | string ) ';' }
  typesType ::= { typeDeclaration ';' }
  procedure ::= 'procedure' identifier formalParameterList ';' {types} block ';'
- labelDecl ::= 'label' indifier { ',' indifier } ';'
+ labelDecl ::= 'label' Identifier { ',' Identifier } ';'
 //function ::= 'function' identifier formalParameterList ':' type ';' program
 
  type ::= simpleType | structuredType
  simpleType ::= 'integer' | 'real' | 'string'
  structuredType ::= arrayType | recordType | proceduralType
- arrayType ::= indifier ':' 'array' '[' (ordinal type) { ',' (ordinal type) } ']' 'of' type
+ arrayType ::= Identifier ':' 'array' '[' (ordinal type) { ',' (ordinal type) } ']' 'of' type
  ordinal type ::= simpleExpression '..' simpleExpression
  recordType ::= 'record' { typeDeclaration } 'end'
  typeDeclaration ::= identifier '=' type

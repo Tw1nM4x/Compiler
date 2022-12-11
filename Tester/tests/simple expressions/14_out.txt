@@ -1,1 +1,1 @@
-(1,8) ERROR: expected ')'
+(1,8) ERROR: expected '5'

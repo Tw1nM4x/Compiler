@@ -38,10 +38,10 @@ namespace Compiler
     }
     public class NodeBinOp : NodeExpression
     {
-        string opname;
+        OperationSign opname;
         NodeExpression left;
         NodeExpression right;
-        public NodeBinOp(string opname, NodeExpression left, NodeExpression right)
+        public NodeBinOp(OperationSign opname, NodeExpression left, NodeExpression right)
         {
             this.opname = opname;
             this.left = left;
@@ -52,7 +52,8 @@ namespace Compiler
         {
             SymType leftType = left.GetCachedType();
             SymType rightType = right.GetCachedType();
-            if(leftType.GetType().Name == "SymRecord" || rightType.GetType().Name == "SymRecord" || leftType.GetType().Name == "SymArray" || rightType.GetType().Name == "SymArray")
+            string opnameStr = Lexer.GetStrOperationSign(opname);
+            if (leftType.GetType().Name == "SymRecord" || rightType.GetType().Name == "SymRecord" || leftType.GetType().Name == "SymArray" || rightType.GetType().Name == "SymArray")
             {
                 throw new Exception("Operator is not overloaded");
             }
@@ -69,7 +70,7 @@ namespace Compiler
                     {
                         right = new NodeCast(leftType, right);
                     }
-                    if((opname == "<" || opname == "<=" || opname == ">" || opname == "=>" || opname == "=" || opname == "<>"))
+                    if((opnameStr == "<" || opnameStr == "<=" || opnameStr == ">" || opnameStr == "=>" || opnameStr == "=" || opnameStr == "<>"))
                     {
                         return new SymBoolean("boolean");
                     }
@@ -80,12 +81,12 @@ namespace Compiler
                     throw new Exception("Incompatible types");
                 }
             }
-            if((leftType.GetType().Name == "SymString" && rightType.GetType().Name == "SymString" && (opname == "/" || opname == "*" || opname == "-"))||
-               ((opname == "or" || opname == "and" || opname == "not") && (leftType.GetType().Name != "SymBoolean" || rightType.GetType().Name != "SymBoolean")))
+            if((leftType.GetType().Name == "SymString" && rightType.GetType().Name == "SymString" && (opnameStr == "/" || opnameStr == "*" || opnameStr == "-"))||
+               ((opnameStr == "or" || opnameStr == "and" || opnameStr == "not") && (leftType.GetType().Name != "SymBoolean" || rightType.GetType().Name != "SymBoolean")))
             {
                 throw new Exception("Operator is not overloaded");
             }
-            if ((opname == "<" || opname == "<=" || opname == ">" || opname == "=>" || opname == "=" || opname == "<>"))
+            if ((opnameStr == "<" || opnameStr == "<=" || opnameStr == ">" || opnameStr == "=>" || opnameStr == "=" || opnameStr == "<>"))
             {
                 return new SymBoolean("boolean");
             }
@@ -95,7 +96,7 @@ namespace Compiler
         {
             string res;
             string prefix = GetPrefixNode(isLeftParents);
-            res = $"{opname}\r\n";
+            res = $"{Lexer.GetStrOperationSign(opname)}\r\n";
             res += prefix + $"├─── {left.ToString(ListAddLeft(isLeftParents))}\r\n";
             res += prefix + $"└─── {right.ToString(ListAddRight(isLeftParents))}";
             return res;
@@ -103,13 +104,13 @@ namespace Compiler
     }
     public class NodeRecordAccess : NodeBinOp
     {
-        public NodeRecordAccess(string opname, NodeExpression left, NodeExpression right) : base(opname, left, right) { }
+        public NodeRecordAccess(OperationSign opname, NodeExpression left, NodeExpression right) : base(opname, left, right) { }
     }
     public class NodeUnOp : NodeExpression
     {
-        string opname;
+        OperationSign opname;
         NodeExpression arg;
-        public NodeUnOp(string opname, NodeExpression arg)
+        public NodeUnOp(OperationSign opname, NodeExpression arg)
         {
             this.opname = opname;
             this.arg = arg;
@@ -123,7 +124,7 @@ namespace Compiler
         {
             string res;
             string prefix = GetPrefixNode(isLeftParents);
-            res = $"{opname}\r\n";
+            res = $"{Lexer.GetStrOperationSign(opname)}\r\n";
             res += prefix + $"└─── {arg.ToString(ListAddRight(isLeftParents))}";
             return res;
         }
@@ -208,8 +209,8 @@ namespace Compiler
     }
     public class NodeReal : NodeExpression
     {
-        float value;
-        public NodeReal(float value)
+        double value;
+        public NodeReal(double value)
         {
             this.value = value;
             cachedType = CalcType();
@@ -220,7 +221,7 @@ namespace Compiler
         }
         public override string ToString(List<bool> isLeftParents)
         {
-            return $"{value.ToString("E10")}";
+            return $"{value.ToString()}";
         }
     }
     public class NodeString : NodeExpression

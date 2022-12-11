@@ -126,10 +126,10 @@ namespace Compiler
     {
         NodeVar controlVar;
         NodeExpression initialVal;
-        string toOrDownto;
+        KeyWord toOrDownto;
         NodeExpression finalVal;
         NodeStatement body;
-        public ForStmt(NodeVar controlVar, NodeExpression initialVal, string toOrDownto, NodeExpression finalVal, NodeStatement body)
+        public ForStmt(NodeVar controlVar, NodeExpression initialVal, KeyWord toOrDownto, NodeExpression finalVal, NodeStatement body)
         {
             this.controlVar = controlVar;
             this.initialVal = initialVal;
@@ -145,7 +145,7 @@ namespace Compiler
             res += prefix + $"├─── :=\r\n" +
                    prefix + $"│    ├─── {controlVar.ToString(isLeftParents)}\r\n" +
                    prefix + $"│    └─── {initialVal.ToString(ListAddRight(ListAddLeft(isLeftParents)))}\r\n" +
-                   prefix + $"├─── {toOrDownto}\r\n" +
+                   prefix + $"├─── {toOrDownto.ToString().ToLower()}\r\n" +
                    prefix + $"│    └─── {finalVal.ToString(ListAddRight(ListAddLeft(isLeftParents)))}\r\n" +
                    prefix + $"└─── {body.ToString(ListAddRight(isLeftParents))}";
             return res;

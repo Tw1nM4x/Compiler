@@ -9,7 +9,7 @@ namespace Compiler
     public enum TokenType
     {
         String,
-        Indifier,
+        Identifier,
         Integer,
         Real,
         Key_word,
@@ -117,16 +117,17 @@ namespace Compiler
         Subtraction, // -=
         Multiplication, // *=
         Division, // /=
+        Point, // .
     }
     public enum Separator
     {
         Unidentified,
-        Сomma, // ,
+        Comma, // ,
         Semiсolon, // ;
         OpenParenthesis, // (
         CloseParenthesis, // )
         OpenBracket, // [
-        CloswBracket, // ]
+        CloseBracket, // ]
         Point, // .
         DoublePoint // ..
     }

@@ -26,7 +26,7 @@ namespace Tester
             switch (key)
             {
                 case "-l":
-                    folders = new Folder[] { new("lexer/string", 14), new("lexer/indifier", 9), new("lexer/integer", 19), new("lexer/real", 28), new("lexer/space", 2),
+                    folders = new Folder[] { new("lexer/string", 14), new("lexer/identifier", 9), new("lexer/integer", 19), new("lexer/real", 28), new("lexer/space", 2),
                         new("lexer/comment", 9), new("lexer/key word", 4), new("lexer/operation sign", 3), new("lexer/separator", 3), new("lexer/errors", 3) };
                     break;
                 case "-spar":
@@ -94,8 +94,8 @@ namespace Tester
                             {
                                 try
                                 {
-                                    //Parser parser = new Parser(lexer);
-                                    //firstNode = parser.ParseProgram();
+                                    Parser parser = new Parser(lexer);
+                                    firstNode = parser.ParseProgram();
                                 }
                                 catch (ExceptionWithPosition ex)
                                 {

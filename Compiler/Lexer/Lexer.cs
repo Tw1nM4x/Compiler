@@ -24,7 +24,7 @@ namespace Compiler
             Error = 0,
             StartStatus = 1,
             String = 2,
-            Indifier = 3,
+            Identifier = 3,
             Integer10 = 4,
             Integer2 = 5,
             Integer8 = 6,
@@ -117,9 +117,9 @@ namespace Compiler
                 case OperationSign.Divide:
                     return "/";
                 case OperationSign.Greater:
-                    return "<";
-                case OperationSign.Less:
                     return ">";
+                case OperationSign.Less:
+                    return "<";
                 case OperationSign.At:
                     return "@";
                 case OperationSign.BitwiseShiftToTheLeft:
@@ -135,7 +135,7 @@ namespace Compiler
                 case OperationSign.GreaterOrEqual:
                     return ">=";
                 case OperationSign.Assignment:
-                    return ";=";
+                    return ":=";
                 case OperationSign.Addition:
                     return "+=";
                 case OperationSign.Subtraction:
@@ -153,7 +153,7 @@ namespace Compiler
             switch (operationSignStr)
             {
                 case ",":
-                    return Separator.Сomma;
+                    return Separator.Comma;
                 case ";":
                     return Separator.Semiсolon;
                 case "(":
@@ -163,7 +163,7 @@ namespace Compiler
                 case "[":
                     return Separator.OpenBracket;
                 case "]":
-                    return Separator.CloswBracket;
+                    return Separator.CloseBracket;
                 case ".":
                     return Separator.Point;
                 case "..":
@@ -176,7 +176,7 @@ namespace Compiler
         {
             switch (operationSignOs)
             {
-                case Separator.Сomma:
+                case Separator.Comma:
                     return ",";
                 case Separator.Semiсolon:
                     return ";";
@@ -186,7 +186,7 @@ namespace Compiler
                     return ")";
                 case Separator.OpenBracket:
                     return "[";
-                case Separator.CloswBracket:
+                case Separator.CloseBracket:
                     return "]";
                 case Separator.Point:
                     return ".";
@@ -203,7 +203,7 @@ namespace Compiler
                 case 2:
                     return TokenType.String;
                 case 3:
-                    return TokenType.Indifier;
+                    return TokenType.Identifier;
                 case 4:
                     return TokenType.Integer;
                 case 5:
@@ -238,9 +238,9 @@ namespace Compiler
             //string whith char
             tableDFA[(int)StatusDFA.StartStatus,(int)'#'] = (int)StatusDFA.String_with_Char;
             tableDFA[(int)StatusDFA.String_with_Char, (int)'#'] = (int)StatusDFA.String_with_Char;
-            //indifier
-            tableDFA[(int)StatusDFA.StartStatus,(int)'_'] = (int)StatusDFA.Indifier;
-            tableDFA[(int)StatusDFA.Indifier,(int)'_'] = (int)StatusDFA.Indifier;
+            //Identifier
+            tableDFA[(int)StatusDFA.StartStatus,(int)'_'] = (int)StatusDFA.Identifier;
+            tableDFA[(int)StatusDFA.Identifier,(int)'_'] = (int)StatusDFA.Identifier;
             //integer
             tableDFA[(int)StatusDFA.StartStatus,(int)'%'] = (int)StatusDFA.Integer2;
             tableDFA[(int)StatusDFA.StartStatus,(int)'&'] = (int)StatusDFA.Integer8;
@@ -283,14 +283,14 @@ namespace Compiler
             }
             for (int i = (int)'a'; i <= (int)'z'; i++)
             {
-                //indifier
-                tableDFA[(int)StatusDFA.StartStatus,i] = (int)StatusDFA.Indifier;
-                tableDFA[(int)StatusDFA.Indifier,i] = (int)StatusDFA.Indifier;
+                //Identifier
+                tableDFA[(int)StatusDFA.StartStatus,i] = (int)StatusDFA.Identifier;
+                tableDFA[(int)StatusDFA.Identifier,i] = (int)StatusDFA.Identifier;
             }
             for (int i = (int)'0'; i <= (int)'9'; i++)
             {
-                //indifier
-                tableDFA[(int)StatusDFA.Indifier,i] = (int)StatusDFA.Indifier;
+                //Identifier
+                tableDFA[(int)StatusDFA.Identifier,i] = (int)StatusDFA.Identifier;
                 //integer x10
                 tableDFA[(int)StatusDFA.StartStatus,i] = (int)StatusDFA.Integer10;
                 tableDFA[(int)StatusDFA.Integer10, i] = (int)StatusDFA.Integer10;
@@ -501,7 +501,7 @@ namespace Compiler
                 throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Incorrect lexeme");
             }
             //if key word
-            if (currentStatusDFA == (int)StatusDFA.Indifier)
+            if (currentStatusDFA == (int)StatusDFA.Identifier)
             {
                 if(Enum.TryParse((GetString(input, 0, lexemeLenght).ToUpper()), out KeyWord res))
                 {
@@ -657,13 +657,13 @@ namespace Compiler
                         valueLexeme = valueLexemeString;
                         break;
                     }
-                case TokenType.Indifier:
+                case TokenType.Identifier:
                     {
                         string valueLexemeString = "";
                         valueLexemeString = lexeme.ToLower();
                         if (valueLexemeString.Length > 127)
                         {
-                            throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow indifier");
+                            throw new ExceptionWithPosition(CurrentLine, CurrentSymbol,"Overflow Identifier");
                         }
                         valueLexeme = valueLexemeString;
                         break;
