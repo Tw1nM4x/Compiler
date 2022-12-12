@@ -1,1 +1,25 @@
-(8,5) ERROR: Identifier not found "e"
+program checkrecord
+├─── type
+│    └─── =
+│         ├─── t
+│         └─── record 
+│              ├─── a
+│              │    └─── string
+│              └─── b
+│                   └─── integer
+├─── var
+│    └─── :
+│         ├─── e
+│         └─── t
+│              └─── record 
+│                   ├─── a
+│                   │    └─── string
+│                   └─── b
+│                        └─── integer
+└─── begin
+     ├─── :=
+     │    ├─── .
+     │    │    ├─── e
+     │    │    └─── a
+     │    └─── 'hello'
+     └─── end

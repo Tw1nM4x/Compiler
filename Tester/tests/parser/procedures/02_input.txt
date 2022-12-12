@@ -1,7 +1,10 @@
+program CheckProcedures;
+procedure proc;
 var 
-a,b : integer;
-c : integer = 7;
+d : integer = 6;
 begin
-a := 5;
-b := a + c;
+write(d);
+end;
+begin
+proc;
 end.

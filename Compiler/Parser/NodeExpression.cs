@@ -57,11 +57,7 @@ namespace Compiler
             {
                 opnameStr = Lexer.GetStrOperationSign((OperationSign)opname);
             }
-            if (leftType.GetType().Name == "SymRecord" || rightType.GetType().Name == "SymRecord" || leftType.GetType().Name == "SymArray" || rightType.GetType().Name == "SymArray")
-            {
-                throw new Exception("Operator is not overloaded");
-            }
-            if(leftType.GetType() != rightType.GetType())
+            if (leftType.GetType() != rightType.GetType() && opnameStr != ".")
             {
                 if((leftType.GetType().Name == "SymInteger" || leftType.GetType().Name == "SymReal") &&
                    (rightType.GetType().Name == "SymInteger" || rightType.GetType().Name == "SymReal"))
@@ -82,7 +78,7 @@ namespace Compiler
                 }
                 else
                 {
-                    throw new Exception("Incompatible types");
+                    throw new Exception($"Incompatible types {opname.GetType()}");
                 }
             }
             if((leftType.GetType().Name == "SymString" && rightType.GetType().Name == "SymString" && (opnameStr == "/" || opnameStr == "*" || opnameStr == "-"))||

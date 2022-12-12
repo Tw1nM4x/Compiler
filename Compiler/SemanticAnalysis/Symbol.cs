@@ -38,11 +38,11 @@ namespace Compiler
     }
     public class SymParamVar : SymVar
     {
-        public SymParamVar(SymVar var) : base(var.GetName(), var.GetTypeVar()) { }
+        public SymParamVar(SymVar var) : base("var " + var.GetName(), var.GetTypeVar()) { }
     }
     public class SymParamOut : SymVar
     {
-        public SymParamOut(SymVar var) : base(var.GetName(), var.GetTypeVar()) { }
+        public SymParamOut(SymVar var) : base("out " + var.GetName(), var.GetTypeVar()) { }
     }
     public class SymVarConst : SymVar
     {

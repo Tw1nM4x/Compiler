@@ -21,7 +21,7 @@ namespace Tester
         }
         static Folder[] folders = new Folder[] { };
 
-        public static void StartTest(string key) 
+        public static void StartTest(string key, string addition = "-null") 
         {
             switch (key)
             {
@@ -33,12 +33,17 @@ namespace Tester
                     folders = new Folder[] { new("simple expressions", 14) };
                     break;
                 case "-par":
-                    folders = new Folder[] { new("parser/defs", 8), new("parser/composite data types", 5), new("parser/scalar data types", 0),
-                        new("parser/control structures", 7), new("parser/procedures", 0) };
+                    folders = new Folder[] { new("parser/defs", 8), new("parser/composite data types", 5), new("parser/scalar data types", 6),
+                        new("parser/control structures", 7), new("parser/procedures", 3) };
                     break;
             }
             int countOK = 0;
             int countERROR = 0;
+            if(addition == "-detail")
+            {
+                StartDetailTest(key);
+                return;
+            }
             for (int numberFolder = 0; numberFolder < folders.Length; numberFolder++)
             {
                 Console.WriteLine($"----------{folders[numberFolder].name}----------");
@@ -142,12 +147,6 @@ namespace Tester
                 }
             }
             Console.WriteLine($"OK: {countOK}  ERRORS: {countERROR}");
-            Console.WriteLine("\nWrite 'go' to see details");
-            string? input = Console.ReadLine();
-            if (input == "go")
-            {
-                StartDetailTest(key);
-            }
         }
         static void StartDetailTest(string key)
         {
@@ -174,10 +173,6 @@ namespace Tester
                     }
                     Console.WriteLine("Press Enter to continue");
                     string? input = Console.ReadLine();
-                    if (input != "")
-                    {
-                        return;
-                    }
                 }
             }
         }

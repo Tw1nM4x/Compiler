@@ -34,6 +34,10 @@ namespace Compiler
     {
         List<OrdinalTypeNode> ordinalTypes;
         SymType type;
+        public SymType GetTypeArray()
+        {
+            return type;
+        }
         public List<OrdinalTypeNode> GetOrdinalTypeNode()
         {
             return ordinalTypes;
@@ -78,6 +82,10 @@ namespace Compiler
     public class SymRecord : SymType
     {
         SymTable fields;
+        public SymTable GetFields()
+        {
+            return fields;
+        }
         public SymRecord(string name, SymTable fields) : base(name)
         {
             this.fields = fields;
@@ -100,7 +108,7 @@ namespace Compiler
                 else
                 {
                     res += prefix + $"├─── {varField.GetName()}\r\n";
-                    res += prefix + $"│    └─── {varField.GetTypeVar().ToString(ListAddLeft(ListAddRight(isLeftParents)))}\r\n";
+                    res += prefix + $"│    └─── {varField.GetTypeVar().ToString(ListAddRight(ListAddLeft(isLeftParents)))}\r\n";
                     i++;
                 }
             }

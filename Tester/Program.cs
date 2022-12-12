@@ -20,14 +20,16 @@ namespace Tester
             if (args.Contains("-help"))
             {
                 Console.WriteLine("Usage:");
-                Console.WriteLine("  dotnet run [options]");
+                Console.WriteLine("  dotnet run [option] [addition]");
                 Console.WriteLine("Options:");
                 Console.WriteLine("  -l       lexical parser");
                 Console.WriteLine("  -sp      simple expression parser");
                 Console.WriteLine("  -p       parser (syntax analyzer)");
+                Console.WriteLine("Additions:");
+                Console.WriteLine("  -detail    view detail tests");
                 return;
             }
-            Tester.StartTest(args[0]);
+            Tester.StartTest(args[0], args.Length == 2? args[1] : "-null");
         }
     }
 }

@@ -1,1 +1,7 @@
-(5 + 4) * 4 - 5 * (4 + 3)
+program CheckScalarTypes;
+type
+arr = array [0..5] of integer;
+var
+a : arr;
+begin
+end.

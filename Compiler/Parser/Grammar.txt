@@ -20,8 +20,7 @@
 	 simpleStmt ::= assignment | call | goto | 'exit' | label
 	 structStmt ::= if | for | while | repeat | block
 
-	 assignment ::= var (':=' | '+=' | '-=' | '*=' | '/=') ( simpleExpression | string )
-	 goto ::= 'goto' var ';'
+	 assignment ::= (var || record || array) (':=' | '+=' | '-=' | '*=' | '/=') ( simpleExpression | string )
 	 label ::= var ':'
 	 if ::= 'if' expression 'then' statement ['else' statement]
 	 for ::= 'for' contrlVar ':=' initialVal 'to' finalVal 'do' statement

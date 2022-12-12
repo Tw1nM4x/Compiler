@@ -1,6 +1,8 @@
-program CheckCompositeTypes
+program CheckScalarTypes;
+type
+arr = array [0..5] of array [1..6] of array [2..7] of integer;
 var
-a : string;
+a : arr;
 begin
-a += 'hello';
+a[0][3][4] := 10;
 end.

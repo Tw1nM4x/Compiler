@@ -1,22 +1,15 @@
-﻿program 
-├─── var
-│    ├─── :
-│    │    ├─── 
-│    │    │    ├─── a
-│    │    │    └─── b
-│    │    └─── integer
-│    └─── :
-│         ├─── c
-│         ├─── integer
-│         └─── =
-│              └─── 7
+﻿program checkprocedures
+├─── procedure proc
+│    ├─── var
+│    │    └─── :
+│    │         ├─── d
+│    │         ├─── integer
+│    │         └─── =
+│    │              └─── 6
+│    └─── begin
+│         ├─── write
+│         │    └─── d
+│         └─── end
 └─── begin
-     ├─── :=
-     │    ├─── a
-     │    └─── 5
-     ├─── :=
-     │    ├─── b
-     │    └─── +
-     │         ├─── a
-     │         └─── c
+     ├─── proc
      └─── end

@@ -1,0 +1,9 @@
+program CheckScalarTypes;
+var
+a : integer = 3;
+type
+arr = array [0..5, 1..6] of array[2 + 6..a * 10] of integer;
+var
+b : arr;
+begin
+end.

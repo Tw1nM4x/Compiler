@@ -1,8 +1,8 @@
-program CheckCompositeTypes
+program CheckScalarTypes;
+type
+arr = array [0..5] of integer;
 var
-a : integer;
-c : real;
+a : arr;
 begin
-a := 5;
-c := 5.5 + a;
+a[0] := 5;
 end.

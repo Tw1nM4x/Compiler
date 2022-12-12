@@ -1,5 +1,25 @@
-﻿program 
+﻿program checkscalartypes
+├─── type
+│    └─── =
+│         ├─── rec
+│         └─── record 
+│              ├─── a
+│              │    └─── string
+│              └─── b
+│                   └─── integer
+├─── var
+│    └─── :
+│         ├─── a
+│         └─── rec
+│              └─── record 
+│                   ├─── a
+│                   │    └─── string
+│                   └─── b
+│                        └─── integer
 └─── begin
-     ├─── 
-     ├─── 
+     ├─── :=
+     │    ├─── .
+     │    │    ├─── a
+     │    │    └─── b
+     │    └─── 10
      └─── end

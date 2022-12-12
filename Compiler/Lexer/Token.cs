@@ -117,7 +117,7 @@ namespace Compiler
         Subtraction, // -=
         Multiplication, // *=
         Division, // /=
-        Point, // .
+        PointRecord, // .
     }
     public enum Separator
     {

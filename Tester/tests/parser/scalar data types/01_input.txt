@@ -1,6 +1,11 @@
-program CheckCompositeTypes
+program CheckScalarTypes;
+type
+rec = record
+a : string;
+b : integer;
+end;
 var
-a : integer;
+a : rec;
 begin
-a := 5;
+a.b := 10;
 end.

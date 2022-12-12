@@ -144,6 +144,8 @@ namespace Compiler
                     return "*=";
                 case OperationSign.Division:
                     return "/=";
+                case OperationSign.PointRecord:
+                    return ".";
                 default:
                     return "";
             }
