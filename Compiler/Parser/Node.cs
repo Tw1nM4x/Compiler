@@ -41,10 +41,10 @@ namespace Compiler
     }
     public class NodeMainProgram : Node 
     {
-        string? name;
+        string name;
         List<NodeDefs> types;
         BlockStmt body;
-        public NodeMainProgram(string? name, List<NodeDefs> types, BlockStmt body)
+        public NodeMainProgram(string name, List<NodeDefs> types, BlockStmt body)
         {
             this.name = name;
             this.types = types;

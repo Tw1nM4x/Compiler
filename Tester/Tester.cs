@@ -100,7 +100,7 @@ namespace Tester
                                 try
                                 {
                                     Parser parser = new Parser(lexer);
-                                    firstNode = parser.ParseProgram();
+                                    firstNode = parser.ParseMainProgram();
                                 }
                                 catch (ExceptionWithPosition ex)
                                 {

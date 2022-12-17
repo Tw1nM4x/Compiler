@@ -54,7 +54,7 @@ namespace Compiler
                     try
                     {
                         Parser parser = new Parser(lexer);
-                        Node firstNode = parser.ParseProgram();
+                        Node firstNode = parser.ParseMainProgram();
                         Console.Write(firstNode.ToString(new List<bool>()) + "\r\n");
                     }
                     catch (ExceptionWithPosition ex)

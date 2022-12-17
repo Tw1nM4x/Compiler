@@ -68,9 +68,9 @@
                 throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"expected {type}");
             }
         }
-        public Node ParseProgram()
+        public Node ParseMainProgram()
         {
-            string? name = null;
+            string name = "";
             List<NodeDefs> types = new List<NodeDefs>();
             BlockStmt body;
             if (Expect(KeyWord.PROGRAM))
