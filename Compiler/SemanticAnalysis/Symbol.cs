@@ -59,9 +59,17 @@ namespace Compiler
     public class SymProc : Symbol
     {
         bool unlimitedParameters = false;
-        SymTable params_;
+        List<SymVar> args;
         SymTable locals;
         BlockStmt body;
+        public List<SymVar> GetParams()
+        {
+            return args;
+        }
+        public SymTable GetLocals()
+        {
+            return locals;
+        }
         public int GetCountParams()
         {
             if (unlimitedParameters)
@@ -70,23 +78,23 @@ namespace Compiler
             }
             else
             {
-                return params_.GetSize();
+                return args.Count();
             }
         }
         public BlockStmt GetBody()
         {
             return body;
         }
-        public SymProc(string name, SymTable params_, SymTable locals, BlockStmt body) : base(name)
+        public SymProc(string name, List<SymVar> args, SymTable locals, BlockStmt body) : base(name)
         {
-            this.params_ = params_;
+            this.args = args;
             this.locals = locals;
             this.body = body;
         }
         public SymProc(string name) : base(name)
         {
             unlimitedParameters = true;
-            this.params_ = new SymTable(new Dictionary<string, Symbol>());
+            this.args = new List<SymVar>();
             this.locals = new SymTable(new Dictionary<string, Symbol>());
             this.body = new BlockStmt(new List<NodeStatement>());
         }

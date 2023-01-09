@@ -1,0 +1,9 @@
+program CheckDuplicateProcedure;
+var
+x : integer;
+procedure x (x : string);
+begin
+end;
+begin
+
+end.

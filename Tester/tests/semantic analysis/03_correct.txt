@@ -1,0 +1,26 @@
+﻿program checklocalvar
+├─── var
+│    └─── :
+│         ├─── x
+│         └─── integer
+├─── procedure y
+│    ├─── :
+│    │    ├─── x
+│    │    └─── string
+│    └─── begin
+│         └─── end
+└─── begin
+     └─── end
+
+Symbol Tables:
+builtins:
+	integer: SymInteger
+	real: SymReal
+	string: SymString
+	write: SymProc
+	read: SymProc
+globals:
+	x: SymVar
+	y: SymProc
+		locals of procedure "y": 
+		x: SymVar

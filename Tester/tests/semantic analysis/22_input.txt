@@ -1,0 +1,8 @@
+program CheckTypeRecord;
+var
+rec : record
+a : integer;
+end;
+begin
+rec.a := 'hello';
+end.

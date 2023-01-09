@@ -1,0 +1,9 @@
+program CheckDuplicateType;
+type
+a = integer;
+a = string;
+var
+x : a;
+begin
+
+end.

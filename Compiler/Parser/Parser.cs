@@ -19,6 +19,93 @@
             symTableStack.AddTable(new SymTable(new Dictionary<string, Symbol>()));
             NextToken();
         }
+        public string PrintSymTable()
+        {
+            string PrintSymProc(Dictionary<string, Symbol> dic, int index, int depth)
+            {
+                string res = "";
+                SymProc symProc = (SymProc)dic.ElementAt(index).Value;
+                Dictionary<string, Symbol> dicLocals = symProc.GetLocals().GetData();
+                if(dicLocals.Count > 0)
+                {
+                    for (int i = 0; i < depth; i++)
+                    {
+                        res += "\t";
+                    }
+                    res += $"locals of procedure \"{dic.ElementAt(index).Key}\": \r\n";
+                    for (int z = 0; z < dicLocals.Count; z++)
+                    {
+                        for (int i = 0; i < depth; i++)
+                        {
+                            res += "\t";
+                        }
+                        res += dicLocals.ElementAt(z).Key.ToString() + ": " + dicLocals.ElementAt(z).Value.GetType().Name + "\r\n";
+                        if (dicLocals.ElementAt(z).Value.GetType() == typeof(SymProc))
+                        {
+                            res += PrintSymProc(dicLocals, z, depth + 1);
+                        }
+                    }
+                }
+                return res;
+            }
+            string PrintSymRecord(Dictionary<string, Symbol> dic, int index, int depth)
+            {
+                string res = "";
+                SymRecord symRecord = (SymRecord)dic.ElementAt(index).Value;
+                Dictionary<string, Symbol> dicLocals = symRecord.GetFields().GetData();
+                if (dicLocals.Count > 0)
+                {
+                    for (int i = 0; i < depth; i++)
+                    {
+                        res += "\t";
+                    }
+                    res += $"locals of record \"{dic.ElementAt(index).Key}\": \r\n";
+                    for (int z = 0; z < dicLocals.Count; z++)
+                    {
+                        for (int i = 0; i < depth; i++)
+                        {
+                            res += "\t";
+                        }
+                        res += dicLocals.ElementAt(z).Key.ToString() + ": " + dicLocals.ElementAt(z).Value.GetType().Name + "\r\n";
+                        if (dicLocals.ElementAt(z).Value.GetType() == typeof(SymRecord))
+                        {
+                            res += PrintSymRecord(dicLocals, z, depth + 1);
+                        }
+                    }
+                }
+                return res;
+            }
+            string res = "\r\nSymbol Tables:\r\n";
+            for (int i = 0; i < symTableStack.GetCountTables(); i++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        res += $"builtins:\r\n";
+                        break;
+                    case 1:
+                        res += $"globals:\r\n";
+                        break;
+                    default:
+                        res += $"table #{i}\r\n";
+                        break;
+                }
+                Dictionary<string, Symbol> dic = symTableStack.GetTable(i).GetData();
+                for (int j = 0; j < dic.Count; j++)
+                {
+                    res += "\t" + dic.ElementAt(j).Key.ToString() + ": " + dic.ElementAt(j).Value.GetType().Name + "\r\n";
+                    if (dic.ElementAt(j).Value.GetType() == typeof(SymProc))
+                    {
+                        res += PrintSymProc(dic, j, 2);
+                    }
+                    if (dic.ElementAt(j).Value.GetType() == typeof(SymRecord))
+                    {
+                        res += PrintSymRecord(dic, j, 2);
+                    }
+                }
+            }
+            return res;
+        }
         void NextToken()
         {
             currentLex = lexer.GetNextToken();
@@ -124,6 +211,7 @@
             while (ExpectType(TokenType.Identifier))
             {
                 string name = (string)currentLex.Value;
+                symTableStack.Check(name);
                 NextToken();
                 Require(OperationSign.Equal);
                 NodeExpression value;
@@ -163,9 +251,11 @@
             string name;
             List<VarDeclarationNode> paramsNode = new List<VarDeclarationNode>();
             SymTable locals = new SymTable(new Dictionary<string, Symbol>());
+            List<SymVar> args = new List<SymVar>();
             NextToken();
             RequireType(TokenType.Identifier);
             name = (string)currentLex.Value;
+            symTableStack.Check(name);
             NextToken();
             symTableStack.AddTable(locals);
             if (Expect(Separator.OpenParenthesis))
@@ -192,14 +282,21 @@
             }
             Require(Separator.Semiсolon);
 
-            SymTable params_ = new SymTable(symTableStack.GetBackTable());
+            foreach (VarDeclarationNode varDeclNode in paramsNode)
+            {
+                foreach (SymVar var in varDeclNode.GetVars())
+                {
+                    args.Add(var);
+                }
+            }
+
             List<NodeDefs> localsTypes = ParseDefs();
             locals = symTableStack.GetBackTable();
             Require(KeyWord.BEGIN);
             BlockStmt body = ParseBlock();
             Require(Separator.Semiсolon);
             symTableStack.PopBack();
-            SymProc symProc = new SymProc(name, params_, locals, body);
+            SymProc symProc = new SymProc(name, args, locals, body);
             symTableStack.Add(name, symProc);
             return new ProcedureTypesNode(paramsNode, localsTypes, symProc);
         }
@@ -211,12 +308,14 @@
             NodeExpression? value = null;
             RequireType(TokenType.Identifier);
             names.Add((string)currentLex.Value);
+            symTableStack.Check(names[^1]);
             NextToken();
             while (Expect(Separator.Comma))
             {
                 NextToken();
                 RequireType(TokenType.Identifier);
                 names.Add((string)currentLex.Value);
+                symTableStack.Check(names[^1]);
                 NextToken();
             }
             Require(OperationSign.Colon);
@@ -261,6 +360,7 @@
             SymType type;
             RequireType(TokenType.Identifier);
             nameType = (string)currentLex.Value;
+            symTableStack.Check(nameType);
             NextToken();
             Require(OperationSign.Equal);
             type = ParseType();
@@ -475,9 +575,17 @@
             NextToken();
             RequireType(TokenType.Identifier);
             controlVar = new NodeVar((SymVar)symTableStack.Get((string)currentLex.Value));
+            if (controlVar.CalcType().GetType() != typeof(SymInteger))
+            {
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Ordinal expression expected");
+            }
             NextToken();
             Require(OperationSign.Assignment);
             initialValue = ParseSimpleExpression();
+            if (initialValue.CalcType().GetType() != controlVar.GetCachedType().GetType())
+            {
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Incompatible types");
+            }
             if (!Expect(KeyWord.TO, KeyWord.DOWNTO))
             {
                 throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected 'to' or 'downto'");
@@ -485,6 +593,10 @@
             toOrDownto = (KeyWord)currentLex.Value;
             NextToken();
             finalValue = ParseSimpleExpression();
+            if (finalValue.CalcType().GetType() != controlVar.GetCachedType().GetType())
+            {
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Incompatible types");
+            }
             Require(KeyWord.DO);
             body = ParseStatement();
             return new ForStmt( controlVar, initialValue, toOrDownto, finalValue, body );
@@ -497,6 +609,10 @@
 
             NextToken();
             condition = ParseExpression();
+            if (condition.CalcType().GetType() != typeof(SymBoolean))
+            {
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Incompatible types: expected \"Boolean\"");
+            }
             Require(KeyWord.THEN);
             if (!Expect(KeyWord.ELSE))
             {
@@ -516,6 +632,10 @@
 
             NextToken();
             condition = ParseExpression();
+            if (condition.CalcType().GetType() != typeof(SymBoolean))
+            {
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Incompatible types: expected \"Boolean\"");
+            }
             Require(KeyWord.DO);
             body = ParseStatement();
             return new WhileStmt(condition, body);
@@ -536,6 +656,10 @@
             } while (Expect(Separator.Semiсolon));
             Require(KeyWord.UNTIL);
             cond = ParseExpression();
+            if (cond.CalcType().GetType() != typeof(SymBoolean))
+            {
+                throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Incompatible types: expected \"Boolean\"");
+            }
             return new RepeatStmt(body, cond);
         }
         public NodeStatement ParseProcedureStmt(string name, int lineProc, int symProc)
@@ -548,14 +672,24 @@
             }
             catch
             {
-                throw new ExceptionWithPosition(lineProc, symProc, $"Identifier not found \"{name}\"");
+                throw new ExceptionWithPosition(lineProc, symProc, $"Procedure not found \"{name}\"");
             }
             if (Expect(Separator.OpenParenthesis))
             {
                 NextToken();
+                int i = 0;
                 while (!Expect(Separator.CloseParenthesis))
                 {
-                    parameter.Add(ParseFactor());
+                    NodeExpression param = ParseFactor();
+                    if(proc.GetName() != "read" && proc.GetName() != "write")
+                    {
+                        if (param.GetCachedType().GetType() != proc.GetParams()[i].GetTypeVar().GetType())
+                        {
+                            throw new ExceptionWithPosition(lineProc, symProc, $"Incompatible type for arg no. {i + 1}");
+                        }
+                        i += 1;
+                    }
+                    parameter.Add(param);
                     if (Expect(Separator.Comma))
                     {
                         NextToken();
@@ -567,9 +701,12 @@
                 }
                 Require(Separator.CloseParenthesis);
             }
-            if (proc.GetCountParams() != -1 && parameter.Count != proc.GetCountParams())
+            if (proc.GetName() != "read" && proc.GetName() != "write")
             {
-                throw new ExceptionWithPosition(lineProc, symProc, $"Wrong number of parameters specified for call to \"{proc.GetName()}\"");
+                if (proc.GetCountParams() != -1 && parameter.Count != proc.GetCountParams())
+                {
+                    throw new ExceptionWithPosition(lineProc, symProc, $"Wrong number of parameters specified for call to \"{proc.GetName()}\"");
+                }
             }
             return new CallStmt(proc, parameter);
         }

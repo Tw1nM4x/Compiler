@@ -22,9 +22,10 @@ namespace Tester
                 Console.WriteLine("Usage:");
                 Console.WriteLine("  dotnet run [option] [addition]");
                 Console.WriteLine("Options:");
-                Console.WriteLine("  -l       lexical parser");
-                Console.WriteLine("  -sp      simple expression parser");
-                Console.WriteLine("  -p       parser (syntax analyzer)");
+                Console.WriteLine("  -l       Lexical parser");
+                Console.WriteLine("  -sp      Simple expression parser");
+                Console.WriteLine("  -p       Parser (syntax analyzer)");
+                Console.WriteLine("  -sa      Semantic analysis");
                 Console.WriteLine("Additions:");
                 Console.WriteLine("  -detail    view detail tests");
                 return;

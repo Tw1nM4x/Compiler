@@ -18,7 +18,7 @@ namespace Compiler
             return new SymType("");
         }
     }
-    public class NodeCast : NodeExpression
+    public partial class NodeCast : NodeExpression
     {
         SymType cast;
         NodeExpression exp;
@@ -36,10 +36,10 @@ namespace Compiler
             return res;
         }
     }
-    public class NodeBinOp : NodeExpression
+    public partial class NodeBinOp : NodeExpression
     {
         object opname;
-        NodeExpression left;
+        public NodeExpression left;
         NodeExpression right;
         public NodeBinOp(object opname, NodeExpression left, NodeExpression right)
         {
@@ -52,17 +52,12 @@ namespace Compiler
         {
             SymType leftType = left.GetCachedType();
             SymType rightType = right.GetCachedType();
-            string? opnameStr = opname.ToString();
-            if (opname.GetType() == typeof(OperationSign))
+            if(leftType.GetType() != rightType.GetType())
             {
-                opnameStr = Lexer.GetStrOperationSign((OperationSign)opname);
-            }
-            if (leftType.GetType() != rightType.GetType() && opnameStr != ".")
-            {
-                if((leftType.GetType().Name == "SymInteger" || leftType.GetType().Name == "SymReal") &&
-                   (rightType.GetType().Name == "SymInteger" || rightType.GetType().Name == "SymReal"))
+                if ((leftType.GetType() == typeof(SymInteger) || leftType.GetType() == typeof(SymReal)) &&
+                   (rightType.GetType() == typeof(SymInteger) || rightType.GetType() == typeof(SymReal)))
                 {
-                    if (leftType.GetType().Name == "SymInteger")
+                    if (leftType.GetType() == typeof(SymInteger))
                     {
                         left = new NodeCast(rightType, left);
                     }
@@ -70,25 +65,25 @@ namespace Compiler
                     {
                         right = new NodeCast(leftType, right);
                     }
-                    if((opnameStr == "<" || opnameStr == "<=" || opnameStr == ">" || opnameStr == "=>" || opnameStr == "=" || opnameStr == "<>"))
-                    {
-                        return new SymBoolean("boolean");
-                    }
                     return new SymReal("real");
                 }
                 else
                 {
-                    throw new Exception($"Incompatible types {opname.GetType()}");
+                    throw new Exception($"Incompatible types");
                 }
             }
-            if((leftType.GetType().Name == "SymString" && rightType.GetType().Name == "SymString" && (opnameStr == "/" || opnameStr == "*" || opnameStr == "-"))||
-               ((opnameStr == "or" || opnameStr == "and" || opnameStr == "not") && (leftType.GetType().Name != "SymBoolean" || rightType.GetType().Name != "SymBoolean")))
+            if (opname.GetType() == typeof(OperationSign))
             {
-                throw new Exception("Operator is not overloaded");
-            }
-            if ((opnameStr == "<" || opnameStr == "<=" || opnameStr == ">" || opnameStr == "=>" || opnameStr == "=" || opnameStr == "<>"))
-            {
-                return new SymBoolean("boolean");
+                OperationSign op = (OperationSign) opname;
+                if (op == OperationSign.Equal || op == OperationSign.Less || op == OperationSign.LessOrEqual ||
+                   op == OperationSign.Greater || op == OperationSign.GreaterOrEqual || op == OperationSign.NotEqual)
+                {
+                    return new SymBoolean("boolean");
+                }
+                if (op != OperationSign.Plus && leftType.GetType() == typeof(SymString))
+                {
+                    throw new Exception("Operator is not overloaded");
+                }
             }
             return leftType;
         }
@@ -111,11 +106,17 @@ namespace Compiler
             return res;
         }
     }
-    public class NodeRecordAccess : NodeBinOp
+    public partial class NodeRecordAccess : NodeBinOp
     {
-        public NodeRecordAccess(OperationSign opname, NodeExpression left, NodeExpression right) : base(opname, left, right) { }
+        public NodeRecordAccess(object opname, NodeExpression left, NodeExpression right) : base(opname, left, right) { }
+
+        public override SymType CalcType()
+        {
+            SymType leftType = left.GetCachedType();
+            return leftType;
+        }
     }
-    public class NodeUnOp : NodeExpression
+    public partial class NodeUnOp : NodeExpression
     {
         object opname;
         NodeExpression arg;
@@ -147,7 +148,7 @@ namespace Compiler
             return res;
         }
     }
-    public class NodeArrayPosition : NodeExpression
+    public partial class NodeArrayPosition : NodeExpression
     {
         string name;
         List<NodeExpression?>? args;
@@ -187,7 +188,7 @@ namespace Compiler
             return res;
         }
     }
-    public class NodeVar : NodeExpression
+    public partial class NodeVar : NodeExpression
     {
         SymVar var_;
         public string GetName()
@@ -208,7 +209,7 @@ namespace Compiler
             return $"{var_.GetName()}";
         }
     }
-    public class NodeInt : NodeExpression
+    public partial class NodeInt : NodeExpression
     {
         int value;
         public NodeInt(int value)
@@ -225,7 +226,7 @@ namespace Compiler
             return $"{value.ToString()}";
         }
     }
-    public class NodeReal : NodeExpression
+    public partial class NodeReal : NodeExpression
     {
         double value;
         public NodeReal(double value)
@@ -242,7 +243,7 @@ namespace Compiler
             return $"{value.ToString()}";
         }
     }
-    public class NodeString : NodeExpression
+    public partial class NodeString : NodeExpression
     {
         string value;
         public NodeString(string value)

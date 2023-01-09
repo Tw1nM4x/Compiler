@@ -1,0 +1,6 @@
+program CheckTypeArrayEl;
+var
+arr : array[0..5] of integer;
+begin
+arr[1] := 'hello';
+end.

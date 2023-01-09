@@ -1,7 +1,27 @@
-program CheckScalarTypes;
-type
-arr = array [0..5] of integer;
+program Hello;
+procedure prin (x : integer);
 var
-a : arr;
+y : integer = 5;
+procedure c;
+var
+u : real = 8;
+	procedure i;
+	var
+	u : real = 8;
+	begin
+	write('wow', u);
+	end;
+var
+p : real;
 begin
+write('wow', u);
+end;
+begin
+write(x,y);
+c;
+end;
+var
+zen : array [0..4] of string;
+begin
+  prin(4);
 end.

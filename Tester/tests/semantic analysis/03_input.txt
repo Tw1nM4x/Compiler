@@ -1,0 +1,9 @@
+program CheckLocalVar;
+var
+x : integer;
+procedure y (x : string);
+begin
+end;
+begin
+
+end.

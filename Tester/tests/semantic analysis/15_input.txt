@@ -1,0 +1,6 @@
+program CheckIncorrectOperationsWhithString;
+var
+x : string;
+begin
+x := 'hello' / ' world!';
+end.

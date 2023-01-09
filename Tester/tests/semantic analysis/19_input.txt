@@ -1,0 +1,7 @@
+program CheckProcedureTypeParams;
+procedure a (x : integer);
+begin
+end;
+begin
+a('hello');
+end.

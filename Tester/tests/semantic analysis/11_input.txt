@@ -1,0 +1,11 @@
+program CheckNotDuplicateInRecord;
+type
+x = record
+x : integer;
+y : string;
+end;
+var
+y : x;
+begin
+
+end.

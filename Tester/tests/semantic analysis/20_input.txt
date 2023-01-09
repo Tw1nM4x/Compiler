@@ -1,0 +1,7 @@
+program CheckProcedureCountParams;
+procedure a (x,y : integer);
+begin
+end;
+begin
+a(5);
+end.

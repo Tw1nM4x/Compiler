@@ -1,0 +1,11 @@
+program CheckDuplicateInRecord;
+type
+rec = record
+x : integer;
+x : string;
+end;
+var
+x : rec;
+begin
+
+end.

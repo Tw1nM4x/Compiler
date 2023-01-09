@@ -1,0 +1,6 @@
+program CheckFor;
+var
+x, a : real;
+begin
+for a := 1 to 5 do x := 7;
+end.

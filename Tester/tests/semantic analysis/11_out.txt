@@ -1,0 +1,34 @@
+program checknotduplicateinrecord
+├─── type
+│    └─── =
+│         ├─── x
+│         └─── record 
+│              ├─── x
+│              │    └─── integer
+│              └─── y
+│                   └─── string
+├─── var
+│    └─── :
+│         ├─── y
+│         └─── x
+│              └─── record 
+│                   ├─── x
+│                   │    └─── integer
+│                   └─── y
+│                        └─── string
+└─── begin
+     └─── end
+
+Symbol Tables:
+builtins:
+	integer: SymInteger
+	real: SymReal
+	string: SymString
+	write: SymProc
+	read: SymProc
+globals:
+	x: SymRecord
+		locals of record "x": 
+		x: SymVar
+		y: SymVar
+	y: SymVar

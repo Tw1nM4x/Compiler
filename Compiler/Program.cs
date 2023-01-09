@@ -24,6 +24,7 @@ namespace Compiler
                 Console.WriteLine("  -l       Lexical parser");
                 Console.WriteLine("  -spar    Simple expression parser");
                 Console.WriteLine("  -par     Parser (syntax analyzer)");
+                Console.WriteLine("  -sa     Semantic analysis");
                 return;
             }
             try
@@ -56,6 +57,24 @@ namespace Compiler
                         Parser parser = new Parser(lexer);
                         Node firstNode = parser.ParseMainProgram();
                         Console.Write(firstNode.ToString(new List<bool>()) + "\r\n");
+                    }
+                    catch (ExceptionWithPosition ex)
+                    {
+                        throw ex;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, ex.Message);
+                    }
+                }
+                if (args[1] == "-sa")
+                {
+                    try
+                    {
+                        Parser parser = new Parser(lexer);
+                        Node firstNode = parser.ParseMainProgram();
+                        Console.Write(firstNode.ToString(new List<bool>()) + "\r\n");
+                        Console.Write(parser.PrintSymTable());
                     }
                     catch (ExceptionWithPosition ex)
                     {

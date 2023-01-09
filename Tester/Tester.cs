@@ -36,6 +36,9 @@ namespace Tester
                     folders = new Folder[] { new("parser/defs", 8), new("parser/composite data types", 5), new("parser/scalar data types", 6),
                         new("parser/control structures", 7), new("parser/procedures", 3) };
                     break;
+                case "-sa":
+                    folders = new Folder[] { new("semantic analysis", 24) };
+                    break;
             }
             int countOK = 0;
             int countERROR = 0;
@@ -121,6 +124,27 @@ namespace Tester
                             using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
                             {
                                 sw.Write($"{ex}\r\n");
+                            }
+                        }
+                    }
+                    if (key == "-sa")
+                    {
+                        using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
+                        {
+                            try
+                            {
+                                Parser parser = new Parser(lexer);
+                                Node firstNode = parser.ParseMainProgram();
+                                sw.Write(firstNode.ToString(new List<bool>()) + "\r\n");
+                                sw.Write(parser.PrintSymTable());
+                            }
+                            catch (ExceptionWithPosition ex)
+                            {
+                                sw.Write($"{ex}\r\n");
+                            }
+                            catch (Exception ex)
+                            {
+                                sw.Write(new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, ex.Message).ToString());
                             }
                         }
                     }

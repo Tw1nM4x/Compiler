@@ -15,7 +15,7 @@ namespace Compiler
             return "";
         }
     }
-    public class AssignmentStmt : NodeStatement
+    public partial class AssignmentStmt : NodeStatement
     {
         string opname;
         NodeExpression left;
@@ -36,7 +36,7 @@ namespace Compiler
             return res;
         }
     }
-    public class CallStmt : NodeStatement
+    public partial class CallStmt : NodeStatement
     {
         SymProc proc;
         List<NodeExpression?>? args;
@@ -81,7 +81,7 @@ namespace Compiler
             return res;
         }
     }
-    public class IfStmt : NodeStatement
+    public partial class IfStmt : NodeStatement
     {
         NodeExpression condition;
         NodeStatement body;
@@ -103,7 +103,7 @@ namespace Compiler
             return res;
         }
     }
-    public class WhileStmt : NodeStatement
+    public partial class WhileStmt : NodeStatement
     {
         NodeExpression condition;
         NodeStatement body;
@@ -122,7 +122,7 @@ namespace Compiler
             return res;
         }
     }
-    public class ForStmt : NodeStatement
+    public partial class ForStmt : NodeStatement
     {
         NodeVar controlVar;
         NodeExpression initialVal;
@@ -151,7 +151,7 @@ namespace Compiler
             return res;
         }
     }
-    public class RepeatStmt : NodeStatement
+    public partial class RepeatStmt : NodeStatement
     {
         NodeExpression condition;
         List<NodeStatement> body;
@@ -173,7 +173,7 @@ namespace Compiler
             return res;
         }
     }
-    public class BlockStmt : NodeStatement
+    public partial class BlockStmt : NodeStatement
     {
         List<NodeStatement> body;
         public BlockStmt(List<NodeStatement> body)

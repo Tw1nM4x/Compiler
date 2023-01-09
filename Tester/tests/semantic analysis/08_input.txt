@@ -1,0 +1,8 @@
+program CheckDuplicateConstVar;
+const
+a = 5;
+var
+a : integer;
+begin
+
+end.

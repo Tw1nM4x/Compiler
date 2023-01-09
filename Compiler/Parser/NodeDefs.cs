@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Compiler
 {
     public class NodeDefs : Node { }
-    public class ConstTypesNode : NodeDefs 
+    public partial class ConstTypesNode : NodeDefs 
     {
         List<ConstDeclarationNode> body;
         public ConstTypesNode(List<ConstDeclarationNode> body)
@@ -41,7 +41,7 @@ namespace Compiler
             return res;
         }
     }
-    public class VarTypesNode : NodeDefs
+    public partial class VarTypesNode : NodeDefs
     {
         List<VarDeclarationNode> body;
         public VarTypesNode(List<VarDeclarationNode> body)
@@ -75,7 +75,7 @@ namespace Compiler
             return res;
         }
     }
-    public class TypeTypesNode : NodeDefs
+    public partial class TypeTypesNode : NodeDefs
     {
         List<DeclarationNode> body;
         public TypeTypesNode(List<DeclarationNode> body)
@@ -109,7 +109,7 @@ namespace Compiler
             return res;
         }
     }
-    public class ProcedureTypesNode : NodeDefs
+    public partial class ProcedureTypesNode : NodeDefs
     {
         List<VarDeclarationNode> params_;
         List<NodeDefs> localsTypes;
@@ -138,7 +138,7 @@ namespace Compiler
         }
     }
     public class DeclarationNode : Node { }
-    public class VarDeclarationNode : DeclarationNode
+    public partial class VarDeclarationNode : DeclarationNode
     {
         List<SymVar> vars;
         SymType type;
@@ -188,7 +188,7 @@ namespace Compiler
             return res;
         }
     }
-    public class TypeDeclarationNode : DeclarationNode
+    public partial class TypeDeclarationNode : DeclarationNode
     {
         string name;
         SymTypeAlias type;
@@ -207,7 +207,7 @@ namespace Compiler
             return res;
         }
     }
-    public class ConstDeclarationNode : DeclarationNode
+    public partial class ConstDeclarationNode : DeclarationNode
     {
         string name;
         NodeExpression value;

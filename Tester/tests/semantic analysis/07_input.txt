@@ -1,0 +1,7 @@
+program CheckDuplicateConst;
+const
+a = 5;
+a = 'five';
+begin
+
+end.

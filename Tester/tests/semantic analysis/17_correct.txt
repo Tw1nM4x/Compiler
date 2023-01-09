@@ -1,0 +1,29 @@
+﻿program checkbollean
+├─── var
+│    └─── :
+│         ├─── x
+│         ├─── integer
+│         └─── =
+│              └─── 5
+└─── begin
+     ├─── if
+     │    ├─── >
+     │    │    ├─── x
+     │    │    └─── or
+     │    │         ├─── 5
+     │    │         └─── 7
+     │    ├─── :=
+     │    │    ├─── x
+     │    │    └─── 0
+     │    └─── 
+     └─── end
+
+Symbol Tables:
+builtins:
+	integer: SymInteger
+	real: SymReal
+	string: SymString
+	write: SymProc
+	read: SymProc
+globals:
+	x: SymVar

@@ -54,6 +54,14 @@ namespace Compiler
     public class SymTableStack
     {
         List<SymTable> tables;
+        public int GetCountTables()
+        {
+            return tables.Count;
+        }
+        public SymTable GetTable(int index)
+        {
+            return tables[index];
+        }
         public SymTable GetBackTable()
         {
             return tables[^1];
@@ -65,6 +73,13 @@ namespace Compiler
         public void PopBack()
         {
             tables.RemoveAt(tables.Count - 1);
+        }
+        public void Check(string name)
+        {
+            if (GetBackTable().GetData().ContainsKey(name))
+            {
+                throw new Exception($"Duplicate identifier \"{name}\"");
+            }
         }
         public void Add(string name, Symbol value)
         {

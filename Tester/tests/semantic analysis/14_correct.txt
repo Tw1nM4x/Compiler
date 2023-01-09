@@ -1,0 +1,23 @@
+﻿program checknotincompatibletypesintreal
+├─── var
+│    └─── :
+│         ├─── x
+│         └─── real
+└─── begin
+     ├─── :=
+     │    ├─── x
+     │    └─── +
+     │         ├─── real
+     │         │    └─── 5
+     │         └─── 10,5
+     └─── end
+
+Symbol Tables:
+builtins:
+	integer: SymInteger
+	real: SymReal
+	string: SymString
+	write: SymProc
+	read: SymProc
+globals:
+	x: SymVar

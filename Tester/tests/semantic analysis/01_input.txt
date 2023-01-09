@@ -1,0 +1,8 @@
+program CheckDuplicateVar;
+var
+x : integer;
+y : string;
+u,x : real;
+begin
+
+end.

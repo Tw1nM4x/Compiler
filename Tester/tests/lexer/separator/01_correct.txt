@@ -1,4 +1,4 @@
 1 1 Operation_sign Colon :
 1 2 Separator Semiсolon ;
-1 3 Separator Сomma ,
+1 3 Separator Comma ,
 1 4 Eof  

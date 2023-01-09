@@ -1,0 +1,6 @@
+program CheckBollean;
+var
+x : integer = 5;
+begin
+if x + 5 then x := 0;
+end.

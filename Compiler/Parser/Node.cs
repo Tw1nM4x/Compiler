@@ -38,8 +38,12 @@ namespace Compiler
             newList.Add(false);
             return newList;
         }
+        public virtual void Generate()
+        {
+
+        }
     }
-    public class NodeMainProgram : Node 
+    public partial class NodeMainProgram : Node 
     {
         string name;
         List<NodeDefs> types;
@@ -63,7 +67,7 @@ namespace Compiler
             return res;
         }
     }
-    public class NodeProgram : Node
+    public partial class NodeProgram : Node
     {
         List<NodeDefs?> types;
         BlockStmt body;
