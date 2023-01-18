@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 namespace Compiler
 {
     public class NodeDefs : Node { }
-    public partial class ConstTypesNode : NodeDefs 
+    public partial class ConstDefsNode : NodeDefs 
     {
         List<ConstDeclarationNode> body;
-        public ConstTypesNode(List<ConstDeclarationNode> body)
+        public ConstDefsNode(List<ConstDeclarationNode> body)
         {
             this.body = body;
         }
@@ -41,10 +41,10 @@ namespace Compiler
             return res;
         }
     }
-    public partial class VarTypesNode : NodeDefs
+    public partial class VarDefsNode : NodeDefs
     {
         List<VarDeclarationNode> body;
-        public VarTypesNode(List<VarDeclarationNode> body)
+        public VarDefsNode(List<VarDeclarationNode> body)
         {
             this.body = body;
         }
@@ -75,10 +75,10 @@ namespace Compiler
             return res;
         }
     }
-    public partial class TypeTypesNode : NodeDefs
+    public partial class TypeDefsNode : NodeDefs
     {
         List<DeclarationNode> body;
-        public TypeTypesNode(List<DeclarationNode> body)
+        public TypeDefsNode(List<DeclarationNode> body)
         {
             this.body = body;
         }
@@ -109,12 +109,12 @@ namespace Compiler
             return res;
         }
     }
-    public partial class ProcedureTypesNode : NodeDefs
+    public partial class ProcedureDefsNode : NodeDefs
     {
         List<VarDeclarationNode> params_;
         List<NodeDefs> localsTypes;
         SymProc symProc;
-        public ProcedureTypesNode(List<VarDeclarationNode> params_, List<NodeDefs> localsTypes, SymProc symProc)
+        public ProcedureDefsNode(List<VarDeclarationNode> params_, List<NodeDefs> localsTypes, SymProc symProc)
         {
             this.params_ = params_;
             this.localsTypes = localsTypes;
@@ -209,11 +209,11 @@ namespace Compiler
     }
     public partial class ConstDeclarationNode : DeclarationNode
     {
-        string name;
+        SymVarConst var;
         NodeExpression value;
-        public ConstDeclarationNode(string name, NodeExpression value)
+        public ConstDeclarationNode(SymVarConst var, NodeExpression value)
         {
-            this.name = name;
+            this.var = var;
             this.value = value;
         }
         public override string ToString(List<bool> isLeftParents)
@@ -221,7 +221,7 @@ namespace Compiler
             string res;
             string prefix = GetPrefixNode(isLeftParents);
             res = $"=\r\n";
-            res += prefix + $"├─── {name}\r\n";
+            res += prefix + $"├─── {var.GetName()}\r\n";
             res += prefix + $"└─── {value.ToString(ListAddRight(isLeftParents))}";
             return res;
         }

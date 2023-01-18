@@ -40,7 +40,7 @@ namespace Compiler
     {
         object opname;
         public NodeExpression left;
-        NodeExpression right;
+        public NodeExpression right;
         public NodeBinOp(object opname, NodeExpression left, NodeExpression right)
         {
             this.opname = opname;
@@ -80,7 +80,9 @@ namespace Compiler
                 {
                     return new SymBoolean("boolean");
                 }
-                if (op != OperationSign.Plus && leftType.GetType() == typeof(SymString))
+                if ((op == OperationSign.Minus || op == OperationSign.Multiply || op == OperationSign.Divide ||
+                    op == OperationSign.Subtraction || op == OperationSign.Multiplication || op == OperationSign.Subtraction) 
+                    && leftType.GetType() == typeof(SymString))
                 {
                     throw new Exception("Operator is not overloaded");
                 }
@@ -112,8 +114,8 @@ namespace Compiler
 
         public override SymType CalcType()
         {
-            SymType leftType = left.GetCachedType();
-            return leftType;
+            SymType rightType = right.GetCachedType();
+            return rightType;
         }
     }
     public partial class NodeUnOp : NodeExpression
@@ -128,6 +130,10 @@ namespace Compiler
         }
         public override SymType CalcType()
         {
+            if (arg.CalcType().GetType() != typeof(SymInteger) || arg.CalcType().GetType() != typeof(SymReal))
+            {
+                throw new Exception("Operator is not overloaded");
+            }
             return arg.CalcType();
         }
         public override string ToString(List<bool> isLeftParents)
@@ -246,6 +252,10 @@ namespace Compiler
     public partial class NodeString : NodeExpression
     {
         string value;
+        public string GetValue()
+        {
+            return value;
+        }
         public NodeString(string value)
         {
             this.value = value;

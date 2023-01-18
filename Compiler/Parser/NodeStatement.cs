@@ -17,10 +17,10 @@ namespace Compiler
     }
     public partial class AssignmentStmt : NodeStatement
     {
-        string opname;
+        OperationSign opname;
         NodeExpression left;
         NodeExpression right;
-        public AssignmentStmt(string opname, NodeExpression left, NodeExpression right)
+        public AssignmentStmt(OperationSign opname, NodeExpression left, NodeExpression right)
         {
             this.opname = opname;
             this.left = left;
@@ -39,13 +39,13 @@ namespace Compiler
     public partial class CallStmt : NodeStatement
     {
         SymProc proc;
-        List<NodeExpression?>? args;
-        public CallStmt(Symbol proc, List<NodeExpression?>? arg)
+        List<NodeExpression?> args;
+        public CallStmt(Symbol proc, List<NodeExpression?> arg)
         {
             this.proc = (SymProc) proc;
             this.args = arg;
         }
-        public CallStmt(SymProc proc, List<NodeExpression?>? arg)
+        public CallStmt(SymProc proc, List<NodeExpression?> arg)
         {
             this.proc = proc;
             this.args = arg;

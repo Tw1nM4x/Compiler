@@ -38,7 +38,7 @@ namespace Compiler
             newList.Add(false);
             return newList;
         }
-        public virtual void Generate()
+        public virtual void Generate(Generator generator)
         {
 
         }

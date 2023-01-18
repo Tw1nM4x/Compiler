@@ -1,27 +1,12 @@
 program Hello;
-procedure prin (x : integer);
+const
+l = 6;
+type
+a = integer;
 var
-y : integer = 5;
-procedure c;
-var
-u : real = 8;
-	procedure i;
-	var
-	u : real = 8;
-	begin
-	write('wow', u);
-	end;
-var
-p : real;
+i : a = l;
 begin
-write('wow', u);
-end;
-begin
-write(x,y);
-c;
-end;
-var
-zen : array [0..4] of string;
-begin
-  prin(4);
+  if i = 2 + 2 then write('true ') else write('false ');
+  //l := 100;
+  write(l);
 end.

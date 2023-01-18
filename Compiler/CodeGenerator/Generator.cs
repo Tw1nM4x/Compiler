@@ -8,32 +8,85 @@ namespace Compiler
 {
     public enum Command
     {
-        Add,
-        Move
+        @extern,
+        global,
+        section,
+        mov,
+        push,
+        pop,
+        add,
+        sub,
+        mul,
+        div,
+        call,
+        fld,
+        fstp,
+        cmp,
+        jmp,
+        je,
+        jg,
+        jl
     }
-    public class LineCommand
+    public enum Register
     {
-        Command cmd;
-        List<object> arguments;
-        public LineCommand(Command cmd, List<object> arguments)
-        {
-            this.cmd = cmd;
-            this.arguments = arguments;
-        }
+        eax,
+        ebx,
+        ecx,
+        edx,
+        esp
+    }
+    public enum Call
+    {
+        _printf,
+        _scanf
+    }
+    public enum NasmType
+    {
+        @byte,
+        word,
+        dword,
+        qword,
+        db,
+        dd,
+        dq
     }
     public class Generator
     {
+        string pathOut;
+        public bool _mainDef = false;
+        public int line = 0;
+        public string Mangle(string var)
+        {
+            return "var_" + var;
+        }
         public void AddCommand(string linecommand)
         {
-            //добавить команду
+            using (StreamWriter sw = new StreamWriter(pathOut, true, Encoding.Default))
+            {
+                sw.Write(linecommand + "\r\n");
+                line += 1;
+            }
         }
-        public void Add(LineCommand command)
+        public void Add(Command cmd, params object[] arguments)
         {
-            //добавить команду
+            using (StreamWriter sw = new StreamWriter(pathOut, true, Encoding.Default))
+            {
+                sw.Write(cmd + " ");
+                for(int i = 0; i < arguments.Length - 1; i++)
+                {
+                    sw.Write(arguments[i] + ", ");
+                }
+                if(arguments.Length > 0)
+                {
+                    sw.Write(arguments[^1]);
+                }
+                sw.Write("\r\n");
+                line += 1;
+            }
         }
-        public Generator()
+        public Generator(string pathOut)
         {
-
+            this.pathOut = pathOut;
         }
     }
 }

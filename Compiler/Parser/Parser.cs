@@ -217,11 +217,11 @@
                 NodeExpression value;
                 value = ParseExpression();
                 Require(Separator.Semiсolon);
-                SymVarConst varConst = new SymVarConst(name, new SymType("const"));
+                SymVarConst varConst = new SymVarConst(name, value.GetCachedType());
                 symTableStack.Add(name, varConst);
-                body.Add(new ConstDeclarationNode(name, value));
+                body.Add(new ConstDeclarationNode(varConst, value));
             }
-            return new ConstTypesNode(body);
+            return new ConstDefsNode(body);
         }
         public NodeDefs ParseVarDefs()
         {
@@ -233,7 +233,7 @@
                 body.Add(ParseVarDef());
                 Require(Separator.Semiсolon);
             }
-            return new VarTypesNode(body);
+            return new VarDefsNode(body);
         }
         public NodeDefs ParseTypeDefs()
         {
@@ -244,7 +244,7 @@
                 body.Add(ParseTypeDef());
                 Require(Separator.Semiсolon);
             }
-            return new TypeTypesNode(body);
+            return new TypeDefsNode(body);
         }
         public NodeDefs ParseProcedureDefs()
         {
@@ -298,7 +298,7 @@
             symTableStack.PopBack();
             SymProc symProc = new SymProc(name, args, locals, body);
             symTableStack.Add(name, symProc);
-            return new ProcedureTypesNode(paramsNode, localsTypes, symProc);
+            return new ProcedureDefsNode(paramsNode, localsTypes, symProc);
         }
         public VarDeclarationNode ParseVarDef(KeyWord? param = null)
         {
@@ -331,7 +331,7 @@
                     throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"Only one variable can be initialized");
                 }
                 NextToken();
-                value = ParseExpression();
+                value = ParseExpression(true);
             }
             foreach(string name in names)
             {
@@ -465,6 +465,7 @@
             switch (currentLex.Value)
             {
                 case KeyWord.BEGIN:
+                    NextToken();
                     res = ParseBlock();
                     break;
                 case KeyWord.IF:
@@ -482,7 +483,7 @@
                 case Separator.Semiсolon:
                     break;
                 case KeyWord.EXIT:
-                    res = new CallStmt(symTableStack.Get("exit"), null);
+                    res = new CallStmt(symTableStack.Get("exit"), new List<NodeExpression?>());
                     NextToken();
                     break;
                 default:
@@ -492,7 +493,7 @@
         }
         public NodeStatement ParseSimpleStatement()
         {
-            string operation;
+            OperationSign operation;
             string name;
             NodeExpression left;
             NodeExpression right;
@@ -500,42 +501,47 @@
 
             int lineStart = currentLex.NumberLine;
             int symStart = currentLex.NumberSymbol;
-            try
+
+            //assigmentStmt
+            name = (string)currentLex.Value;
+            Symbol sym = symTableStack.Get((string)currentLex.Value);
+            NextToken();
+            if(sym.GetType() != typeof(SymVar))
             {
-                //assigmentStmt
-                symVar = (SymVar)symTableStack.Get((string)currentLex.Value);
-                left = new NodeVar(symVar);
-                name = (string)currentLex.Value;
-                NextToken();
-                while (Expect(Separator.OpenBracket, Separator.Point))
+                if(sym.GetType() == typeof(SymProc))
                 {
-                    Separator separator = (Separator)currentLex.Value;
-                    NextToken();
-                    switch (separator)
-                    {
-                        case Separator.OpenBracket:
-                            left = ParsePositionArray(left, ref symVar);
-                            break;
-                        case Separator.Point:
-                            left = ParseRecordField(left, ref symVar);
-                            name = symVar.GetName();
-                            break;
-                    }
+                    //procedureStmt
+                    return ParseProcedureStmt(name, lineStart, symStart);
+                }
+                throw new ExceptionWithPosition(lineStart, symStart, $"Expected variable identifier");
+            }
+            symVar = (SymVar)sym;
+            left = new NodeVar(symVar);
+            while (Expect(Separator.OpenBracket, Separator.Point))
+            {
+                Separator separator = (Separator)currentLex.Value;
+                NextToken();
+                switch (separator)
+                {
+                    case Separator.OpenBracket:
+                        left = ParsePositionArray(left, ref symVar);
+                        break;
+                    case Separator.Point:
+                        left = ParseRecordField(left, ref symVar);
+                        name = symVar.GetName();
+                        if (((NodeRecordAccess)left).CalcType().GetType() == typeof(SymProc))
+                        {
+                            //procedureStmt
+                            return ParseProcedureStmt(name, lineStart, symStart);
+                        }
+                        break;
                 }
             }
-            catch
-            {
-                //procedureStmt
-                name = (string)currentLex.Value;
-                NextToken();
-                return ParseProcedureStmt(name, lineStart, symStart);
-            }
-            //assigmentStmt
             if (!Expect(OperationSign.Assignment, OperationSign.Addition, OperationSign.Subtraction, OperationSign.Multiplication, OperationSign.Division))
             {
                 throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Expected assigment sign");
             }
-            operation = Lexer.GetStrOperationSign((OperationSign)currentLex.Value);
+            operation = (OperationSign)currentLex.Value;
             NextToken();
             int lineStartExp = currentLex.NumberLine;
             int symStartExp = currentLex.NumberSymbol;
@@ -557,10 +563,6 @@
                     NextToken();
                     continue;
                 }
-                if (!Expect(KeyWord.END))
-                {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, "expected ';'");
-                }
             }
             Require(KeyWord.END);
             return new BlockStmt(body);
@@ -572,6 +574,7 @@
             NodeExpression initialValue;
             NodeExpression finalValue;
             NodeStatement? body;
+
             NextToken();
             RequireType(TokenType.Identifier);
             controlVar = new NodeVar((SymVar)symTableStack.Get((string)currentLex.Value));
@@ -666,6 +669,7 @@
         {
             List<NodeExpression?> parameter = new List<NodeExpression?>();
             SymProc proc;
+
             try
             {
                 proc = (SymProc)symTableStack.Get(name);
@@ -680,7 +684,7 @@
                 int i = 0;
                 while (!Expect(Separator.CloseParenthesis))
                 {
-                    NodeExpression param = ParseFactor();
+                    NodeExpression param = ParseSimpleExpression();
                     if(proc.GetName() != "read" && proc.GetName() != "write")
                     {
                         if (param.GetCachedType().GetType() != proc.GetParams()[i].GetTypeVar().GetType())
@@ -710,49 +714,49 @@
             }
             return new CallStmt(proc, parameter);
         }
-        public NodeExpression ParseExpression()
+        public NodeExpression ParseExpression(bool inDef = false)
         {
-            NodeExpression left = ParseSimpleExpression();
+            NodeExpression left = ParseSimpleExpression(inDef);
             while (Expect(OperationSign.Less, OperationSign.LessOrEqual, OperationSign.Greater, OperationSign.GreaterOrEqual, OperationSign.Equal, OperationSign.NotEqual))
             {
                 OperationSign operation = (OperationSign)currentLex.Value;
                 NextToken();
-                NodeExpression right = ParseSimpleExpression();
+                NodeExpression right = ParseSimpleExpression(inDef);
                 left = new NodeBinOp(operation, left, right);
             }
             return left;
         }
-        public NodeExpression ParseSimpleExpression()
+        public NodeExpression ParseSimpleExpression(bool inDef = false)
         {
-            NodeExpression left = ParseTerm();
+            NodeExpression left = ParseTerm(inDef);
             while (Expect(OperationSign.Plus, OperationSign.Minus, KeyWord.OR, KeyWord.XOR))
             {
                 object operation = currentLex.Value;
                 NextToken();
-                NodeExpression right = ParseTerm();
+                NodeExpression right = ParseTerm(inDef);
                 left = new NodeBinOp(operation, left, right );
             }
             return left;
         }
-        public NodeExpression ParseTerm()
+        public NodeExpression ParseTerm(bool inDef = false)
         {
-            NodeExpression left = ParseFactor();
+            NodeExpression left = ParseFactor(inDef);
             while (Expect(OperationSign.Multiply, OperationSign.Divide, KeyWord.AND))
             {
                 object operation = currentLex.Value;
                 NextToken();
-                NodeExpression right = ParseFactor();
+                NodeExpression right = ParseFactor(inDef);
                 left = new NodeBinOp(operation, left, right);
             }
             return left;
         }
-        public NodeExpression ParseFactor()
+        public NodeExpression ParseFactor(bool inDef = false)
         {
             if (Expect(Separator.OpenParenthesis))
             {
                 NodeExpression e;
                 NextToken();
-                e = ParseExpression();
+                e = ParseExpression(inDef);
                 Require(Separator.CloseParenthesis);
                 return e;
             }
@@ -787,6 +791,10 @@
                 catch
                 {
                     throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Identifier not found \"{factor.Value}\"");
+                }
+                if (inDef && symVar.GetType() != typeof(SymVarConst))
+                {
+                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Illegal expression {symVar.GetType()}");
                 }
                 ans = new NodeVar(symVar);
                 while (Expect(Separator.OpenBracket, Separator.Point))
