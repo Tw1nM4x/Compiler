@@ -30,7 +30,12 @@ namespace Compiler
         {
             string res;
             string prefix = GetPrefixNode(isLeftParents);
-            res = $"{opname}\r\n";
+            string opnameStr = "";
+            if (opname.GetType() == typeof(OperationSign))
+            {
+                opnameStr = Lexer.GetStrOperationSign((OperationSign)opname);
+            }
+            res = $"{opnameStr}\r\n";
             res += prefix + $"├─── {left.ToString(ListAddLeft(isLeftParents))}\r\n";
             res += prefix + $"└─── {right.ToString(ListAddRight(isLeftParents))}";
             return res;

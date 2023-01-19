@@ -19,7 +19,7 @@ program checkdefs
 │         ├─── d
 │         ├─── integer
 │         └─── =
-│              └─── c
+│              └─── 7
 ├─── type
 │    └─── =
 │         ├─── e

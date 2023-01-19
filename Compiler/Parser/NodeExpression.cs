@@ -130,9 +130,9 @@ namespace Compiler
         }
         public override SymType CalcType()
         {
-            if (arg.CalcType().GetType() != typeof(SymInteger) || arg.CalcType().GetType() != typeof(SymReal))
+            if (arg.CalcType().GetType() != typeof(SymInteger) && arg.CalcType().GetType() != typeof(SymReal))
             {
-                throw new Exception("Operator is not overloaded");
+                throw new Exception("Operator is not overloaded (expected Integer or Real)");
             }
             return arg.CalcType();
         }

@@ -25,6 +25,7 @@ namespace Compiler
             }
             body.Generate(generator);
             generator.Add(Command.section, ".data");
+            generator.AddCommand($"finalVal: {NasmType.dd}  0.0");
             generator.AddCommand($"real: {NasmType.dd}  0.0");
             generator.AddCommand($"format: {NasmType.db} '%s',0");
         }
@@ -360,21 +361,58 @@ namespace Compiler
     {
         public override void Generate(Generator generator)
         {
-
+            condition.Generate(generator);
+            generator.Add(Command.pop, Register.eax);
+            int key = generator.line;
+            generator.Add(Command.jmp, $"Check_{key}");
+            generator.AddCommand($"Do_{key}:");
+            body.Generate(generator);
+            generator.AddCommand($"Check_{key}:");
+            generator.Add(Command.cmp, Register.eax, $"{NasmType.@byte} 1");
+            generator.Add(Command.je, $"Do_{key}");
         }
     }
     public partial class ForStmt
     {
+        //NodeVar controlVar;
+        //NodeExpression initialVal;
+        //KeyWord toOrDownto;
+        //NodeExpression finalVal;
+
+        //NodeStatement body;
         public override void Generate(Generator generator)
         {
+            initialVal.Generate(generator);
+            generator.Add(Command.pop, Register.eax);
+            generator.Add(Command.mov, $"[{generator.Mangle(controlVar.GetName())}]", Register.eax);
+            finalVal.Generate(generator);
+            generator.Add(Command.pop, Register.eax);
+            generator.Add(Command.mov, "[finalVal]", Register.eax);
 
+            int key = generator.line;
+            generator.AddCommand($"Do_{key}:");
+            body.Generate(generator);
+            generator.Add(Command.inc, $"{NasmType.dword} [{generator.Mangle(controlVar.GetName())}]");
+
+            generator.Add(Command.mov, Register.eax, $"{NasmType.dword} [{generator.Mangle(controlVar.GetName())}]");
+            generator.Add(Command.cmp, Register.eax, $"{NasmType.dword} [finalVal]");
+            generator.Add(Command.jle, $"Do_{key}");
         }
     }
     public partial class RepeatStmt
     {
         public override void Generate(Generator generator)
         {
-
+            condition.Generate(generator);
+            generator.Add(Command.pop, Register.eax);
+            int key = generator.line;
+            generator.AddCommand($"Do_{key}:");
+            foreach(NodeStatement node in body)
+            {
+                node.Generate(generator);
+            }
+            generator.Add(Command.cmp, Register.eax, $"{NasmType.@byte} 1");
+            generator.Add(Command.je, $"Do_{key}");
         }
     }
     public partial class BlockStmt

@@ -24,8 +24,11 @@ namespace Compiler
         cmp,
         jmp,
         je,
+        jle,
+        jge,
         jg,
-        jl
+        jl,
+        inc
     }
     public enum Register
     {

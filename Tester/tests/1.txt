@@ -6,7 +6,7 @@ a = integer;
 var
 i : a = l;
 begin
-  if i = 2 + 2 then write('true ') else write('false ');
-  //l := 100;
-  write(l);
+  for i := 1 to 9 do begin
+	write('hello ', i, ' ')
+  end;
 end.

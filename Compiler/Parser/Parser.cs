@@ -440,7 +440,7 @@
         {
             SymTable fields = new SymTable(new Dictionary<string, Symbol>());
             symTableStack.AddTable(fields);
-            while (currentLex.Type == TokenType.Identifier)
+            while (ExpectType(TokenType.Identifier))
             {
                 ParseVarDef();
                 if (Expect(KeyWord.END))
@@ -506,14 +506,14 @@
             name = (string)currentLex.Value;
             Symbol sym = symTableStack.Get((string)currentLex.Value);
             NextToken();
-            if(sym.GetType() != typeof(SymVar))
+            if(sym.GetType() != typeof(SymVar) && sym.GetType() != typeof(SymVarLocal) && sym.GetType() != typeof(SymParamVar) && sym.GetType() != typeof(SymParamOut))
             {
                 if(sym.GetType() == typeof(SymProc))
                 {
                     //procedureStmt
                     return ParseProcedureStmt(name, lineStart, symStart);
                 }
-                throw new ExceptionWithPosition(lineStart, symStart, $"Expected variable identifier");
+                throw new ExceptionWithPosition(lineStart, symStart, $"Expected variable identifier {sym.GetType()}");
             }
             symVar = (SymVar)sym;
             left = new NodeVar(symVar);
@@ -546,7 +546,7 @@
             int lineStartExp = currentLex.NumberLine;
             int symStartExp = currentLex.NumberSymbol;
             right = ParseExpression();
-            if(symVar.GetTypeVar().GetName() != right.GetCachedType().GetName())
+            if(symVar.GetTypeVar().GetType() != right.GetCachedType().GetType())
             {
                 throw new ExceptionWithPosition(lineStartExp, symStartExp, $"Incompatible types: got \"{right.GetCachedType().GetName()}\" expected \"{symVar.GetTypeVar().GetName()}\"");
             }
@@ -794,7 +794,7 @@
                 }
                 if (inDef && symVar.GetType() != typeof(SymVarConst))
                 {
-                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Illegal expression {symVar.GetType()}");
+                    throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol, $"Illegal expression");
                 }
                 ans = new NodeVar(symVar);
                 while (Expect(Separator.OpenBracket, Separator.Point))

@@ -4,7 +4,7 @@ a = integer;
 b = a;
 var
 c : b = 5;
-d : integer = c;
+d : integer = 7;
 type
 e = string;
 var

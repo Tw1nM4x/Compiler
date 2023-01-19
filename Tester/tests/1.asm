@@ -15,57 +15,33 @@ push dword [var_l]
 pop eax
 mov [var_i], eax
 section .text
+push dword 1
+pop eax
+mov [var_i], eax
+push dword 9
+pop eax
+mov [finalVal], eax
+Do_23:
 push dword [var_i]
-push dword 2
-push dword 2
-pop ebx
-pop eax
-add eax, ebx
-push eax
-pop ebx
-pop eax
-cmp eax, ebx
-je True_27
-push byte 0
-jmp False_27
-True_27:
-push byte 1
-False_27:
-pop eax
-cmp eax, byte 1
-je Then_35
-mov [format + 0], byte 'f'
-mov [format + 1], byte 'a'
+mov [format + 0], byte 'h'
+mov [format + 1], byte 'e'
 mov [format + 2], byte 'l'
-mov [format + 3], byte 's'
-mov [format + 4], byte 'e'
+mov [format + 3], byte 'l'
+mov [format + 4], byte 'o'
 mov [format + 5], byte ' '
-mov [format + 6], byte 0
+mov [format + 6], byte '%'
+mov [format + 7], byte 'd'
+mov [format + 8], byte ' '
+mov [format + 9], byte 0
 push format
 call _printf
 add esp, 4
 mov eax, 0
-jmp Else_35
-Then_35:
-mov [format + 0], byte 't'
-mov [format + 1], byte 'r'
-mov [format + 2], byte 'u'
-mov [format + 3], byte 'e'
-mov [format + 4], byte ' '
-mov [format + 5], byte 0
-push format
-call _printf
-add esp, 4
-mov eax, 0
-Else_35:
-push dword [var_l]
-mov [format + 0], byte '%'
-mov [format + 1], byte 'd'
-mov [format + 2], byte 0
-push format
-call _printf
-add esp, 4
-mov eax, 0
+inc dword [var_i]
+mov eax, dword [var_i]
+cmp eax, dword [finalVal]
+jle Do_23
 section .data
+finalVal: dd  0.0
 real: dd  0.0
 format: db '%s',0
