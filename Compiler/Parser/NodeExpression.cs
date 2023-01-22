@@ -17,6 +17,10 @@ namespace Compiler
         {
             return new SymType("");
         }
+        public virtual string Print()
+        {
+            return "";
+        }
     }
     public partial class NodeCast : NodeExpression
     {
@@ -85,6 +89,14 @@ namespace Compiler
                     && leftType.GetType() == typeof(SymString))
                 {
                     throw new Exception("Operator is not overloaded");
+                }
+            }
+            if (opname.GetType() == typeof(KeyWord))
+            {
+                KeyWord op = (KeyWord)opname;
+                if (op == KeyWord.OR || op == KeyWord.AND || op == KeyWord.NOT)
+                {
+                    return new SymBoolean("boolean");
                 }
             }
             return leftType;
@@ -157,11 +169,27 @@ namespace Compiler
     public partial class NodeArrayPosition : NodeExpression
     {
         string name;
-        List<NodeExpression?>? args;
-        public NodeArrayPosition(string name, List<NodeExpression?>? arg)
+        SymArray symArray;
+        public List<NodeExpression> args;
+        public string GetName()
+        {
+            return name;
+        }
+        public NodeArrayPosition(string name, SymArray symArray, List<NodeExpression> arg)
         {
             this.name = name;
+            this.symArray = symArray;
             this.args = arg;
+            cachedType = CalcType();
+        }
+        public override SymType CalcType()
+        {
+            SymType res = symArray.GetTypeArray();
+            while (res.GetType() == typeof(SymArray))
+            {
+                res = ((SymArray)res).GetTypeArray();
+            }
+            return res;
         }
         public override string ToString(List<bool> isLeftParents)
         {
@@ -201,6 +229,10 @@ namespace Compiler
         {
             return var_.GetName();
         }
+        public SymVar GetSymVar()
+        {
+            return var_;
+        }
         public NodeVar(SymVar var_)
         {
             this.var_ = var_;
@@ -208,7 +240,7 @@ namespace Compiler
         }
         public override SymType CalcType()
         {
-            return var_.GetTypeVar();
+            return var_.GetOriginalTypeVar();
         }
         public override string ToString(List<bool> isLeftParents)
         {

@@ -20,4 +20,4 @@ builtins:
 	write: SymProc
 	read: SymProc
 globals:
-	x: SymVar
+	x: SymVarGlobal

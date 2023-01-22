@@ -77,8 +77,8 @@ namespace Compiler
     }
     public partial class TypeDefsNode : NodeDefs
     {
-        List<DeclarationNode> body;
-        public TypeDefsNode(List<DeclarationNode> body)
+        List<TypeDeclarationNode> body;
+        public TypeDefsNode(List<TypeDeclarationNode> body)
         {
             this.body = body;
         }
@@ -109,12 +109,12 @@ namespace Compiler
             return res;
         }
     }
-    public partial class ProcedureDefsNode : NodeDefs
+    public partial class ProcedureDefNode : NodeDefs
     {
         List<VarDeclarationNode> params_;
         List<NodeDefs> localsTypes;
         SymProc symProc;
-        public ProcedureDefsNode(List<VarDeclarationNode> params_, List<NodeDefs> localsTypes, SymProc symProc)
+        public ProcedureDefNode(List<VarDeclarationNode> params_, List<NodeDefs> localsTypes, SymProc symProc)
         {
             this.params_ = params_;
             this.localsTypes = localsTypes;
@@ -156,6 +156,20 @@ namespace Compiler
             this.vars = name;
             this.type = type;
             this.value = value;
+            if (value != null)
+            {
+                if (type.GetType() != value.GetCachedType().GetType())
+                {
+                    if (type.GetType() == typeof(SymReal) && value.GetCachedType().GetType() == typeof(SymInteger))
+                    {
+                        this.value = new NodeCast(type, value);
+                    }
+                    else
+                    {
+                        throw new Exception($"Incompatible types");
+                    }
+                }
+            }
         }
         public override string ToString(List<bool> isLeftParents)
         {
@@ -215,6 +229,12 @@ namespace Compiler
         {
             this.var = var;
             this.value = value;
+            if ((value.GetCachedType().GetType() != typeof(SymInteger)) &&
+                (value.GetCachedType().GetType() != typeof(SymReal)) &&
+                (value.GetCachedType().GetType() != typeof(SymString)))
+            {
+                throw new Exception($"Incompatible types");
+            }
         }
         public override string ToString(List<bool> isLeftParents)
         {

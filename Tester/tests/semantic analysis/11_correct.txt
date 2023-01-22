@@ -29,6 +29,6 @@ builtins:
 globals:
 	x: SymRecord
 		locals of record "x": 
-		x: SymVar
-		y: SymVar
-	y: SymVar
+		x: SymVarGlobal
+		y: SymVarGlobal
+	y: SymVarGlobal

@@ -10,24 +10,32 @@ namespace Compiler
     {
         public override void Generate(Generator generator)
         {
-            generator.Add(Command.@extern, Call._printf);
-            generator.Add(Command.@extern, Call._scanf);
-            generator.Add(Command.global, "_main");
+            generator.AddCommand(Section.file, Command.@extern, Call._printf);
+            generator.AddCommand(Section.file, Command.@extern, Call._scanf);
+            generator.AddCommand(Section.file, Command.global, "_main");
+            generator.AddCommand(Section.file, Command.section, ".data");
+            generator.AddCommand(Section.file, Command.section, ".text");
+
             foreach (NodeDefs el in types)
             {
-                el.Generate(generator);
+                if(el.GetType() == typeof(ProcedureDefNode))
+                {
+                    el.Generate(generator);
+                }
             }
-            generator.Add(Command.section, ".text");
-            if (!generator._mainDef)
+            generator.AddLine(Section.text, "_main :");
+            foreach (NodeDefs el in types)
             {
-                generator.AddCommand("_main: ");
-                generator._mainDef = true;
+                if (el.GetType() != typeof(ProcedureDefNode))
+                {
+                    el.Generate(generator);
+                }
             }
             body.Generate(generator);
-            generator.Add(Command.section, ".data");
-            generator.AddCommand($"finalVal: {NasmType.dd}  0.0");
-            generator.AddCommand($"real: {NasmType.dd}  0.0");
-            generator.AddCommand($"format: {NasmType.db} '%s',0");
+            generator.AddCommand(Section.text, Command.ret);
+            generator.AddLine(Section.data, $"real: {NasmType.dd}  0.0");
+
+            generator.Write();
         }
     }
     public partial class NodeProgram
@@ -41,7 +49,6 @@ namespace Compiler
     {
         public override void Generate(Generator generator)
         {
-            generator.Add(Command.section, ".data");
             foreach (ConstDeclarationNode el in body)
             {
                 el.Generate(generator);
@@ -53,18 +60,57 @@ namespace Compiler
     {
         public override void Generate(Generator generator)
         {
-            generator.Add(Command.section, ".data");
             foreach (VarDeclarationNode el in body)
             {
                 el.Generate(generator);
             }
         }
     }
-    public partial class ProcedureDefsNode
+    public partial class TypeDefsNode
     {
         public override void Generate(Generator generator)
         {
+            foreach (TypeDeclarationNode el in body)
+            {
+                el.Generate(generator);
+            }
+        }
+    }
+    public partial class ProcedureDefNode
+    {
+        public override void Generate(Generator generator)
+        {
+            generator.AddLine(Section.text, $"{Generator.Mangle(symProc.GetName())}:");
 
+            generator.AddCommand(Section.text, Command.push, Register.ebp);
+            generator.AddCommand(Section.text, Command.mov, Register.ebp, Register.esp);
+
+            generator.AddCommand(Section.text, Command.sub, Register.esp, symProc.GetLocals().GetSizeLocal()); // Выделить память под локальные
+
+            foreach (NodeDefs el in localsTypes)
+            {
+                if (el.GetType() != typeof(ProcedureDefNode))
+                {
+                    el.Generate(generator);
+                }
+            }
+            symProc.GetBody().Generate(generator);
+
+            generator.AddCommand(Section.text, Command.add, Register.esp, symProc.GetLocals().GetSizeParam()); // Очистить мусор памяти от параметров
+
+            generator.AddCommand(Section.text, Command.mov, Register.esp, Register.ebp);
+            generator.AddCommand(Section.text, Command.pop, Register.ebp);
+
+            generator.AddCommand(Section.text, Command.ret);
+            generator.AddLine(Section.text, "");
+
+            foreach (NodeDefs el in localsTypes)
+            {
+                if (el.GetType() == typeof(ProcedureDefNode))
+                {
+                    el.Generate(generator);
+                }
+            }
         }
     }
     public partial class VarDeclarationNode
@@ -73,29 +119,57 @@ namespace Compiler
         {
             foreach (SymVar var in vars)
             {
-                if (var.GetTypeVar().GetType() == typeof(SymInteger))
+                if(var.GetType() == typeof(SymVarGlobal))
                 {
-                    generator.AddCommand($"{generator.Mangle(var.GetName())}: {NasmType.dd} 0");
-                }
-                if (var.GetTypeVar().GetType() == typeof(SymReal))
-                {
-                    generator.AddCommand($"{generator.Mangle(var.GetName())}: {NasmType.dq} 0.0");
-                }
-                if (var.GetTypeVar().GetType() == typeof(SymString))
-                {
-                    generator.AddCommand($"{generator.Mangle(var.GetName())}: {NasmType.db} 0");
-                }
-                if (value != null)
-                {
-                    generator.Add(Command.section, ".text");
-                    if (!generator._mainDef)
+                    if (var.GetOriginalTypeVar().GetType() == typeof(SymInteger))
                     {
-                        generator.AddCommand("_main: ");
-                        generator._mainDef = true;
+                        generator.AddLine(Section.data, $"{Generator.Mangle(var.GetName())}: {NasmType.dd} 0");
                     }
-                    value.Generate(generator);
-                    generator.Add(Command.pop, Register.eax);
-                    generator.Add(Command.mov, $"[{generator.Mangle(var.GetName())}]", Register.eax);
+                    if (var.GetOriginalTypeVar().GetType() == typeof(SymReal))
+                    {
+                        generator.AddLine(Section.data, $"{Generator.Mangle(var.GetName())}: {NasmType.dd} 0.0");
+                    }
+                    if (var.GetOriginalTypeVar().GetType() == typeof(SymString))
+                    {
+                        generator.AddLine(Section.data, $"{Generator.Mangle(var.GetName())}: {NasmType.dd} 0");
+                    }
+                    if (var.GetOriginalTypeVar().GetType() == typeof(SymRecord))
+                    {
+                        SymRecord record = (SymRecord)var.GetOriginalTypeVar();
+
+                        generator.AddLine(Section.data, "");
+                        generator.AddLine(Section.data, $"{Generator.Mangle(var.GetName())}:");
+                        generator.AddCommand(Section.data, Command.istruc, $"rec_{type.GetName()}");
+                        foreach (string el in record.GetFields().GetData().Keys)
+                        {
+                            generator.AddCommand(Section.data, Command.at, $"rec_{type.GetName()}.{ Generator.Mangle(el)}", $"{NasmType.dd} 0");
+                        }
+                        generator.AddCommand(Section.data, Command.iend);
+                        generator.AddLine(Section.data, "");
+                    }
+                    if (var.GetOriginalTypeVar().GetType() == typeof(SymArray))
+                    {
+                        SymArray array = (SymArray)var.GetOriginalTypeVar();
+                        string size = "";
+                        for(int i = 0; i < array.GetOrdinalTypeNode().Count; i++)
+                        {
+                            OrdinalTypeNode ordinalTypesNode = array.GetOrdinalTypeNode().ElementAt(i);
+                            if (i > 0)
+                            {
+                                size += " * ";
+                            }
+                            generator.AddLine(Section.bss, $"{Generator.Mangle(var.GetName())}_from{i} : {Command.equ} {ordinalTypesNode.from.Print()}");
+                            string res = $"({(ordinalTypesNode.to.Print())} - {Generator.Mangle(var.GetName())}_from{i} + 1)";
+                            generator.AddLine(Section.bss, $"{Generator.Mangle(var.GetName())}_size{i} : {Command.equ} {res}");
+                            size += $"{Generator.Mangle(var.GetName())}_size{i}";
+                        }
+                        generator.AddLine(Section.bss, $"{Generator.Mangle(var.GetName())}: {Command.resd} {size}");
+                    }
+                    if (value != null)
+                    {
+                        value.Generate(generator);
+                        generator.AddCommand(Section.text, Command.pop, $"{NasmType.dword} [{Generator.Mangle(var.GetName())}]");
+                    }
                 }
             }
         }
@@ -104,29 +178,24 @@ namespace Compiler
     {
         public override void Generate(Generator generator)
         {
-            if (var.GetTypeVar().GetType() == typeof(SymInteger))
+            generator.AddLine(Section.file, $"{Generator.Mangle(var.GetName())} {Command.equ} {value.Print()}");
+        }
+    }
+    public partial class TypeDeclarationNode
+    {
+        public override void Generate(Generator generator)
+        {
+            if (type.GetOriginalType().GetType() == typeof(SymRecord))
             {
-                generator.AddCommand($"{generator.Mangle(var.GetName())}: {NasmType.dd} 0");
-            }
-            if (var.GetTypeVar().GetType() == typeof(SymReal))
-            {
-                generator.AddCommand($"{generator.Mangle(var.GetName())}: {NasmType.dq} 0.0");
-            }
-            if (var.GetTypeVar().GetType() == typeof(SymString))
-            {
-                generator.AddCommand($"{generator.Mangle(var.GetName())}: {NasmType.db} 0");
-            }
-            if (value != null)
-            {
-                generator.Add(Command.section, ".text");
-                if (!generator._mainDef)
+                SymRecord record = (SymRecord)type.GetOriginalType();
+
+                generator.AddLine(Section.file, $"");
+                generator.AddCommand(Section.file, Command.struc, $"rec_{name}");
+                foreach (string el in record.GetFields().GetData().Keys)
                 {
-                    generator.AddCommand("_main: ");
-                    generator._mainDef = true;
+                    generator.AddLine(Section.file, $".{Generator.Mangle(el)}: resd 1");
                 }
-                value.Generate(generator);
-                generator.Add(Command.pop, Register.eax);
-                generator.Add(Command.mov, $"[{generator.Mangle(var.GetName())}]", Register.eax);
+                generator.AddCommand(Section.file, Command.endstruc);
             }
         }
     }
@@ -134,7 +203,18 @@ namespace Compiler
     {
         public override void Generate(Generator generator)
         {
-
+            if(cast.GetType() == typeof(SymReal))
+            {
+                if(exp.GetCachedType().GetType() == typeof(SymInteger))
+                {
+                    exp.Generate(generator);
+                    generator.AddCommand(Section.text, Command.pop, Register.eax);
+                    generator.AddCommand(Section.text, Command.mov, $"[real]", Register.eax);
+                    generator.AddCommand(Section.text, Command.fild, $"{NasmType.dword} [real]");
+                    generator.AddCommand(Section.text, Command.sub, Register.esp, 4);
+                    generator.AddCommand(Section.text, Command.fstp, $"{NasmType.dword} [{Register.esp}]");
+                }
+            }
         }
     }
     public partial class NodeBinOp
@@ -143,87 +223,240 @@ namespace Compiler
         {
             left.Generate(generator);
             right.Generate(generator);
-            generator.Add(Command.pop, Register.ebx);
-            generator.Add(Command.pop, Register.eax);
-            switch (opname)
+            if (left.GetCachedType().GetType() == typeof(SymReal))
             {
-                case OperationSign.Plus:
-                    generator.Add(Command.add, Register.eax, Register.ebx);
-                    generator.Add(Command.push, Register.eax);
-                    break;
-                case OperationSign.Minus:
-                    generator.Add(Command.sub, Register.eax, Register.ebx);
-                    generator.Add(Command.push, Register.eax);
-                    break;
-                case OperationSign.Multiply:
-                    generator.Add(Command.mul, Register.ebx);
-                    generator.Add(Command.push, Register.eax);
-                    break;
-                case OperationSign.Divide:
-                    generator.Add(Command.mov, Register.ecx, 0);
-                    generator.Add(Command.mov, Register.edx, 0);
-                    generator.Add(Command.div, Register.ebx);
-                    generator.Add(Command.push, Register.eax);
-                    break;
-                case OperationSign.Equal:
-                    generator.Add(Command.cmp, Register.eax, Register.ebx);
-                    int key = generator.line;
-                    generator.Add(Command.je, $"True_{key}");
-                    generator.Add(Command.push, $"{NasmType.@byte} 0");
-                    generator.Add(Command.jmp, $"False_{key}");
-                    generator.AddCommand($"True_{key}:");
-                    generator.Add(Command.push, $"{NasmType.@byte} 1");
-                    generator.AddCommand($"False_{key}:");
-                    break;
+                generator.AddCommand(Section.text, Command.fld, $"{NasmType.dword} [{Register.esp} + 4]");
+                generator.AddCommand(Section.text, Command.fld, $"{NasmType.dword} [{Register.esp}]");
+                switch (opname)
+                {
+                    case OperationSign.Plus:
+                        generator.AddCommand(Section.text, Command.fadd);
+                        break;
+                    case OperationSign.Minus:
+                        generator.AddCommand(Section.text, Command.fsub);
+                        break;
+                    case OperationSign.Multiply:
+                        generator.AddCommand(Section.text, Command.fmul);
+                        break;
+                    case OperationSign.Divide:
+                        generator.AddCommand(Section.text, Command.fdiv);
+                        break;
+                }
+                generator.AddCommand(Section.text, Command.add, Register.esp, 4);
+                generator.AddCommand(Section.text, Command.fstp, $"{NasmType.dword} [{Register.esp}]");
+
             }
+            if (left.GetCachedType().GetType() == typeof(SymInteger))
+            {
+                generator.AddCommand(Section.text, Command.pop, Register.ebx);
+                generator.AddCommand(Section.text, Command.pop, Register.eax);
+                switch (opname)
+                {
+                    case OperationSign.Plus:
+                        generator.AddCommand(Section.text, Command.add, Register.eax, Register.ebx);
+                        generator.AddCommand(Section.text, Command.push, Register.eax);
+                        break;
+                    case OperationSign.Minus:
+                        generator.AddCommand(Section.text, Command.sub, Register.eax, Register.ebx);
+                        generator.AddCommand(Section.text, Command.push, Register.eax);
+                        break;
+                    case OperationSign.Multiply:
+                        generator.AddCommand(Section.text, Command.mul, Register.ebx);
+                        generator.AddCommand(Section.text, Command.push, Register.eax);
+                        break;
+                    case OperationSign.Divide:
+                        generator.AddCommand(Section.text, Command.mov, Register.ecx, 0);
+                        generator.AddCommand(Section.text, Command.mov, Register.edx, 0);
+                        generator.AddCommand(Section.text, Command.div, Register.ebx);
+                        generator.AddCommand(Section.text, Command.push, Register.eax);
+                        break;
+                    case OperationSign.Equal:
+                        generator.AddCommand(Section.text, Command.cmp, Register.eax, Register.ebx);
+                        int key = generator.line;
+                        generator.AddCommand(Section.text, Command.je, $"True_{key}");
+                        generator.AddCommand(Section.text, Command.push, $"{NasmType.@byte} 0");
+                        generator.AddCommand(Section.text, Command.jmp, $"False_{key}");
+                        generator.AddLine(Section.text, $"True_{key}:");
+                        generator.AddCommand(Section.text, Command.push, $"{NasmType.@byte} 1");
+                        generator.AddLine(Section.text, $"False_{key}:");
+                        break;
+                }
+            }
+            if (left.GetCachedType().GetType() == typeof(SymString))
+            {
+                generator.AddCommand(Section.text, Command.pop, Register.ebx);
+                generator.AddCommand(Section.text, Command.pop, Register.eax);
+                switch (opname)
+                {
+                    case OperationSign.Plus:
+                        /*
+                        push dword[fizz]
+                        pop dword[buffer]
+                        push dword[buzz]
+                        pop dword[buffer + 4]*/
+                        int key = generator.line;
+                        generator.AddLine(Section.data, $"newstr_{key} : times 10 {NasmType.db} 0");
+                        generator.AddCommand(Section.text, Command.push, $"{NasmType.dword} [{Register.eax}]");
+                        generator.AddCommand(Section.text, Command.pop, $"{NasmType.dword} [newstr_{key}]");
+                        generator.AddCommand(Section.text, Command.push, $"{NasmType.dword} [{Register.ebx}]");
+                        generator.AddCommand(Section.text, Command.pop, $"{NasmType.dword} [newstr_{key} + 4]");
+                        generator.AddCommand(Section.text, Command.push, $"newstr_{key}");
+                        break;
+                }
+            }
+        }
+        public override string Print()
+        {
+            string result = "";
+            result += "(" + left.Print();
+            if (opname.GetType() == typeof(OperationSign))
+            {
+                result += " " + Lexer.GetStrOperationSign((OperationSign)opname) + " ";
+            }
+            else
+            {
+                result += " " + opname + " ";
+            }
+            result += right.Print() + ")";
+            return result;
         }
     }
     public partial class NodeRecordAccess
     {
         public override void Generate(Generator generator)
         {
-
+            NodeVar leftVar = (NodeVar)left;
+            NodeVar rightVar = (NodeVar)right;
+            generator.AddCommand(Section.text, Command.push, $"{NasmType.dword} [{Generator.Mangle(leftVar.GetName())} + rec_{leftVar.GetSymVar().GetTypeVar().GetName()}.{Generator.Mangle(rightVar.GetName())}]");
         }
     }
     public partial class NodeUnOp
     {
         public override void Generate(Generator generator)
         {
-
+            arg.Generate(generator);
+            switch (opname)
+            {
+                case OperationSign.Minus:
+                    generator.AddCommand(Section.text, Command.pop, Register.eax);
+                    if (arg.GetCachedType().GetType() == typeof(SymInteger))
+                    {
+                        generator.AddCommand(Section.text, Command.neg, Register.eax);
+                        generator.AddCommand(Section.text, Command.push, Register.eax);
+                    }
+                    if (arg.GetCachedType().GetType() == typeof(SymReal))
+                    {
+                        generator.AddCommand(Section.text, Command.mov, $"[real]", $"{NasmType.dword} __float32__(0.0)");
+                        generator.AddCommand(Section.text, Command.fld, $"{NasmType.dword} [real]");
+                        generator.AddCommand(Section.text, Command.mov, $"[real]", Register.eax);
+                        generator.AddCommand(Section.text, Command.fld, $"{NasmType.dword} [real]");
+                        generator.AddCommand(Section.text, Command.fsub);
+                        generator.AddCommand(Section.text, Command.sub, Register.esp, 4);
+                        generator.AddCommand(Section.text, Command.fstp, $"{NasmType.dword} [{Register.esp}]");
+                    }
+                    break;
+                case OperationSign.Plus:
+                    break;
+            }
+        }
+        public override string Print()
+        {
+            string result = "";
+            result += "(";
+            if (opname.GetType() == typeof(OperationSign))
+            {
+                result += Lexer.GetStrOperationSign((OperationSign)opname) + " ";
+            }
+            else
+            {
+                result += opname + " ";
+            }
+            result += arg.Print() + ")";
+            return result;
         }
     }
     public partial class NodeArrayPosition
     {
         public override void Generate(Generator generator)
         {
-
+            generator.AddCommand(Section.text, Command.mov, Register.ecx, 0);
+            for (int i = 0; i < args.Count; i++)
+            {
+                NodeExpression arg = args.ElementAt(i);
+                arg.Generate(generator);
+                generator.AddCommand(Section.text, Command.pop, Register.eax);
+                generator.AddCommand(Section.text, Command.mov, Register.ebx, $"{Generator.Mangle(name)}_from{i}");
+                generator.AddCommand(Section.text, Command.sub, Register.eax, Register.ebx);
+                if (i == args.Count - 1)
+                {
+                    generator.AddCommand(Section.text, Command.add, Register.ecx, Register.eax);
+                }
+                else
+                {
+                    generator.AddCommand(Section.text, Command.mov, Register.ebx, $"{Generator.Mangle(name)}_size{i}");
+                    generator.AddCommand(Section.text, Command.mul, Register.ebx);
+                    generator.AddCommand(Section.text, Command.add, Register.ecx, Register.eax);
+                }
+            }
+            generator.AddCommand(Section.text, Command.push, $"{NasmType.dword} [{Generator.Mangle(name)} + 4 * {Register.ecx}]");
         }
     }
     public partial class NodeVar
     {
         public override void Generate(Generator generator)
         {
-            if (var_.GetTypeVar().GetType() == typeof(SymInteger))
+            if (var_.GetType() == typeof(SymVarGlobal))
             {
-                generator.Add(Command.push, $"{NasmType.dword} [{generator.Mangle(var_.GetName())}]");
+                if (var_.GetOriginalTypeVar().GetType() == typeof(SymInteger))
+                {
+                    generator.AddCommand(Section.text, Command.push, $"{NasmType.dword} [{Generator.Mangle(var_.GetName())}]");
+                }
+                if (var_.GetOriginalTypeVar().GetType() == typeof(SymReal))
+                {
+                    generator.AddCommand(Section.text, Command.sub, Register.esp, 4);
+                    generator.AddCommand(Section.text, Command.fld, $"{NasmType.dword} [{Generator.Mangle(var_.GetName())}]");
+                    generator.AddCommand(Section.text, Command.fstp, $"{NasmType.dword} [{Register.esp}]");
+                }
+                if (var_.GetOriginalTypeVar().GetType() == typeof(SymString))
+                {
+                    generator.AddCommand(Section.text, Command.push, $"dword [{Generator.Mangle(var_.GetName())}]");
+                }
             }
-            if (var_.GetTypeVar().GetType() == typeof(SymReal))
+            if (var_.GetType() == typeof(SymVarParam))
             {
-                generator.Add(Command.sub, Register.esp, 8);
-                generator.Add(Command.fld, $"{NasmType.dword} [{generator.Mangle(var_.GetName())}]");
-                generator.Add(Command.fstp, $"{NasmType.qword} [{Register.esp}]");
+                if (var_.GetOriginalTypeVar().GetType() == typeof(SymInteger))
+                {
+                    SymVarParam varParam = (SymVarParam)var_;
+                    generator.AddCommand(Section.text, Command.push, $"{NasmType.dword} [{Register.ebp} + {4 + varParam.offset}]");
+                }
             }
-            if (var_.GetTypeVar().GetType() == typeof(SymString))
+            if (var_.GetType() == typeof(SymVarLocal))
             {
-                generator.Add(Command.push, $"[{generator.Mangle(var_.GetName())}]");
+                if (var_.GetOriginalTypeVar().GetType() == typeof(SymInteger))
+                {
+                    SymVarLocal varLocal = (SymVarLocal)var_;
+                    generator.AddCommand(Section.text, Command.push, $"{NasmType.dword} [{Register.ebp} - {varLocal.offset}]");
+                }
             }
+            if (var_.GetType() == typeof(SymVarConst))
+            {
+                generator.AddCommand(Section.text, Command.push, $"{Generator.Mangle(var_.GetName())}");
+            }
+        }
+        public override string Print()
+        {
+            return $"[{Generator.Mangle(var_.GetName())}]";
         }
     }
     public partial class NodeInt
     {
         public override void Generate(Generator generator)
         {
-            generator.Add(Command.push, $"{NasmType.dword} " + value);
+            generator.AddCommand(Section.text, Command.push, $"{NasmType.dword} " + value);
+        }
+        public override string Print()
+        {
+            return value.ToString();
         }
     }
     public partial class NodeReal
@@ -231,24 +464,27 @@ namespace Compiler
         public override void Generate(Generator generator)
         {
             string real = value.ToString("F").Replace(',', '.');
-            generator.Add(Command.sub, Register.esp, 8);
-            generator.Add(Command.mov, "[real]", $"{NasmType.dword} __float32__({real})");
-            generator.Add(Command.fld, $"{NasmType.dword} [real]");
-            generator.Add(Command.fstp, $"{NasmType.qword} [{Register.esp}]");
+            generator.AddCommand(Section.text, Command.sub, Register.esp, 4);
+            generator.AddCommand(Section.text, Command.mov, $"[real]", $"{NasmType.dword} __float32__({real})");
+            generator.AddCommand(Section.text, Command.fld, $"{NasmType.dword} [real]");
+            generator.AddCommand(Section.text, Command.fstp, $"{NasmType.dword} [{Register.esp}]");
+        }
+        public override string Print()
+        {
+            return $"__float32__({value.ToString("F").Replace(',', '.')})";
         }
     }
     public partial class NodeString
     {
         public override void Generate(Generator generator)
         {
-            for (int i = 0; i < value.Length; i++)
-            {
-                //generator.Add(Command.sub, Register.esp, 1);
-                generator.Add(Command.push, $"{NasmType.@byte} \'{value[i]}\'");
-            }
-            //generator.Add(Command.sub, Register.esp, 1);
-            generator.Add(Command.push, $"{NasmType.@byte} 0");
-            generator.Add(Command.sub, Register.esp, value.Length);
+            generator.numberConst += 1;
+            generator.AddLine(Section.data, $"string_{generator.numberConst}: {NasmType.db} \'{value}\',0");
+            generator.AddCommand(Section.text, Command.push, $"string_{generator.numberConst}");
+        }
+        public override string Print()
+        {
+            return "\'" + value.ToString() + "\'";
         }
     }
     public partial class AssignmentStmt
@@ -256,14 +492,68 @@ namespace Compiler
         public override void Generate(Generator generator)
         {
             right.Generate(generator);
-            generator.Add(Command.pop, Register.eax);
             switch (opname)
             {
                 case OperationSign.Assignment:
                     if (left.GetType() == typeof(NodeVar))
                     {
                         NodeVar var = (NodeVar)left;
-                        generator.Add(Command.mov, $"[{generator.Mangle(var.GetName())}]",Register.eax);
+                        if(var.GetSymVar().GetType() == typeof(SymVarGlobal))
+                        {
+                            if (var.GetSymVar().GetOriginalTypeVar().GetType() == typeof(SymInteger))
+                            {
+                                generator.AddCommand(Section.text, Command.pop, $"{NasmType.dword} [{Generator.Mangle(var.GetName())}]");
+                            }
+                            if (var.GetSymVar().GetOriginalTypeVar().GetType() == typeof(SymReal))
+                            {
+                                generator.AddCommand(Section.text, Command.pop, $"{NasmType.dword} [{Generator.Mangle(var.GetName())}]");
+                            }
+                            if (var.GetSymVar().GetOriginalTypeVar().GetType() == typeof(SymString))
+                            {
+                                generator.AddCommand(Section.text, Command.pop, $"{NasmType.dword} [{Generator.Mangle(var.GetName())}]");
+                            }
+                        }
+                        if (var.GetSymVar().GetType() == typeof(SymVarParam))
+                        {
+                            SymVarParam varParam = (SymVarParam)var.GetSymVar();
+                            generator.AddCommand(Section.text, Command.pop, $"{NasmType.dword} [{Register.ebp} + {4 + varParam.offset}]");
+                        }
+                        if (var.GetSymVar().GetType() == typeof(SymVarLocal))
+                        {
+                            SymVarLocal varLocal = (SymVarLocal)var.GetSymVar();
+                            generator.AddCommand(Section.text, Command.pop, $"{NasmType.dword} [{Register.ebp} - {varLocal.offset}]");
+                        }
+                    }
+                    if (left.GetType() == typeof(NodeRecordAccess))
+                    {
+                        NodeRecordAccess nodeRec = (NodeRecordAccess)left;
+                        NodeVar leftVar = (NodeVar)nodeRec.left;
+                        NodeVar rightVar = (NodeVar)nodeRec.right;
+                        generator.AddCommand(Section.text, Command.pop, $"{NasmType.dword} [{Generator.Mangle(leftVar.GetName())} + rec_{leftVar.GetSymVar().GetTypeVar().GetName()}.{Generator.Mangle(rightVar.GetName())}]");
+                    }
+                    if (left.GetType() == typeof(NodeArrayPosition))
+                    {
+                        NodeArrayPosition nodeArrPos = (NodeArrayPosition)left;
+                        generator.AddCommand(Section.text, Command.mov, Register.ecx, 0);
+                        for (int i = 0; i < nodeArrPos.args.Count; i++)
+                        {
+                            NodeExpression arg = nodeArrPos.args.ElementAt(i);
+                            arg.Generate(generator);
+                            generator.AddCommand(Section.text, Command.pop, Register.eax);
+                            generator.AddCommand(Section.text, Command.mov, Register.ebx, $"{Generator.Mangle(nodeArrPos.GetName())}_from{i}");
+                            generator.AddCommand(Section.text, Command.sub, Register.eax, Register.ebx);
+                            if (i == nodeArrPos.args.Count - 1)
+                            {
+                                generator.AddCommand(Section.text, Command.add, Register.ecx, Register.eax);
+                            }
+                            else
+                            {
+                                generator.AddCommand(Section.text, Command.mov, Register.ebx, $"{Generator.Mangle(nodeArrPos.GetName())}_size{i}");
+                                generator.AddCommand(Section.text, Command.mul, Register.ebx);
+                                generator.AddCommand(Section.text, Command.add, Register.ecx, Register.eax);
+                            }
+                        }
+                        generator.AddCommand(Section.text, Command.pop, $"{NasmType.dword} [{Generator.Mangle(nodeArrPos.GetName())} + 4 * {Register.ecx}]");
                     }
                     break;
             }
@@ -273,71 +563,88 @@ namespace Compiler
     {
         public override void Generate(Generator generator)
         {
-            if(proc.GetName() == "write")
+            switch (proc.GetName())
             {
-                string format = "";
-                for(int i = args.Count - 1; i > -1; i--)
-                {
-                    NodeExpression? el = args[i];
-                    if (el != null)
+                case "write":
+                    string format = "";
+                    for (int i = args.Count - 1; i > -1; i--)
                     {
-                        if (el.GetCachedType().GetType() == typeof(SymReal))
+                        NodeExpression? el = args[i];
+                        if (el != null)
                         {
-                            format = "%g" + format;
-                            el.Generate(generator);
-                        }
-                        if (el.GetCachedType().GetType() == typeof(SymInteger))
-                        {
-                            format = "%d" + format;
-                            el.Generate(generator);
-                        }
-                        if (el.GetCachedType().GetType() == typeof(SymString))
-                        {
-                            if (el.GetType() == typeof(NodeString))
+                            if (el.GetCachedType().GetType() == typeof(SymReal))
                             {
-                                NodeString nodeStr = (NodeString)el;
-                                format = nodeStr.GetValue() + format;
+                                format = "%g" + format;
+                                el.Generate(generator);
+                                generator.AddCommand(Section.text, Command.pop, Register.eax);
+                                generator.AddCommand(Section.text, Command.mov, $"[real]", $"{Register.eax}");
+                                generator.AddCommand(Section.text, Command.fld, $"{NasmType.dword} [real]");
+                                generator.AddCommand(Section.text, Command.sub, Register.esp, 8);
+                                generator.AddCommand(Section.text, Command.fstp, $"{NasmType.qword} [{Register.esp}]");
                             }
-                            else if(el.GetType() == typeof(NodeBinOp))
+                            if (el.GetCachedType().GetType() == typeof(SymInteger))
                             {
-                                NodeBinOp binOp = (NodeBinOp)el;
-                                PrintPartOp(binOp);
-                                void PrintPartOp(NodeBinOp part)
+                                format = "%d" + format;
+                                el.Generate(generator);
+                            }
+                            if (el.GetCachedType().GetType() == typeof(SymString))
+                            {
+                                if (el.GetType() == typeof(NodeBinOp))
                                 {
-                                    if (part.right.GetType() == typeof(NodeString))
+                                    NodeBinOp binOp = (NodeBinOp)el;
+                                    PrintPartOp(binOp);
+                                    void PrintPartOp(NodeBinOp part)
                                     {
-                                        NodeString nodeStr = (NodeString)part.right;
-                                        format = nodeStr.GetValue() + format;
+                                        if (part.right.GetType() == typeof(NodeString))
+                                        {
+                                            NodeString nodeStr = (NodeString)part.right;
+                                            format = nodeStr.GetValue() + format;
+                                        }
+                                        else if (part.right.GetType() == typeof(NodeBinOp))
+                                        {
+                                            NodeBinOp binOp = (NodeBinOp)part.right;
+                                            PrintPartOp(binOp);
+                                        }
+                                        if (part.left.GetType() == typeof(NodeString))
+                                        {
+                                            NodeString nodeStr = (NodeString)part.left;
+                                            format = nodeStr.GetValue() + format;
+                                        }
+                                        else if (part.left.GetType() == typeof(NodeBinOp))
+                                        {
+                                            NodeBinOp binOp = (NodeBinOp)part.left;
+                                            PrintPartOp(binOp);
+                                        }
                                     }
-                                    else if (part.right.GetType() == typeof(NodeBinOp))
-                                    {
-                                        NodeBinOp binOp = (NodeBinOp)part.right;
-                                        PrintPartOp(binOp);
-                                    }
-                                    if(part.left.GetType() == typeof(NodeString))
-                                    {
-                                        NodeString nodeStr = (NodeString)part.left;
-                                        format = nodeStr.GetValue() + format;
-                                    }
-                                    else if(part.left.GetType() == typeof(NodeBinOp))
-                                    {
-                                        NodeBinOp binOp = (NodeBinOp)part.left;
-                                        PrintPartOp(binOp);
-                                    }
+                                }
+                                else
+                                {
+                                    format = "%s" + format;
+                                    el.Generate(generator);
                                 }
                             }
                         }
                     }
-                }
-                for (int i = 0; i < format.Length; i++)
-                {
-                    generator.Add(Command.mov, $"[format + {i}]", $"{NasmType.@byte} \'{format[i]}\'");
-                }
-                generator.Add(Command.mov, $"[format + {format.Length}]", $"{NasmType.@byte} 0");
-                generator.Add(Command.push, "format");
-                generator.Add(Command.call, Call._printf);
-                generator.Add(Command.add, Register.esp, 4);
-                generator.Add(Command.mov, Register.eax, 0);
+                    generator.numberConst += 1;
+                    generator.AddLine(Section.data, $"format_{generator.numberConst}: {NasmType.db} \'{format}\',0");
+                    generator.AddCommand(Section.text, Command.push, $"format_{generator.numberConst}");
+                    generator.AddCommand(Section.text, Command.call, Call._printf);
+                    generator.AddCommand(Section.text, Command.add, Register.esp, 4);
+                    generator.AddCommand(Section.text, Command.mov, Register.eax, 0);
+                    break;
+                case "read":
+                    break;
+                default:
+                    for (int i = args.Count - 1; i > -1; i--)
+                    {
+                        NodeExpression? el = args[i];
+                        if (el != null)
+                        {
+                            el.Generate(generator);
+                        }
+                    }
+                    generator.AddCommand(Section.text, Command.call, Generator.Mangle(proc.GetName()));
+                    break;
             }
         }
     }
@@ -346,15 +653,15 @@ namespace Compiler
         public override void Generate(Generator generator)
         {
             condition.Generate(generator);
-            generator.Add(Command.pop, Register.eax);
-            generator.Add(Command.cmp, Register.eax, $"{NasmType.@byte} 1");
+            generator.AddCommand(Section.text, Command.pop, Register.eax);
+            generator.AddCommand(Section.text, Command.cmp, Register.eax, $"{NasmType.@byte} 1");
             int key = generator.line;
-            generator.Add(Command.je, $"Then_{key}");
+            generator.AddCommand(Section.text, Command.je, $"Then_{key}");
             elseBody.Generate(generator);
-            generator.Add(Command.jmp, $"Else_{key}");
-            generator.AddCommand($"Then_{key}:");
+            generator.AddCommand(Section.text, Command.jmp, $"Else_{key}");
+            generator.AddLine(Section.text, $"Then_{key}:");
             body.Generate(generator);
-            generator.AddCommand($"Else_{key}:");
+            generator.AddLine(Section.text, $"Else_{key}:");
         }
     }
     public partial class WhileStmt
@@ -362,41 +669,37 @@ namespace Compiler
         public override void Generate(Generator generator)
         {
             condition.Generate(generator);
-            generator.Add(Command.pop, Register.eax);
+            generator.AddCommand(Section.text, Command.pop, Register.eax);
             int key = generator.line;
-            generator.Add(Command.jmp, $"Check_{key}");
-            generator.AddCommand($"Do_{key}:");
+            generator.AddCommand(Section.text, Command.jmp, $"Check_{key}");
+            generator.AddLine(Section.text, $"Do_{key}:");
             body.Generate(generator);
-            generator.AddCommand($"Check_{key}:");
-            generator.Add(Command.cmp, Register.eax, $"{NasmType.@byte} 1");
-            generator.Add(Command.je, $"Do_{key}");
+            generator.AddLine(Section.text, $"Check_{key}:");
+            generator.AddCommand(Section.text, Command.cmp, Register.eax, $"{NasmType.@byte} 1");
+            generator.AddCommand(Section.text, Command.je, $"Do_{key}");
         }
     }
     public partial class ForStmt
     {
-        //NodeVar controlVar;
-        //NodeExpression initialVal;
-        //KeyWord toOrDownto;
-        //NodeExpression finalVal;
-
-        //NodeStatement body;
         public override void Generate(Generator generator)
         {
-            initialVal.Generate(generator);
-            generator.Add(Command.pop, Register.eax);
-            generator.Add(Command.mov, $"[{generator.Mangle(controlVar.GetName())}]", Register.eax);
-            finalVal.Generate(generator);
-            generator.Add(Command.pop, Register.eax);
-            generator.Add(Command.mov, "[finalVal]", Register.eax);
-
             int key = generator.line;
-            generator.AddCommand($"Do_{key}:");
-            body.Generate(generator);
-            generator.Add(Command.inc, $"{NasmType.dword} [{generator.Mangle(controlVar.GetName())}]");
+            initialVal.Generate(generator);
+            generator.AddCommand(Section.text, Command.pop, Register.eax);
+            generator.AddCommand(Section.text, Command.mov, $"[{Generator.Mangle(controlVar.GetName())}]", Register.eax);
+            finalVal.Generate(generator);
+            generator.AddCommand(Section.text, Command.pop, Register.eax);
+            generator.AddLine(Section.data, $"finalVal{key}: {NasmType.dd}  0");
 
-            generator.Add(Command.mov, Register.eax, $"{NasmType.dword} [{generator.Mangle(controlVar.GetName())}]");
-            generator.Add(Command.cmp, Register.eax, $"{NasmType.dword} [finalVal]");
-            generator.Add(Command.jle, $"Do_{key}");
+            generator.AddCommand(Section.text, Command.mov, $"[finalVal{key}]", Register.eax);
+
+            generator.AddLine(Section.text, $"Do_{key}:");
+            body.Generate(generator);
+            generator.AddCommand(Section.text, Command.inc, $"{NasmType.dword} [{Generator.Mangle(controlVar.GetName())}]");
+
+            generator.AddCommand(Section.text, Command.mov, Register.eax, $"{NasmType.dword} [{Generator.Mangle(controlVar.GetName())}]");
+            generator.AddCommand(Section.text, Command.cmp, Register.eax, $"{NasmType.dword} [finalVal{key}]");
+            generator.AddCommand(Section.text, Command.jle, $"Do_{key}");
         }
     }
     public partial class RepeatStmt
@@ -404,15 +707,15 @@ namespace Compiler
         public override void Generate(Generator generator)
         {
             condition.Generate(generator);
-            generator.Add(Command.pop, Register.eax);
+            generator.AddCommand(Section.text, Command.pop, Register.eax);
             int key = generator.line;
-            generator.AddCommand($"Do_{key}:");
+            generator.AddLine(Section.text, $"Do_{key}:");
             foreach(NodeStatement node in body)
             {
                 node.Generate(generator);
             }
-            generator.Add(Command.cmp, Register.eax, $"{NasmType.@byte} 1");
-            generator.Add(Command.je, $"Do_{key}");
+            generator.AddCommand(Section.text, Command.cmp, Register.eax, $"{NasmType.@byte} 1");
+            generator.AddCommand(Section.text, Command.je, $"Do_{key}");
         }
     }
     public partial class BlockStmt

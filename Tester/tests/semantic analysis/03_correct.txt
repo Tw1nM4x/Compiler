@@ -20,7 +20,7 @@ builtins:
 	write: SymProc
 	read: SymProc
 globals:
-	x: SymVar
+	x: SymVarGlobal
 	y: SymProc
 		locals of procedure "y": 
-		x: SymVar
+		x: SymVarParam

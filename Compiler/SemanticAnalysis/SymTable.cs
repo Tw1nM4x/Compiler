@@ -8,10 +8,20 @@ namespace Compiler
 {
     public class SymTable
     {
+        public int sizeLocal = 0; 
+        public int sizeParam = 0;
         Dictionary<string, Symbol> data;
         public Dictionary<string, Symbol> GetData()
         {
             return data;
+        }
+        public int GetSizeLocal()
+        {
+            return sizeLocal;
+        }
+        public int GetSizeParam()
+        {
+            return sizeParam;
         }
         public int GetSize()
         {
@@ -21,6 +31,24 @@ namespace Compiler
         {
             if(data.TryAdd(name, value))
             {
+                if(value.GetType() == typeof(SymVarLocal))
+                {
+                    SymVarLocal varLocal = (SymVarLocal)value;
+                    if(varLocal.GetOriginalTypeVar().GetType() == typeof(SymInteger))
+                    {
+                        sizeLocal += 4;
+                    }
+                    varLocal.offset = sizeLocal;
+                }
+                if (value.GetType() == typeof(SymVarParam))
+                {
+                    SymVarParam varParam = (SymVarParam)value;
+                    if (varParam.GetOriginalTypeVar().GetType() == typeof(SymInteger))
+                    {
+                        sizeParam += 4;
+                    }
+                    varParam.offset = sizeParam;
+                }
                 return;
             }
             else

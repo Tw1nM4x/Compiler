@@ -23,6 +23,10 @@ namespace Compiler
         SymType type;
         public SymType GetTypeVar()
         {
+            return type;
+        }
+        public SymType GetOriginalTypeVar()
+        {
             SymType buildsType = type;
             while (buildsType.GetType().Name == "SymTypeAlias")
             {
@@ -36,13 +40,25 @@ namespace Compiler
             this.type = type;
         }
     }
-    public class SymParamVar : SymVar
+    public class SymVarParamVar : SymVar
     {
-        public SymParamVar(SymVar var) : base("var " + var.GetName(), var.GetTypeVar()) { }
+        public SymVarParamVar(SymVar var) : base("var " + var.GetName(), var.GetTypeVar()) { }
     }
-    public class SymParamOut : SymVar
+    public class SymVarParamOut : SymVar
     {
-        public SymParamOut(SymVar var) : base("out " + var.GetName(), var.GetTypeVar()) { }
+        public SymVarParamOut(SymVar var) : base("out " + var.GetName(), var.GetTypeVar()) { }
+    }
+    public enum VarType
+    {
+        Param,
+        Const,
+        Global,
+        Local
+    }
+    public class SymVarParam : SymVar
+    {
+        public int offset = 0;
+        public SymVarParam(SymVar var) : base(var.GetName(), var.GetTypeVar()) { }
     }
     public class SymVarConst : SymVar
     {
@@ -50,11 +66,12 @@ namespace Compiler
     }
     public class SymVarGlobal : SymVar
     {
-        public SymVarGlobal(string name, SymType type) : base(name, type) { }
+        public SymVarGlobal(SymVar var) : base(var.GetName(), var.GetTypeVar()) { }
     }
     public class SymVarLocal : SymVar
     {
-        public SymVarLocal(string name, SymType type) : base(name, type) { }
+        public int offset = 0;
+        public SymVarLocal(SymVar var) : base(var.GetName(), var.GetTypeVar()) { }
     }
     public class SymProc : Symbol
     {

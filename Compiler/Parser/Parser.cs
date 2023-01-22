@@ -180,7 +180,7 @@
             Require(Separator.Semiсolon);
             return res;
         }
-        public List<NodeDefs> ParseDefs()
+        public List<NodeDefs> ParseDefs(VarType varType = VarType.Global)
         {
             List<NodeDefs> types = new List<NodeDefs>();
             while (Expect(KeyWord.VAR, KeyWord.CONST, KeyWord.TYPE, KeyWord.PROCEDURE))
@@ -188,7 +188,7 @@
                 switch (currentLex.Value)
                 {
                     case KeyWord.VAR:
-                        types.Add(ParseVarDefs());
+                        types.Add(ParseVarDefs(varType: varType));
                         break;
                     case KeyWord.CONST:
                         types.Add(ParseConstDefs());
@@ -223,21 +223,21 @@
             }
             return new ConstDefsNode(body);
         }
-        public NodeDefs ParseVarDefs()
+        public NodeDefs ParseVarDefs(VarType varType = VarType.Global)
         {
             List<VarDeclarationNode> body = new List<VarDeclarationNode>();
             NextToken();
             RequireType(TokenType.Identifier);
             while (ExpectType(TokenType.Identifier))
             {
-                body.Add(ParseVarDef());
+                body.Add(ParseVarDef(varType: varType));
                 Require(Separator.Semiсolon);
             }
             return new VarDefsNode(body);
         }
         public NodeDefs ParseTypeDefs()
         {
-            List<DeclarationNode> body = new List<DeclarationNode>();
+            List<TypeDeclarationNode> body = new List<TypeDeclarationNode>();
             NextToken();
             while (currentLex.Type == TokenType.Identifier)
             {
@@ -268,12 +268,12 @@
                     {
                         KeyWord param = (KeyWord)currentLex.Value;
                         NextToken();
-                        varDef = ParseVarDef(param);
+                        varDef = ParseVarDef(param: param, varType: VarType.Param);
                         paramsNode.Add(varDef);
                     }
                     else
                     {
-                        varDef = ParseVarDef();
+                        varDef = ParseVarDef(varType: VarType.Param);
                         paramsNode.Add(varDef);
                     }
                 } 
@@ -290,7 +290,7 @@
                 }
             }
 
-            List<NodeDefs> localsTypes = ParseDefs();
+            List<NodeDefs> localsTypes = ParseDefs(varType: VarType.Local);
             locals = symTableStack.GetBackTable();
             Require(KeyWord.BEGIN);
             BlockStmt body = ParseBlock();
@@ -298,9 +298,9 @@
             symTableStack.PopBack();
             SymProc symProc = new SymProc(name, args, locals, body);
             symTableStack.Add(name, symProc);
-            return new ProcedureDefsNode(paramsNode, localsTypes, symProc);
+            return new ProcedureDefNode(paramsNode, localsTypes, symProc);
         }
-        public VarDeclarationNode ParseVarDef(KeyWord? param = null)
+        public VarDeclarationNode ParseVarDef(KeyWord? param = null, VarType varType = VarType.Global)
         {
             List<string> names = new List<string>();
             List<SymVar> vars = new List<SymVar> ();
@@ -336,15 +336,32 @@
             foreach(string name in names)
             {
                 SymVar var = new SymVar(name, type);
-                switch (param)
+                switch (varType)
                 {
-                    case KeyWord.VAR:
-                        symTableStack.Add(name, new SymParamVar(var));
-                        var = new SymParamVar(var);
+                    case VarType.Global:
+                        var = new SymVarGlobal(var);
+                        symTableStack.Add(name, var);
                         break;
-                    case KeyWord.OUT:
-                        symTableStack.Add(name, new SymParamOut(var));
-                        var = new SymParamOut(var);
+                    case VarType.Local:
+                        var = new SymVarLocal(var);
+                        symTableStack.Add(name, var);
+                        break;
+                    case VarType.Param:
+                        switch (param)
+                        {
+                            case KeyWord.VAR:
+                                var = new SymVarParamVar(var);
+                                symTableStack.Add(name, var);
+                                break;
+                            case KeyWord.OUT:
+                                var = new SymVarParamOut(var);
+                                symTableStack.Add(name, var);
+                                break;
+                            default:
+                                var = new SymVarParam(var);
+                                symTableStack.Add(name, var);
+                                break;
+                        }
                         break;
                     default:
                         symTableStack.Add(name, var);
@@ -431,9 +448,9 @@
         }
         public OrdinalTypeNode ParseArrayOrdinalType()
         {
-            NodeExpression from = ParseSimpleExpression();
+            NodeExpression from = ParseSimpleExpression(inDef: true);
             Require(Separator.DoublePoint);
-            NodeExpression to = ParseSimpleExpression();
+            NodeExpression to = ParseSimpleExpression(inDef: true);
             return new OrdinalTypeNode(from, to);
         }
         public SymType ParseRecordType()
@@ -506,7 +523,7 @@
             name = (string)currentLex.Value;
             Symbol sym = symTableStack.Get((string)currentLex.Value);
             NextToken();
-            if(sym.GetType() != typeof(SymVar) && sym.GetType() != typeof(SymVarLocal) && sym.GetType() != typeof(SymParamVar) && sym.GetType() != typeof(SymParamOut))
+            if(sym.GetType() != typeof(SymVarGlobal) && sym.GetType() != typeof(SymVarLocal) && sym.GetType() != typeof(SymVarParam) && sym.GetType() != typeof(SymVarParamVar) && sym.GetType() != typeof(SymVarParamOut))
             {
                 if(sym.GetType() == typeof(SymProc))
                 {
@@ -546,10 +563,6 @@
             int lineStartExp = currentLex.NumberLine;
             int symStartExp = currentLex.NumberSymbol;
             right = ParseExpression();
-            if(symVar.GetTypeVar().GetType() != right.GetCachedType().GetType())
-            {
-                throw new ExceptionWithPosition(lineStartExp, symStartExp, $"Incompatible types: got \"{right.GetCachedType().GetName()}\" expected \"{symVar.GetTypeVar().GetName()}\"");
-            }
             return new AssignmentStmt(operation, left, right);
         }
         public BlockStmt ParseBlock()
@@ -687,7 +700,7 @@
                     NodeExpression param = ParseSimpleExpression();
                     if(proc.GetName() != "read" && proc.GetName() != "write")
                     {
-                        if (param.GetCachedType().GetType() != proc.GetParams()[i].GetTypeVar().GetType())
+                        if (param.GetCachedType().GetType() != proc.GetParams()[i].GetOriginalTypeVar().GetType())
                         {
                             throw new ExceptionWithPosition(lineProc, symProc, $"Incompatible type for arg no. {i + 1}");
                         }
@@ -824,17 +837,22 @@
         }
         public NodeExpression ParsePositionArray(NodeExpression node, ref SymVar var_)
         {
-            SymArray array;
-            List<NodeExpression?> body = new List<NodeExpression?> ();
+            SymArray array = new SymArray("", new List<OrdinalTypeNode>(), new SymInteger(""));
+            List<NodeExpression> body = new List<NodeExpression> ();
             bool bracketClose = false;
+            bool end = false;
 
             body.Add(ParseSimpleExpression());
             while (Expect(Separator.Comma, Separator.CloseBracket))
             {
+                if (end)
+                {
+                    break;
+                }
                 switch (currentLex.Value)
                 {
                     case Separator.CloseBracket:
-                        array = (SymArray)var_.GetTypeVar();
+                        array = (SymArray)((NodeVar)node).GetSymVar().GetTypeVar();
                         var_ = new SymVar(var_.GetName(), array.GetTypeArray());
                         bracketClose = true;
                         NextToken();
@@ -846,8 +864,15 @@
                         }
                         break;
                     case Separator.Comma:
-                        NextToken();
-                        body.Add(ParseSimpleExpression());
+                        if (!bracketClose)
+                        {
+                            NextToken();
+                            body.Add(ParseSimpleExpression());
+                        }
+                        else
+                        {
+                            end = true;
+                        }
                         break;
                 }
             }
@@ -855,7 +880,7 @@
             {
                 throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected ']'");
             }
-            return new NodeArrayPosition(var_.GetName(), body);
+            return new NodeArrayPosition(var_.GetName(), array, body);
         }
         public NodeExpression ParseRecordField(NodeExpression node, ref SymVar var_)
         {
@@ -863,7 +888,7 @@
             {
                 throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"expected Identifier");
             }
-            SymRecord record = (SymRecord)var_.GetTypeVar();
+            SymRecord record = (SymRecord)var_.GetOriginalTypeVar();
             SymTable fields = record.GetFields();
             var_ = (SymVar)fields.Get((string)currentLex.Value);
             NodeExpression field = new NodeVar(var_);

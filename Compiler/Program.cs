@@ -26,7 +26,7 @@ namespace Compiler
                 Console.WriteLine("  -spar    Simple expression parser");
                 Console.WriteLine("  -par     Parser (syntax analyzer)");
                 Console.WriteLine("  -sa      Semantic analysis");
-                Console.WriteLine("  -gen     Code Generator");
+                Console.WriteLine("  -gen     Code generator");
                 return;
             }
             try
@@ -125,7 +125,7 @@ namespace Compiler
 
                     Process exeProcess = new Process();
                     exeProcess.StartInfo.FileName = "D:/GitProjects/Compiler/Tester/tests/1.exe";
-                    exeProcess.StartInfo.UseShellExecute = true;
+                    //exeProcess.StartInfo.UseShellExecute = true;
                     exeProcess.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
                     exeProcess.Start();
                 }

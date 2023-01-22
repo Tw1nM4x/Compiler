@@ -25,6 +25,17 @@ namespace Compiler
             this.opname = opname;
             this.left = left;
             this.right = right;
+            if (left.GetCachedType().GetType() != right.GetCachedType().GetType())
+            {
+                if (left.GetCachedType().GetType() == typeof(SymReal) && right.GetCachedType().GetType() == typeof(SymInteger))
+                {
+                    this.right = new NodeCast(left.GetCachedType(), right);
+                }
+                else
+                {
+                    throw new Exception($"Incompatible types");
+                }
+            }
         }
         public override string ToString(List<bool> isLeftParents)
         {

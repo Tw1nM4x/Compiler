@@ -62,8 +62,8 @@ namespace Compiler
     }
     public class OrdinalTypeNode : Node
     {
-        NodeExpression from;
-        NodeExpression to;
+        public NodeExpression from;
+        public NodeExpression to;
         public OrdinalTypeNode(NodeExpression from, NodeExpression to)
         {
             this.from = from;
@@ -103,12 +103,12 @@ namespace Compiler
                 if (i == symFields.Count)
                 {
                     res += prefix + $"└─── {varField.GetName()}\r\n";
-                    res += prefix + $"     └─── {varField.GetTypeVar().ToString(ListAddRight(ListAddRight(isLeftParents)))}";
+                    res += prefix + $"     └─── {varField.GetOriginalTypeVar().ToString(ListAddRight(ListAddRight(isLeftParents)))}";
                 }
                 else
                 {
                     res += prefix + $"├─── {varField.GetName()}\r\n";
-                    res += prefix + $"│    └─── {varField.GetTypeVar().ToString(ListAddRight(ListAddLeft(isLeftParents)))}\r\n";
+                    res += prefix + $"│    └─── {varField.GetOriginalTypeVar().ToString(ListAddRight(ListAddLeft(isLeftParents)))}\r\n";
                     i++;
                 }
             }
