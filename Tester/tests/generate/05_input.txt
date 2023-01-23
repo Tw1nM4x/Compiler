@@ -1,0 +1,7 @@
+program CheckStringConcatenation;
+var
+	str : string;
+begin
+	str := 'Fizz' + 'Buzz';
+	write(str);
+end.

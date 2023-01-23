@@ -17,8 +17,8 @@ namespace Compiler
         pop,
         add,
         sub,
-        mul,
-        div,
+        imul,
+        idiv,
         fadd,
         fsub,
         fmul,
@@ -30,6 +30,7 @@ namespace Compiler
         cmp,
         jmp,
         je,
+        jne,
         jle,
         jge,
         jg,
@@ -80,37 +81,37 @@ namespace Compiler
     }
     public class Generator
     {
-        string pathOut;
-        public int line = 0;
+        public int key = 0;
         public int numberConst = 0;
-        List<string> file = new List<string>();
-        List<string> data = new List<string>();
-        List<string> bss = new List<string>();
-        List<string> text = new List<string>();
+        List<object> file = new List<object>();
+        List<object> data = new List<object>();
+        List<object> bss = new List<object>();
+        List<object> text = new List<object>();
+        public Generator() { }
         public static string Mangle(string var)
         {
             return "_" + var;
         }
-        public void Write()
+        public void WriteInFile(string pathOut)
         {
-            using (StreamWriter sw = new StreamWriter(pathOut, true, Encoding.Default))
+            using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
             {
-                foreach (string el in file)
+                foreach (object el in file)
                 {
                     sw.Write(el + "\r\n");
                 }
                 sw.Write($"\r\n {Command.section} .{Section.bss} \r\n");
-                foreach (string el in bss)
+                foreach (object el in bss)
                 {
                     sw.Write("\t" + el + "\r\n");
                 }
                 sw.Write($"\r\n {Command.section} .{Section.data} \r\n");
-                foreach (string el in data)
+                foreach (object el in data)
                 {
                     sw.Write("\t" + el + "\r\n");
                 }
                 sw.Write($"\r\n {Command.section} .{Section.text} \r\n");
-                foreach (string el in text)
+                foreach (object el in text)
                 {
                     sw.Write("\t" + el + "\r\n");
                 }
@@ -133,40 +134,87 @@ namespace Compiler
                     text.Add(linecommand);
                     break;
             }
-            line += 1;
+            key += 1;
+        }
+        class CommandLine
+        {
+            public Command cmd;
+            public object[] arguments;
+            public CommandLine(Command cmd, params object[] arguments)
+            {
+                this.cmd = cmd;
+                this.arguments = arguments;
+            }
+            public override string ToString()
+            {
+                string linecommand = "";
+                linecommand += cmd + " ";
+                for (int i = 0; i < arguments.Length - 1; i++)
+                {
+                    linecommand += arguments[i] + ", ";
+                }
+                if (arguments.Length > 0)
+                {
+                    linecommand += arguments[^1];
+                }
+                return linecommand;
+            }
         }
         public void AddCommand(Section section, Command cmd, params object[] arguments)
         {
-            string linecommand = "";
-            linecommand += cmd + " ";
-            for (int i = 0; i < arguments.Length - 1; i++)
-            {
-                linecommand += arguments[i] + ", ";
-            }
-            if (arguments.Length > 0)
-            {
-                linecommand += arguments[^1];
-            }
+            CommandLine cmdline = new CommandLine(cmd, arguments);
             switch (section)
             {
                 case Section.file:
-                    file.Add(linecommand);
+                    file.Add(cmdline);
                     break;
                 case Section.data:
-                    data.Add(linecommand);
+                    data.Add(cmdline);
                     break;
                 case Section.bss:
-                    bss.Add(linecommand);
+                    bss.Add(cmdline);
                     break;
                 case Section.text:
-                    text.Add(linecommand);
+                    text.Add(cmdline);
                     break;
             }
-            line += 1;
+            key += 1;
         }
-        public Generator(string pathOut)
+
+        public void PeepholeOptimization(int rounds)
         {
-            this.pathOut = pathOut;
+            for (int r = 0; r < rounds; r ++)
+            {
+                for (int i = 1; i < text.Count; i++)
+                {
+                    object line = text[i];
+                    object beforeLine = text[i - 1];
+                    if (line.GetType() == typeof(CommandLine) && beforeLine.GetType() == typeof(CommandLine))
+                    {
+                        CommandLine cmdBeforeLine = (CommandLine)beforeLine;
+                        CommandLine cmdLine = (CommandLine)line;
+                        if(cmdBeforeLine.cmd == Command.push && cmdLine.cmd == Command.pop)
+                        {
+                            if(cmdBeforeLine.arguments.First().GetType() == typeof(Register) && cmdLine.arguments.First().GetType() == typeof(Register))
+                            {
+                                if ((Register)cmdBeforeLine.arguments.First() == (Register)cmdLine.arguments.First())
+                                {
+                                    Console.WriteLine($"desription {cmdBeforeLine.arguments.First()} {cmdLine.arguments.First()}");
+                                    text.RemoveAt(i);
+                                    text.RemoveAt(i - 1);
+                                    i -= 2;
+                                    continue;
+                                }
+                            }
+                            CommandLine newCmdline = new CommandLine(Command.mov, new object[] { cmdLine.arguments.First(), cmdBeforeLine.arguments.First() });
+                            Console.WriteLine(newCmdline);
+                            text[i] = newCmdline;
+                            text.RemoveAt(i - 1);
+                            i -= 1;
+                        }
+                    }
+                }
+            }
         }
     }
 }

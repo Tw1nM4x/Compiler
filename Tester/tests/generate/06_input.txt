@@ -1,0 +1,9 @@
+program CheckUseVariables;
+var
+	int1 : integer = 5;
+	int2 : integer = 2;
+	int3 : integer = 9;
+begin
+	int3 := int3 - int1 + int2;
+	write(int3);
+end.

@@ -34,19 +34,13 @@ namespace Compiler
                 if(value.GetType() == typeof(SymVarLocal))
                 {
                     SymVarLocal varLocal = (SymVarLocal)value;
-                    if(varLocal.GetOriginalTypeVar().GetType() == typeof(SymInteger))
-                    {
-                        sizeLocal += 4;
-                    }
+                    sizeLocal += 4;
                     varLocal.offset = sizeLocal;
                 }
                 if (value.GetType() == typeof(SymVarParam))
                 {
                     SymVarParam varParam = (SymVarParam)value;
-                    if (varParam.GetOriginalTypeVar().GetType() == typeof(SymInteger))
-                    {
-                        sizeParam += 4;
-                    }
+                    sizeParam += 4;
                     varParam.offset = sizeParam;
                 }
                 return;

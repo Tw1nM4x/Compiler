@@ -1,0 +1,18 @@
+program CheckProcedure3;
+procedure proc1;
+begin
+	write(1, ' ');
+end;
+procedure proc2;
+begin
+	write(2, ' ');
+end;
+procedure proc3;
+begin
+	write(3, ' ');
+end;
+begin
+	proc1;
+	proc3;
+	proc2;
+end.

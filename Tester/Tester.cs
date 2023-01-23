@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -38,6 +39,9 @@ namespace Tester
                     break;
                 case "-sa":
                     folders = new Folder[] { new("semantic analysis", 24) };
+                    break;
+                case "-gen":
+                    folders = new Folder[] { new("generate", 21) };
                     break;
             }
             int countOK = 0;
@@ -147,6 +151,60 @@ namespace Tester
                                 sw.Write(new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, ex.Message).ToString());
                             }
                         }
+                    }
+                    if (key == "-gen")
+                    {
+                        string pathOutAsm = Environment.CurrentDirectory + $"/tests/{folders[numberFolder].name}/" + $"{numberTestStr}_out.asm";
+                        string pathObj = Environment.CurrentDirectory + $"/tests/{folders[numberFolder].name}/" + $"{numberTestStr}_obj.obj";
+                        string pathExe = Environment.CurrentDirectory + $"/tests/{folders[numberFolder].name}/" + $"{numberTestStr}_exe.exe";
+
+                        Console.WriteLine($"--------------Test {numberTestStr}----------------");
+
+                        using (StreamReader sr = new StreamReader(pathIn, Encoding.Default))
+                        {
+                            Console.WriteLine(sr.ReadToEnd() + "\n");
+                        }
+
+                        try
+                        {
+                            Parser parser = new Parser(lexer);
+                            Node firstNode = parser.ParseMainProgram();
+                            Generator generator = new Generator();
+                            firstNode.Generate(generator);
+                            generator.WriteInFile(pathOutAsm);
+                        }
+                        catch (ExceptionWithPosition ex)
+                        {
+                            throw ex;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new ExceptionWithPosition(lexer.CurrentLine, lexer.CurrentSymbol - 1, ex.Message);
+                        }
+
+                        Process nasmProcess = new Process();
+                        nasmProcess.StartInfo.FileName = "nasm";
+                        nasmProcess.StartInfo.Arguments = $"-fwin32 {pathOutAsm} -o {pathObj}";
+                        nasmProcess.Start();
+                        nasmProcess.WaitForExit();
+
+                        Process golinkProcess = new Process();
+                        golinkProcess.StartInfo.FileName = "gcc";
+                        golinkProcess.StartInfo.Arguments = $"-m32 -mconsole {pathObj} -o {pathExe}";
+                        golinkProcess.Start();
+                        golinkProcess.WaitForExit();
+                        new FileInfo(pathObj).Delete();
+
+                        Console.WriteLine("-------------------------------------");
+
+                        Process exeProcess = new Process();
+                        exeProcess.StartInfo.FileName = $"{pathExe}";
+                        exeProcess.Start();
+                        exeProcess.WaitForExit();
+                        Console.WriteLine("\n");
+                        Console.WriteLine("Press Enter to continue");
+                        string? input = Console.ReadLine();
+                        continue;
                     }
                     string checkFile;
                     string outFile;

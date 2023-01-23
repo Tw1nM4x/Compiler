@@ -1,0 +1,10 @@
+program CheckProcedure;
+procedure proc (x:integer);
+	var
+	i : integer = 5;
+	begin
+		write(x + i);
+	end;
+begin
+	proc(6);
+end.

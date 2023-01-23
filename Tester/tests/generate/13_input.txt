@@ -1,0 +1,9 @@
+program CheckRepeat;
+var
+a : integer = -2;
+begin
+	repeat 
+	write(' ', a);
+	a := a + 1;
+	until a < 7
+end.

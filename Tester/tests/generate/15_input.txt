@@ -1,0 +1,14 @@
+program CheckArray2;
+const
+	l = 2;
+var
+	arStr : array[0..(10 - 5) + l] of string;
+	arInt : array[3..5] of integer;
+	arReal : array[1 + 2..5] of real;
+begin
+	arStr[5] := 'hello';
+	arInt[4] := 5;
+	arInt[4 - 1] := 4;
+	arReal[5] := 4.2;
+	write(arStr[5], ' ', arInt[4] - arInt[3], ' ', arReal[5] + arInt[4]);
+end.

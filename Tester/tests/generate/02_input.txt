@@ -1,0 +1,8 @@
+program CheckStartValues;
+var
+	str : string = 'Hello';
+	int : integer = 5;
+	r : real = 3.2;
+begin
+	write(str, ' ', int, ' ', r);
+end.

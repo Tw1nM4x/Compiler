@@ -1,0 +1,11 @@
+program CheckProcedure2;
+procedure proc (x, y: integer; z : string; g : real);
+	var
+	i : integer = 5;
+	j : real = 0.5;
+	begin
+		write(x + y - i, ' ', z, ' ', g * j);
+	end;
+begin
+	proc(8, 12, 'test', 8.04);
+end.

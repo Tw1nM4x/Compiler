@@ -1,0 +1,14 @@
+program CheckArray;
+var
+	i,j : integer;
+	ar : array[0..5, 5..10] of integer;
+begin
+	for i := 0 to 5 do
+	begin
+		for j := 5 to 10 do
+		begin
+		ar[i][j] := i + j;
+		end;
+	end;
+	write(ar[3][7]);
+end.

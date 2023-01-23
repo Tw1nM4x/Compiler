@@ -1,3 +1,9 @@
+program Hello;
+begin
+	write(5 + 10 * 2);
+end.
+
+
 {program Hello;
 var
 	b : array[0..8, 0..5] of integer;
@@ -20,6 +26,7 @@ begin
 	write(' end: ', z);
 end.}
 
+{
 program f;
 const
 	i = 5;
@@ -37,7 +44,8 @@ begin
 	ar2[2] := 9;
 	ar[4] := 6.8;
 	write(' ', ar[4] + ar2[2]);
-	c := 'po' + 'heu';
+	c := 'pogh' + 'heu';
 	ar3[4] := 'hey';
 	write(ar3[4], c);
 end.
+}

@@ -1,0 +1,15 @@
+program CheckRecord;
+type
+	rec = record
+	x : integer;
+	y : string;
+	z : real;
+	end;
+var
+	ex: rec;
+begin
+	ex.x := 10 / 6;
+	ex.y := 'test';
+	ex.z := 5.4 - ex.x;
+	write(ex.x, ' ', ex.y, ' ', ex.z);
+end.

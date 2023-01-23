@@ -94,12 +94,10 @@ namespace Compiler
                         Parser parser = new Parser(lexer);
                         Node firstNode = parser.ParseMainProgram();
                         string pathOut = @"D:/GitProjects/Compiler/Tester/tests/1.asm";
-                        Generator generator = new Generator(pathOut);
-                        using (StreamWriter sw = new StreamWriter(pathOut, false, Encoding.Default))
-                        {
-                            sw.Write("");
-                        }
+                        Generator generator = new Generator();
                         firstNode.Generate(generator);
+                        generator.PeepholeOptimization(1);
+                        generator.WriteInFile(pathOut);
                     }
                     catch (ExceptionWithPosition ex)
                     {
@@ -112,7 +110,7 @@ namespace Compiler
 
                     Process nasmProcess = new Process();
                     nasmProcess.StartInfo.FileName = "nasm";
-                    nasmProcess.StartInfo.Arguments = "-f win32 D:/GitProjects/Compiler/Tester/tests/1.asm -o D:/GitProjects/Compiler/Tester/tests/1.obj";
+                    nasmProcess.StartInfo.Arguments = "-fwin32 D:/GitProjects/Compiler/Tester/tests/1.asm -o D:/GitProjects/Compiler/Tester/tests/1.obj";
                     nasmProcess.Start();
                     nasmProcess.WaitForExit();
 
@@ -125,9 +123,19 @@ namespace Compiler
 
                     Process exeProcess = new Process();
                     exeProcess.StartInfo.FileName = "D:/GitProjects/Compiler/Tester/tests/1.exe";
-                    //exeProcess.StartInfo.UseShellExecute = true;
-                    exeProcess.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
                     exeProcess.Start();
+                    exeProcess.WaitForExit();
+
+                    //exeProcess.StartInfo.FileName = "D:/GitProjects/Compiler/Tester/tests/1.exe";
+                    /*Process p = new Process();
+                    p.StartInfo.UseShellExecute = false;
+                    p.StartInfo.RedirectStandardOutput = true;
+                    p.StartInfo.RedirectStandardError = true;
+                    p.StartInfo.FileName = "D:/GitProjects/Compiler/Tester/tests/1.exe";
+                    p.StartInfo.Arguments = "";
+                    p.Start();
+                    Console.WriteLine(p.StandardOutput.ReadToEnd());
+                    p.WaitForExit();*/
                 }
             }
             catch (ExceptionWithPosition e)

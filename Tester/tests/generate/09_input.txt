@@ -1,0 +1,10 @@
+program CheckConst;
+const
+	c1 = 5;
+	c2 = 'const';
+	c3 = 5.3;
+var
+	int : integer = (c1 + 1) - 2;
+begin
+	write(int, ' ', c2, ' ', c3);
+end.

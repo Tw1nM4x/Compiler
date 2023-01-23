@@ -1,0 +1,11 @@
+program CheckAssigment;
+var
+	str : string;
+	int : integer;
+	r : real;
+begin
+	str := 'Hello';
+	int := 100;
+	r := 4.25;
+	write(str, ' ', int, ' ', r);
+end.

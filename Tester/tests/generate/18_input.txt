@@ -1,0 +1,19 @@
+program CheckRecord2;
+type
+	rec1 = record
+	x : integer;
+	end;
+	rec2 = record
+	x : integer;
+	y : integer;
+	end;
+var
+	ex1: rec1;
+	ex2: rec2;
+begin
+	ex1.x := 5;
+	ex2.x := 7;
+	ex2.y := ex1.x + ex2.x;
+	ex1.x := ex2.y - 1;
+	write(ex1.x, ' ', ex2.x, ' ', ex2.y);
+end.

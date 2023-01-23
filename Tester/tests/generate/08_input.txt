@@ -1,0 +1,9 @@
+program CheckSimpleType;
+type
+	a = integer;
+var
+	int : a;
+begin
+	int := 10;
+	write(int);
+end.

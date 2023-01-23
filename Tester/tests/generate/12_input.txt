@@ -1,0 +1,10 @@
+program CheckWhile;
+var
+a : integer = 5;
+begin
+	while a > 0 do 
+	begin
+		write(' ', a);
+		a := a - 1;
+	end;
+end.

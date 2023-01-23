@@ -1,0 +1,8 @@
+program CheckCastInteger;
+var
+	int : integer = 5;
+	r : real = 5.2;
+begin
+	r := r - int;
+	write(r);
+end.
