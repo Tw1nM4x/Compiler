@@ -23,13 +23,13 @@ section .text
 	pop dword [_int3]
 	push dword [_int3]
 	push dword [_int1]
-	pop ebx
 	pop eax
+	pop ebx
 	sub eax, ebx
 	push eax
 	push dword [_int2]
-	pop ebx
 	pop eax
+	pop ebx
 	add eax, ebx
 	push eax
 	pop dword [_int3]

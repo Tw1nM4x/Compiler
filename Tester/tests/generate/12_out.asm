@@ -26,16 +26,16 @@ section .text
 	mov eax, 0
 	push dword [_a]
 	push dword 1
-	pop ebx
 	pop eax
+	pop ebx
 	sub eax, ebx
 	push eax
 	pop dword [_a]
 	Check_9:
 	push dword [_a]
 	push dword 0
-	pop ebx
 	pop eax
+	pop ebx
 	cmp eax, ebx
 	jg True_31
 	push byte 0

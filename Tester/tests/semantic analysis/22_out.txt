@@ -1,1 +1,1 @@
-(7,10) ERROR: Incompatible types: got "string" expected "integer"
+(7,17) ERROR: Incompatible types

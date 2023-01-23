@@ -158,7 +158,7 @@ namespace Compiler
             this.value = value;
             if (value != null)
             {
-                if (type.GetType() != value.GetCachedType().GetType())
+                if (vars[0].GetOriginalTypeVar().GetType() != value.GetCachedType().GetType())
                 {
                     if (type.GetType() == typeof(SymReal) && value.GetCachedType().GetType() == typeof(SymInteger))
                     {

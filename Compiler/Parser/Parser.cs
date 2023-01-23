@@ -331,7 +331,7 @@
                     throw new ExceptionWithPosition(currentLex.NumberLine, currentLex.NumberSymbol,"Only one variable can be initialized");
                 }
                 NextToken();
-                value = ParseExpression(true);
+                value = ParseExpression(inDef: true);
             }
             foreach(string name in names)
             {
@@ -852,7 +852,7 @@
                 switch (currentLex.Value)
                 {
                     case Separator.CloseBracket:
-                        array = (SymArray)((NodeVar)node).GetSymVar().GetTypeVar();
+                        array = (SymArray)((NodeVar)node).GetSymVar().GetOriginalTypeVar();
                         var_ = new SymVar(var_.GetName(), array.GetTypeArray());
                         bracketClose = true;
                         NextToken();

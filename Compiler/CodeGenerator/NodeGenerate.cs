@@ -273,8 +273,8 @@ namespace Compiler
             }
             if (left.GetCachedType().GetType() == typeof(SymInteger))
             {
-                generator.AddCommand(Section.text, Command.pop, Register.eax);
                 generator.AddCommand(Section.text, Command.pop, Register.ebx);
+                generator.AddCommand(Section.text, Command.pop, Register.eax);
                 switch (opname)
                 {
                     case OperationSign.Plus:

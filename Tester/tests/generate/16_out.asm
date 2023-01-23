@@ -48,13 +48,13 @@ section .text
 	Do_32:
 	push dword [_x]
 	push dword [_y]
-	pop ebx
 	pop eax
+	pop ebx
 	add eax, ebx
 	push eax
 	push dword [_z]
-	pop ebx
 	pop eax
+	pop ebx
 	sub eax, ebx
 	push eax
 	mov ecx, 0

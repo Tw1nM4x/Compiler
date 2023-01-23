@@ -42,15 +42,15 @@ endstruc
 	pop dword [_ex2 + rec_rec2._x]
 	push dword [_ex1 + rec_rec1._x]
 	push dword [_ex2 + rec_rec2._x]
-	pop ebx
 	pop eax
+	pop ebx
 	add eax, ebx
 	push eax
 	pop dword [_ex2 + rec_rec2._y]
 	push dword [_ex2 + rec_rec2._y]
 	push dword 1
-	pop ebx
 	pop eax
+	pop ebx
 	sub eax, ebx
 	push eax
 	pop dword [_ex1 + rec_rec1._x]

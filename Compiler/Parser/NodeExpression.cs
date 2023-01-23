@@ -91,14 +91,6 @@ namespace Compiler
                     throw new Exception("Operator is not overloaded");
                 }
             }
-            if (opname.GetType() == typeof(KeyWord))
-            {
-                KeyWord op = (KeyWord)opname;
-                if (op == KeyWord.OR || op == KeyWord.AND || op == KeyWord.NOT)
-                {
-                    return new SymBoolean("boolean");
-                }
-            }
             return leftType;
         }
         public override string ToString(List<bool> isLeftParents)

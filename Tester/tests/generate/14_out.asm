@@ -37,8 +37,8 @@ section .text
 	Do_21:
 	push dword [_i]
 	push dword [_j]
-	pop ebx
 	pop eax
+	pop ebx
 	add eax, ebx
 	push eax
 	mov ecx, 0

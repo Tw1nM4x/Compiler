@@ -21,13 +21,13 @@ _c3 equ __float32__(5.30)
 	_main :
 	push _c1
 	push dword 1
-	pop ebx
 	pop eax
+	pop ebx
 	add eax, ebx
 	push eax
 	push dword 2
-	pop ebx
 	pop eax
+	pop ebx
 	sub eax, ebx
 	push eax
 	pop dword [_int]

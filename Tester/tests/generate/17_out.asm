@@ -31,8 +31,8 @@ endstruc
 	_main :
 	push dword 10
 	push dword 6
-	pop ebx
 	pop eax
+	pop ebx
 	mov ecx, 0
 	mov edx, 0
 	idiv ebx

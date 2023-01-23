@@ -20,8 +20,8 @@ section .text
 	pop dword [_a]
 	push dword [_a]
 	push dword 4
-	pop ebx
 	pop eax
+	pop ebx
 	cmp eax, ebx
 	je True_13
 	push byte 0

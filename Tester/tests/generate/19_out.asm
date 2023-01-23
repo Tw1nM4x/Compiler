@@ -19,8 +19,8 @@ section .text
 	pop dword [ebp - 4]
 	push dword [ebp + 8]
 	push dword [ebp - 4]
-	pop ebx
 	pop eax
+	pop ebx
 	add eax, ebx
 	push eax
 	push format_1

@@ -45,8 +45,8 @@ _l equ 2
 	mov ecx, 0
 	push dword 4
 	push dword 1
-	pop ebx
 	pop eax
+	pop ebx
 	sub eax, ebx
 	push eax
 	pop eax
@@ -109,8 +109,8 @@ _l equ 2
 	sub eax, ebx
 	add ecx, eax
 	push dword [_arint + 4 * ecx]
-	pop ebx
 	pop eax
+	pop ebx
 	sub eax, ebx
 	push eax
 	push string_3

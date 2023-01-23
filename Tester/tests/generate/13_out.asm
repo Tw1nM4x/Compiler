@@ -28,15 +28,15 @@ section .text
 	mov eax, 0
 	push dword [_a]
 	push dword 1
-	pop ebx
 	pop eax
+	pop ebx
 	add eax, ebx
 	push eax
 	pop dword [_a]
 	push dword [_a]
 	push dword 7
-	pop ebx
 	pop eax
+	pop ebx
 	cmp eax, ebx
 	jl True_32
 	push byte 0
