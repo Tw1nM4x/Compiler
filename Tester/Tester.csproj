@@ -11,8 +11,4 @@
     <ProjectReference Include="..\Compiler\Compiler.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="tests\generate\" />
-  </ItemGroup>
-
 </Project>

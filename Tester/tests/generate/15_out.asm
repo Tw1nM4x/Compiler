@@ -1,8 +1,6 @@
 extern _printf
 extern _scanf
 global _main
-section .data
-section .text
 _l equ 2
 
  section .bss 
@@ -45,8 +43,8 @@ _l equ 2
 	mov ecx, 0
 	push dword 4
 	push dword 1
-	pop eax
 	pop ebx
+	pop eax
 	sub eax, ebx
 	push eax
 	pop eax
@@ -109,8 +107,8 @@ _l equ 2
 	sub eax, ebx
 	add ecx, eax
 	push dword [_arint + 4 * ecx]
-	pop eax
 	pop ebx
+	pop eax
 	sub eax, ebx
 	push eax
 	push string_3

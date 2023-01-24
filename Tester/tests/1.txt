@@ -1,51 +1,11 @@
 program Hello;
-begin
-	write(5 + 10 * 2);
-end.
-
-
-{program Hello;
-var
-	b : array[0..8, 0..5] of integer;
-	i,j : integer;
-	z : integer = 0;
-
-begin
-	for i := 0 to 8 do 
-	begin
-		for j := 0 to 5 do 
-		begin 
-			z := z + 1;
-			b[i][j][0] := i - j;
-			write(i, '-', j, '=', b[i][j][0], ' ', z, '- ');
-			b[i][j][1] := i + j;
-			z := z + 1;
-			write(i, '+', j, '=', b[i][j][1], ' ', z, '- ');
-		end
-	end
-	write(' end: ', z);
-end.}
-
-{
-program f;
 const
-	i = 5;
-var
-	ar : array [0..5] of real;
-	ar2 : array [0..5] of integer;
-	ar3 : array [0..5] of string;
-	a : real = 5;
-	b : real = 9.2 + 3.1;
-	c : string;
+	a = 'hi';
 begin
-	a := 0.05 * 20;
-	a := a - b;
-	write(a);
-	ar2[2] := 9;
-	ar[4] := 6.8;
-	write(' ', ar[4] + ar2[2]);
-	c := 'pogh' + 'heu';
-	ar3[4] := 'hey';
-	write(ar3[4], c);
+	write('hello' + a);
+	;
+	exit;
+	;
+	write('wow');
+	write('heu');
 end.
-}

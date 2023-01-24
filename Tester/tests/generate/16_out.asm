@@ -1,8 +1,6 @@
 extern _printf
 extern _scanf
 global _main
-section .data
-section .text
 
  section .bss 
 	_ar_from0 : equ 0
@@ -17,9 +15,9 @@ section .text
 	_x: dd 0
 	_y: dd 0
 	_z: dd 0
-	finalVal16: dd  0
-	finalVal24: dd  0
-	finalVal32: dd  0
+	finalVal14: dd  0
+	finalVal22: dd  0
+	finalVal30: dd  0
 	format_1: db '%d',0
 	real: dd  0.0
 
@@ -30,31 +28,31 @@ section .text
 	mov [_x], eax
 	push dword 5
 	pop eax
-	mov [finalVal16], eax
-	Do_16:
+	mov [finalVal14], eax
+	Do_14:
 	push dword 5
 	pop eax
 	mov [_y], eax
 	push dword 10
 	pop eax
-	mov [finalVal24], eax
-	Do_24:
+	mov [finalVal22], eax
+	Do_22:
 	push dword 0
 	pop eax
 	mov [_z], eax
 	push dword 5
 	pop eax
-	mov [finalVal32], eax
-	Do_32:
+	mov [finalVal30], eax
+	Do_30:
 	push dword [_x]
 	push dword [_y]
-	pop eax
 	pop ebx
+	pop eax
 	add eax, ebx
 	push eax
 	push dword [_z]
-	pop eax
 	pop ebx
+	pop eax
 	sub eax, ebx
 	push eax
 	mov ecx, 0
@@ -80,16 +78,16 @@ section .text
 	pop dword [_ar + 4 * ecx]
 	inc dword [_z]
 	mov eax, dword [_z]
-	cmp eax, dword [finalVal32]
-	jle Do_32
+	cmp eax, dword [finalVal30]
+	jle Do_30
 	inc dword [_y]
 	mov eax, dword [_y]
-	cmp eax, dword [finalVal24]
-	jle Do_24
+	cmp eax, dword [finalVal22]
+	jle Do_22
 	inc dword [_x]
 	mov eax, dword [_x]
-	cmp eax, dword [finalVal16]
-	jle Do_16
+	cmp eax, dword [finalVal14]
+	jle Do_14
 	mov ecx, 0
 	push dword 3
 	pop eax

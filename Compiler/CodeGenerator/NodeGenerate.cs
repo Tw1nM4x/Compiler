@@ -10,12 +10,30 @@ namespace Compiler
     {
         public override void Generate(Generator generator)
         {
+            /*generator.AddLine(Section.file, "_printf:");
+            generator.AddLine(Section.file, "push	ebp");
+            generator.AddLine(Section.file, "mov	ebp, esp");
+            generator.AddLine(Section.file, "push	ebx");
+            generator.AddLine(Section.file, "sub	esp, 36");
+            generator.AddLine(Section.file, "lea	eax, [ebp + 12]");
+            generator.AddLine(Section.file, "mov	[ebp - 16], eax");
+            generator.AddLine(Section.file, "mov	ebx, [ebp - 16]");
+            generator.AddLine(Section.file, "mov	[esp], dword 1");
+            //generator.AddLine(Section.file, "mov	eax, __imp____acrt_iob_func");
+            generator.AddLine(Section.file, "call	__imp____acrt_iob_func");
+            generator.AddLine(Section.file, "mov	[esp + 8], ebx");
+            generator.AddLine(Section.file, "mov	edx, [ebp + 8]");
+            generator.AddLine(Section.file, "mov	[esp + 4], edx");
+            generator.AddLine(Section.file, "mov	[esp], eax");
+            generator.AddLine(Section.file, "call	___mingw_vfprintf");
+            generator.AddLine(Section.file, "mov	[ebp - 12], eax");
+            generator.AddLine(Section.file, "mov	eax, [ebp - 12]");
+            generator.AddLine(Section.file, "mov	ebx, [ebp - 4]");
+            generator.AddLine(Section.file, "leave");
+            generator.AddLine(Section.file, "ret");*/
             generator.AddCommand(Section.file, Command.@extern, Call._printf);
             generator.AddCommand(Section.file, Command.@extern, Call._scanf);
             generator.AddCommand(Section.file, Command.global, "_main");
-            generator.AddCommand(Section.file, Command.section, ".data");
-            generator.AddCommand(Section.file, Command.section, ".text");
-
             foreach (NodeDefs el in types)
             {
                 if(el.GetType() == typeof(ProcedureDefNode))

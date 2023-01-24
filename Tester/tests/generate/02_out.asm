@@ -1,8 +1,6 @@
 extern _printf
 extern _scanf
 global _main
-section .data
-section .text
 
  section .bss 
 

@@ -42,7 +42,7 @@ namespace Compiler
     }
     public partial class NodeBinOp : NodeExpression
     {
-        object opname;
+        public object opname;
         public NodeExpression left;
         public NodeExpression right;
         public NodeBinOp(object opname, NodeExpression left, NodeExpression right)
@@ -216,7 +216,7 @@ namespace Compiler
     }
     public partial class NodeVar : NodeExpression
     {
-        SymVar var_;
+        public SymVar var_;
         public string GetName()
         {
             return var_.GetName();
@@ -241,7 +241,7 @@ namespace Compiler
     }
     public partial class NodeInt : NodeExpression
     {
-        int value;
+        public int value;
         public NodeInt(int value)
         {
             this.value = value;
@@ -258,7 +258,7 @@ namespace Compiler
     }
     public partial class NodeReal : NodeExpression
     {
-        double value;
+        public double value;
         public NodeReal(double value)
         {
             this.value = value;
@@ -275,7 +275,7 @@ namespace Compiler
     }
     public partial class NodeString : NodeExpression
     {
-        string value;
+        public string value;
         public string GetValue()
         {
             return value;

@@ -1,8 +1,6 @@
 extern _printf
 extern _scanf
 global _main
-section .data
-section .text
 
 struc rec_rec1
 ._x: resd 1
@@ -42,15 +40,15 @@ endstruc
 	pop dword [_ex2 + rec_rec2._x]
 	push dword [_ex1 + rec_rec1._x]
 	push dword [_ex2 + rec_rec2._x]
-	pop eax
 	pop ebx
+	pop eax
 	add eax, ebx
 	push eax
 	pop dword [_ex2 + rec_rec2._y]
 	push dword [_ex2 + rec_rec2._y]
 	push dword 1
-	pop eax
 	pop ebx
+	pop eax
 	sub eax, ebx
 	push eax
 	pop dword [_ex1 + rec_rec1._x]

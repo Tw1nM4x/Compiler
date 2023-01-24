@@ -1,8 +1,6 @@
 extern _printf
 extern _scanf
 global _main
-section .data
-section .text
 _c1 equ 5
 _c2 equ string_1
 _c3 equ __float32__(5.30)
@@ -19,17 +17,7 @@ _c3 equ __float32__(5.30)
 
  section .text 
 	_main :
-	push _c1
-	push dword 1
-	pop eax
-	pop ebx
-	add eax, ebx
-	push eax
-	push dword 2
-	pop eax
-	pop ebx
-	sub eax, ebx
-	push eax
+	push dword 4
 	pop dword [_int]
 	push _c3
 	pop eax

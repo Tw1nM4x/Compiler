@@ -1,8 +1,6 @@
 extern _printf
 extern _scanf
 global _main
-section .data
-section .text
 
  section .bss 
 
@@ -21,19 +19,11 @@ section .text
 	fld dword [real]
 	fstp dword [esp]
 	pop dword [_r]
-	sub esp, 4
-	fld dword [_r]
-	fstp dword [esp]
-	push dword [_int]
+	push dword 0
 	pop eax
 	mov [real], eax
 	fild dword [real]
 	sub esp, 4
-	fstp dword [esp]
-	fld dword [esp + 4]
-	fld dword [esp]
-	fsub 
-	add esp, 4
 	fstp dword [esp]
 	pop dword [_r]
 	sub esp, 4

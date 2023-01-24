@@ -1,8 +1,6 @@
 extern _printf
 extern _scanf
 global _main
-section .data
-section .text
 
  section .bss 
 
@@ -21,17 +19,7 @@ section .text
 	pop dword [_int2]
 	push dword 9
 	pop dword [_int3]
-	push dword [_int3]
-	push dword [_int1]
-	pop eax
-	pop ebx
-	sub eax, ebx
-	push eax
-	push dword [_int2]
-	pop eax
-	pop ebx
-	add eax, ebx
-	push eax
+	push dword 0
 	pop dword [_int3]
 	push dword [_int3]
 	push format_1

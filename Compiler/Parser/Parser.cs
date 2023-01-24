@@ -15,6 +15,7 @@
             builtins.Add("string", new SymString("string"));
             builtins.Add("write", new SymProc("write"));
             builtins.Add("read", new SymProc("read"));
+            builtins.Add("exit", new SymProc("exit"));
             symTableStack.AddTable(new SymTable(builtins));
             symTableStack.AddTable(new SymTable(new Dictionary<string, Symbol>()));
             NextToken();
@@ -125,9 +126,9 @@
         {
             if (!Expect(require))
             {
-                if (require.GetType() == typeof(Separator))
+                if (require is Separator r)
                 {
-                    require = Lexer.GetStrSeparator((Separator)require);
+                    require = Lexer.GetStrSeparator(r);
                 }
                 if (require.GetType() == typeof(OperationSign))
                 {
@@ -217,7 +218,7 @@
                 NodeExpression value;
                 value = ParseExpression();
                 Require(Separator.Semiсolon);
-                SymVarConst varConst = new SymVarConst(name, value.GetCachedType());
+                SymVarConst varConst = new SymVarConst(name, value.GetCachedType(), value);
                 symTableStack.Add(name, varConst);
                 body.Add(new ConstDeclarationNode(varConst, value));
             }
@@ -578,7 +579,7 @@
                 }
             }
             Require(KeyWord.END);
-            return new BlockStmt(body);
+            return HighLevelOptimization.RemoveUnreachebleCode(new BlockStmt(body));
         }
         public NodeStatement ParseFor()
         {
@@ -748,6 +749,7 @@
                 NextToken();
                 NodeExpression right = ParseTerm(inDef);
                 left = new NodeBinOp(operation, left, right );
+                left = HighLevelOptimization.ConstantFolding((NodeBinOp)left);
             }
             return left;
         }
@@ -760,6 +762,7 @@
                 NextToken();
                 NodeExpression right = ParseFactor(inDef);
                 left = new NodeBinOp(operation, left, right);
+                left = HighLevelOptimization.ConstantFolding((NodeBinOp)left); //optimization
             }
             return left;
         }

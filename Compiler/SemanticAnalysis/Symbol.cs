@@ -8,7 +8,7 @@ namespace Compiler
 {
     public class Symbol : Node
     {
-        string name;
+        public string name;
         public string GetName()
         {
             return name;
@@ -62,7 +62,11 @@ namespace Compiler
     }
     public class SymVarConst : SymVar
     {
-        public SymVarConst(string name, SymType type) : base(name, type) { }
+        public NodeExpression value;
+        public SymVarConst(string name, SymType type, NodeExpression value) : base(name, type)
+        {
+            this.value = value;
+        }
     }
     public class SymVarGlobal : SymVar
     {

@@ -1,8 +1,6 @@
 extern _printf
 extern _scanf
 global _main
-section .data
-section .text
 
  section .bss 
 
@@ -20,29 +18,29 @@ section .text
 	pop dword [_a]
 	push dword [_a]
 	push dword 4
-	pop eax
 	pop ebx
+	pop eax
 	cmp eax, ebx
-	je True_13
+	je True_11
 	push byte 0
-	jmp False_13
-	True_13:
+	jmp False_11
+	True_11:
 	push byte 1
-	False_13:
+	False_11:
 	pop eax
 	cmp eax, byte 1
-	je Then_22
+	je Then_20
 	push string_1
 	push format_2
 	call _printf
 	add esp, 4
 	mov eax, 0
-	jmp Else_22
-	Then_22:
+	jmp Else_20
+	Then_20:
 	push string_3
 	push format_4
 	call _printf
 	add esp, 4
 	mov eax, 0
-	Else_22:
+	Else_20:
 	ret 

@@ -10,22 +10,8 @@ namespace Compiler
         public virtual string ToString(List<bool> isLeftParents) {
             return "node";
         }
-        public static string GetPrefixNode(List<bool> isLeftParents)
-        {
-            string res = "";
-            foreach (bool isLeft in isLeftParents)
-            {
-                if (isLeft)
-                {
-                    res += $"│    ";
-                }
-                else
-                {
-                    res += $"     ";
-                }
-            }
-            return res;
-        }
+        public static string GetPrefixNode(List<bool> isLeftParents) =>
+            String.Join("", isLeftParents.Select(left => left ? "│    " : "    "));
         public List<bool> ListAddLeft(List<bool> List)
         {
             List<bool> newList = new List<bool>(List);

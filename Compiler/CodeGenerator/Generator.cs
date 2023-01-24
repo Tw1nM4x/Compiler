@@ -180,7 +180,7 @@ namespace Compiler
             }
             key += 1;
         }
-
+        
         public void PeepholeOptimization(int rounds)
         {
             for (int r = 0; r < rounds; r ++)
@@ -189,25 +189,21 @@ namespace Compiler
                 {
                     object line = text[i];
                     object beforeLine = text[i - 1];
-                    if (line.GetType() == typeof(CommandLine) && beforeLine.GetType() == typeof(CommandLine))
+                    if (line is CommandLine cmdLine && beforeLine is CommandLine cmdBeforeLine)
                     {
-                        CommandLine cmdBeforeLine = (CommandLine)beforeLine;
-                        CommandLine cmdLine = (CommandLine)line;
                         if(cmdBeforeLine.cmd == Command.push && cmdLine.cmd == Command.pop)
                         {
-                            if(cmdBeforeLine.arguments.First().GetType() == typeof(Register) && cmdLine.arguments.First().GetType() == typeof(Register))
+                            if(cmdBeforeLine.arguments.First() is Register beforeReg && cmdLine.arguments.First() is Register register)
                             {
-                                if ((Register)cmdBeforeLine.arguments.First() == (Register)cmdLine.arguments.First())
+                                if (beforeReg == register)
                                 {
-                                    Console.WriteLine($"desription {cmdBeforeLine.arguments.First()} {cmdLine.arguments.First()}");
                                     text.RemoveAt(i);
                                     text.RemoveAt(i - 1);
                                     i -= 2;
                                     continue;
                                 }
                             }
-                            CommandLine newCmdline = new CommandLine(Command.mov, new object[] { cmdLine.arguments.First(), cmdBeforeLine.arguments.First() });
-                            Console.WriteLine(newCmdline);
+                            CommandLine newCmdline = new CommandLine(Command.mov, cmdLine.arguments.First(), cmdBeforeLine.arguments.First());
                             text[i] = newCmdline;
                             text.RemoveAt(i - 1);
                             i -= 1;

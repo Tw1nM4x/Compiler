@@ -54,7 +54,7 @@ namespace Compiler
     }
     public partial class CallStmt : NodeStatement
     {
-        SymProc proc;
+        public SymProc proc;
         List<NodeExpression?> args;
         public CallStmt(Symbol proc, List<NodeExpression?> arg)
         {
@@ -191,7 +191,7 @@ namespace Compiler
     }
     public partial class BlockStmt : NodeStatement
     {
-        List<NodeStatement> body;
+        public List<NodeStatement> body;
         public BlockStmt(List<NodeStatement> body)
         {
             this.body = body;

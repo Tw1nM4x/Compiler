@@ -1,8 +1,6 @@
 extern _printf
 extern _scanf
 global _main
-section .data
-section .text
 
 struc rec_rec
 ._x: resd 1
@@ -31,8 +29,8 @@ endstruc
 	_main :
 	push dword 10
 	push dword 6
-	pop eax
 	pop ebx
+	pop eax
 	mov ecx, 0
 	mov edx, 0
 	idiv ebx
